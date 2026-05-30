@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# C / AVR build outputs
+*.o
+*.elf
+*.map
+*.hex
+
+# CMake out-of-source build directories
+/build-*/
+
+# packaged firmware artifacts
+/dist/
+
+# generated Sphinx docs (built from _templates/ + conf.py)
+/docs/source/index.rst
+/docs/source/toc_*.rst
+/docs/build/
+
+# python tooling byproducts (conf.py, pipenv)
+__pycache__/
+*.pyc
+.venv/
+
+# misc
+*scratch*
