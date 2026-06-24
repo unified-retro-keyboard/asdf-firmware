@@ -43,7 +43,7 @@ jobs:
             echo "Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match CMakeLists VERSION ($CMAKE_VERSION)" >&2
             exit 1
           fi
-      - run: /bin/bash ./make-targets.sh -a -i -s
+      - run: /bin/bash ./make-targets.sh -a avr -i -s
       - name: Upload built ELFs
         uses: actions/upload-artifact@v4
         with:
@@ -85,7 +85,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake build-essential gcc-arm-none-eabi
       - name: Build PIC32CM PL10 firmware (build-verified, no hardware/emulator validation yet)
-        run: bash ./make-targets.sh -t pic32cm_pl10_q64 -t pic32cm_pl10_dip28
+        run: bash ./make-targets.sh -a arm_m0+
 
   integration_test:
     needs: build_firmware

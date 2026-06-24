@@ -10,25 +10,29 @@ MAKE_TARGETS="all"
 DOC_DIR=docs
 LINKS_DIR="$DOC_DIR/source"
 
+# Each target belongs to a category. The category determines how the target is
+# built (see build_arch) and lets -a select a whole category at once.
+#   avr     - 8-bit AVR firmware (avr-gcc); compiled/installed via deploy (-i)
+#   test    - host unit tests (native gcc + ctest)
+#   arm_m0+ - Arm Cortex-M0+ firmware (arm-none-eabi-gcc); build-verified
+#   sim     - simavr integration tests (needs the AVR ELFs + simavr)
 add_valid_target() {
     VALID_TARGETS[$NUM_VALID_TARGETS]=$1
-    TARGET_TYPE[$NUM_VALID_TARGETS]=${2:-EXECUTABLE}
+    TARGET_CATEGORY[$NUM_VALID_TARGETS]=$2
     ((NUM_VALID_TARGETS++))
 }
 
-add_valid_target test         UNIT_TEST
-add_valid_target atmega328p
-add_valid_target atmega168p
-add_valid_target atmega88p
-add_valid_target atmega2560
-add_valid_target atmega1280
-add_valid_target atmega640
-# ARM firmware targets: excluded from -a (the AVR release flow) so they do not
-# require arm-none-eabi-gcc there; build explicitly with -t. FIRMWARE_ARM also
-# tells build_arch to compile (configure + make), since these are not deployed.
-add_valid_target pic32cm_pl10_q64   FIRMWARE_ARM
-add_valid_target pic32cm_pl10_dip28 FIRMWARE_ARM
-add_valid_target simavr_test  INTEGRATION_TEST
+#                name                 category
+add_valid_target test                test
+add_valid_target atmega328p          avr
+add_valid_target atmega168p          avr
+add_valid_target atmega88p           avr
+add_valid_target atmega2560          avr
+add_valid_target atmega1280          avr
+add_valid_target atmega640           avr
+add_valid_target pic32cm_pl10_q64    arm_m0+
+add_valid_target pic32cm_pl10_dip28  arm_m0+
+add_valid_target simavr_test         sim
 
 
 check_valid_target() {
@@ -42,6 +46,17 @@ check_valid_target() {
         fi
     done
     echo $result
+}
+
+
+# Return success if $1 is a category used by at least one registered target.
+is_known_category() {
+    local i
+    for (( i = 0; i < NUM_VALID_TARGETS; i++ ))
+    do
+        [[ ${TARGET_CATEGORY[$i]} == "$1" ]] && return 0
+    done
+    return 1
 }
 
 
@@ -79,7 +94,7 @@ preflight_simavr_test() {
     done
     if [[ $missing -ne 0 ]]; then
         echo
-        echo "Run: bash make-targets.sh -a"
+        echo "Run: bash make-targets.sh -a avr"
         echo "to build the AVR firmware before running integration tests."
         return 1
     fi
@@ -109,11 +124,16 @@ preflight_simavr_test() {
     return 0
 }
 
+# Build a target. Behavior is derived from the target's category:
+#   avr     -> configure only (firmware is compiled and installed by deploy, -i)
+#   test    -> make + ctest (host unit tests)
+#   sim     -> preflight + make + ctest (simavr integration tests)
+#   arm_m0+ -> make (build-verified firmware; not installed/deployed)
 build_arch() {
     local target_arch="$1"
-    local target_type="$2"
+    local category="$2"
 
-    if [[ $target_arch == simavr_test ]]; then
+    if [[ $category == sim ]]; then
         preflight_simavr_test || exit 1
     fi
 
@@ -121,12 +141,14 @@ build_arch() {
         -DCMAKE_INSTALL_PREFIX="." -DARCH="$target_arch" \
         -DCMAKE_BUILD_TYPE="$BUILD_TYPE" || exit 1
 
-    if [[ $target_type == UNIT_TEST || $target_type == INTEGRATION_TEST ]]; then
-        (cd "build-$target_arch" && make && ctest --output-on-failure) || exit 1
-    elif [[ $target_type == FIRMWARE_ARM ]]; then
-        # ARM firmware is build-verified only (not installed/deployed): compile it.
-        (cd "build-$target_arch" && make) || exit 1
-    fi
+    case "$category" in
+        test | sim)
+            (cd "build-$target_arch" && make && ctest --output-on-failure) || exit 1
+            ;;
+        "arm_m0+")
+            (cd "build-$target_arch" && make) || exit 1
+            ;;
+    esac
 
 }
 
@@ -154,27 +176,29 @@ clean_all() {
 syntax() {
     echo "Usage:"
     echo "  $0 -t target [-t target] ..."
-    echo "  $0 -a"
+    echo "  $0 -a [category]"
     echo "  $0 -h"
     echo ""
     echo "Options:"
     echo "  -h.  Display this help message"
     echo "  -x   Before creating a build directgory or virtual env, remove"
     echo "       any pre-existing version"
-    echo "  -t   add an architecture directory"
-    echo "  -a   Add all valid architecture directories"
+    echo "  -t   add an architecture target"
+    echo "  -a   Build all targets; with a category argument, only that category"
     echo "  -i   Build each specified target and install to dist directory"
     echo "  -p   Install pipenv virtual environment for python scripts"
     echo "  -c   Clean all artifacts"
     echo "  -s   Copy dist files to sphinx directory"
     echo "Valid targets: ${VALID_TARGETS[*]}"
+    echo "Categories:    avr, test, arm_m0+, sim"
 }
 
 parse() {
     local SYNTAX=""
-    local ALL=""
+    local ALL_CATEGORY=""
     local i
     local valid_index
+    local next
 
     NUM_CMAKE_TARGETS=0
     CLEAN_BEFORE_BUILD=""
@@ -190,7 +214,20 @@ parse() {
                 SYNTAX="yes"
                 ;;
             a)
-                ALL="yes"
+                # -a takes an OPTIONAL category argument. With a known category,
+                # build that category; a bare -a builds every target.
+                next="${!OPTIND}"
+                if [[ -n $next && $next != -* ]]; then
+                    if is_known_category "$next"; then
+                        ALL_CATEGORY="$next"
+                        ((OPTIND++))
+                    else
+                        echo "Unknown category \"$next\""
+                        SYNTAX="yes"
+                    fi
+                else
+                    ALL_CATEGORY="__all__"
+                fi
                 ;;
             t)
                 # Test that target is valid
@@ -223,11 +260,11 @@ parse() {
         syntax && die
     fi
 
-    if [[ "$ALL" == "yes" ]]
+    if [[ -n "$ALL_CATEGORY" ]]
     then
         for (( i=0; i<NUM_VALID_TARGETS; i++ ))
         do
-            if [[ ${TARGET_TYPE[$i]} == "EXECUTABLE" ]]; then
+            if [[ "$ALL_CATEGORY" == "__all__" || ${TARGET_CATEGORY[$i]} == "$ALL_CATEGORY" ]]; then
                 CMAKE_TARGETS[$NUM_CMAKE_TARGETS]=$i
                 ((NUM_CMAKE_TARGETS++))
             fi
@@ -270,7 +307,7 @@ main() {
          then
              clean_arch ${VALID_TARGETS[$TARGET]}
          fi
-         build_arch ${VALID_TARGETS[$TARGET]} ${TARGET_TYPE[$TARGET]}
+         build_arch ${VALID_TARGETS[$TARGET]} ${TARGET_CATEGORY[$TARGET]}
          if [[ "$DEPLOY" == "yes" ]]
          then
              deploy_arch ${VALID_TARGETS[$TARGET]}
@@ -288,5 +325,3 @@ main() {
 main $@
 
 exit 0
-
-
