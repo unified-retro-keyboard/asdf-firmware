@@ -10,29 +10,48 @@ MAKE_TARGETS="all"
 DOC_DIR=docs
 LINKS_DIR="$DOC_DIR/source"
 
-# Each target belongs to a category. The category determines how the target is
-# built (see build_arch) and lets -a select a whole category at once.
+# Targets are defined in targets.csv (the single source of truth, also read by
+# test/simavr/CMakeLists.txt and CI). Each target has a category that determines
+# how it is built (see build_arch) and lets -a select a whole category at once:
 #   avr     - 8-bit AVR firmware (avr-gcc); compiled/installed via deploy (-i)
 #   test    - host unit tests (native gcc + ctest)
 #   arm_m0+ - Arm Cortex-M0+ firmware (arm-none-eabi-gcc); build-verified
 #   sim     - simavr integration tests (needs the AVR ELFs + simavr)
+TARGETS_FILE="$(dirname "${BASH_SOURCE[0]}")/targets.csv"
+
 add_valid_target() {
     VALID_TARGETS[$NUM_VALID_TARGETS]=$1
     TARGET_CATEGORY[$NUM_VALID_TARGETS]=$2
+    TARGET_SIMAVR[$NUM_VALID_TARGETS]=$3
     ((NUM_VALID_TARGETS++))
 }
 
-#                name                 category
-add_valid_target test                test
-add_valid_target atmega328p          avr
-add_valid_target atmega168p          avr
-add_valid_target atmega88p           avr
-add_valid_target atmega2560          avr
-add_valid_target atmega1280          avr
-add_valid_target atmega640           avr
-add_valid_target pic32cm_pl10_q64    arm_m0+
-add_valid_target pic32cm_pl10_dip28  arm_m0+
-add_valid_target simavr_test         sim
+# Populate the target tables from targets.csv (name,category,simavr).
+load_targets() {
+    local name category simavr
+    while IFS=, read -r name category simavr; do
+        # strip whitespace / CR; skip comments and blank lines
+        name="${name//[[:space:]]/}"
+        category="${category//[[:space:]]/}"
+        simavr="${simavr//[[:space:]]/}"
+        [[ -z $name || $name == \#* ]] && continue
+        add_valid_target "$name" "$category" "$simavr"
+    done < "$TARGETS_FILE"
+}
+load_targets
+
+# Print target names matching a filter: empty = all, a category name, or the
+# keyword "simavr" for targets exercised by the simavr integration tests.
+list_targets() {
+    local i
+    for (( i = 0; i < NUM_VALID_TARGETS; i++ )); do
+        if [[ -z $1 ]] \
+           || [[ $1 == simavr && ${TARGET_SIMAVR[$i]} == yes ]] \
+           || [[ ${TARGET_CATEGORY[$i]} == "$1" ]]; then
+            echo "${VALID_TARGETS[$i]}"
+        fi
+    done
+}
 
 
 check_valid_target() {
@@ -85,7 +104,7 @@ preflight_simavr_test() {
     local missing=0
     local ver
     ver=$(asdf_version)
-    for t in atmega328p atmega168p atmega640 atmega1280 atmega2560; do
+    for t in $(list_targets simavr); do
         local elf="build-$t/src/asdf-v${ver}-$t.elf"
         if [[ ! -f $elf ]]; then
             echo "ERROR: missing $elf"
@@ -185,6 +204,7 @@ syntax() {
     echo "       any pre-existing version"
     echo "  -t   add an architecture target"
     echo "  -a   Build all targets; with a category argument, only that category"
+    echo "  -l   List target names (optionally filtered by category or 'simavr')"
     echo "  -i   Build each specified target and install to dist directory"
     echo "  -p   Install pipenv virtual environment for python scripts"
     echo "  -c   Clean all artifacts"
@@ -207,11 +227,23 @@ parse() {
     CLEAN_ALL=""
     COPY_DIST_TO_DOCS=""
 
-    while getopts "t:ahipxcs" optname
+    while getopts "t:ahipxcsl" optname
     do
         case "$optname" in
             h)
                 SYNTAX="yes"
+                ;;
+            l)
+                # -l prints target names (optionally filtered by category, or by
+                # the keyword "simavr") and exits. Used by CI and humans.
+                next="${!OPTIND}"
+                if [[ -n $next && $next != -* ]]; then
+                    list_targets "$next"
+                    ((OPTIND++))
+                else
+                    list_targets ""
+                fi
+                exit 0
                 ;;
             a)
                 # -a takes an OPTIONAL category argument. With a known category,

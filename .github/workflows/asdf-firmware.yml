@@ -104,7 +104,7 @@ jobs:
       - name: Re-layout downloaded ELFs
         run: |
           VER="${{ needs.build_firmware.outputs.version }}"
-          for t in atmega328p atmega168p atmega640 atmega1280 atmega2560; do
+          for t in $(bash ./make-targets.sh -l simavr); do
             mkdir -p build-$t/src
             mv "asdf-v${VER}-$t.elf" build-$t/src/ 2>/dev/null || \
               find . -maxdepth 4 -name "asdf-v${VER}-$t.elf" \
