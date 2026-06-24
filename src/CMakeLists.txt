@@ -81,7 +81,14 @@ if(ARCH_TYPE STREQUAL "ARM")
   list(APPEND SOURCES
     ${CMAKE_SOURCE_DIR}/src/third_party/cmsis/startup_${ARM_STARTUP_BASE}.c
     ${CMAKE_SOURCE_DIR}/src/third_party/cmsis/system_${ARM_STARTUP_BASE}.c
-    ${CMAKE_SOURCE_DIR}/src/Arch/asdf_arch_pic32cm_common.c)
+    ${CMAKE_SOURCE_DIR}/src/Arch/asdf_arch_pic32cm_common.c
+    ${CMAKE_SOURCE_DIR}/src/Arch/asdf_arch_pic32cm_syscalls.c)
+  # Vendored Microchip startup/system sources: do not warn on them (they call
+  # their own deprecated legacy handler aliases). Our code keeps -Wall -Wextra.
+  set_source_files_properties(
+    ${CMAKE_SOURCE_DIR}/src/third_party/cmsis/startup_${ARM_STARTUP_BASE}.c
+    ${CMAKE_SOURCE_DIR}/src/third_party/cmsis/system_${ARM_STARTUP_BASE}.c
+    PROPERTIES COMPILE_OPTIONS "-w")
 endif()
 
 # create a library for the keymap modules
@@ -120,7 +127,7 @@ if(ARCH_TYPE STREQUAL "ARM")
   target_link_options(${PROJECT_EXECUTABLE_TARGET_NAME} PRIVATE
     -mcpu=cortex-m0plus -mthumb
     -T${LINKER_SCRIPT}
-    --specs=nano.specs --specs=nosys.specs
+    --specs=nano.specs
     -Wl,--gc-sections
     -Wl,-Map=${PROJECT_TARGET_NAME}.map)
   add_custom_command(TARGET ${PROJECT_EXECUTABLE_TARGET_NAME} POST_BUILD
