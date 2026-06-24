@@ -181,8 +181,9 @@ shift-register columns). Shared ARM mechanics live in
 `src/Arch/asdf_arch_pic32cm_common.{c,h}`; vendored device-support files are in
 `src/third_party/cmsis/`. These targets are **build-verified only** (clean
 `arm-none-eabi-gcc` cross-compile that fits the device flash/RAM); they have not
-yet been validated on hardware or in an emulator, and run at the OSCHF 4 MHz
-reset default. Building them requires `arm-none-eabi-gcc`.
+yet been validated on hardware or in an emulator. The core runs at 24 MHz (the
+OSCHF internal-oscillator maximum; the PL10 flash is single-cycle, so no wait
+states are needed). Building them requires `arm-none-eabi-gcc`.
 
 The firmware is designed to run from ROM on a slow vintage processor, with a
 small RAM footprint, and is not re-entrant. It is designed to compile on small
