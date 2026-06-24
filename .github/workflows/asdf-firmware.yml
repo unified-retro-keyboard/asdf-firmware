@@ -76,6 +76,17 @@ jobs:
       - name: Run host unit tests
         run: bash ./make-targets.sh -t test
 
+  build_arm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential gcc-arm-none-eabi
+      - name: Build PIC32CM PL10 firmware (build-verified, no hardware/emulator validation yet)
+        run: bash ./make-targets.sh -t pic32cm_pl10_q64 -t pic32cm_pl10_dip28
+
   integration_test:
     needs: build_firmware
     runs-on: ubuntu-latest
