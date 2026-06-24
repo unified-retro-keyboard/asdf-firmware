@@ -5,16 +5,64 @@
 //
 //  asdf_arch_pic32cm_common.c
 //
-// Shared ARM mechanics for the PIC32CM PL10 arch variants: clock init, the
-// 1 ms SysTick tick, and busy-loop delays. Bodies are stubbed here and filled
-// in Task 4.
+// Shared ARM mechanics for the PIC32CM PL10 arch variants: clock, the 1 ms
+// SysTick tick, and busy-loop delays. The matrix-scan and output logic that
+// differs between the 64-pin (2560-class) and SPDIP-28 (328p-class) variants
+// lives in their respective asdf_arch_pic32cm_pl10_*.c files.
 
 #include "asdf_arch_pic32cm_common.h"
+#include "asdf_config.h" // ASDF_PULSE_DELAY_SHORT_US / ASDF_PULSE_DELAY_LONG_MS
 
-void asdf_arch_common_clock_init(void) {}
-void asdf_arch_common_tick_init(void) {}
-uint8_t asdf_arch_tick(void) { return 0; }
-void arch_delay_us(uint16_t us) { (void) us; }
-void asdf_arch_delay_ms(uint16_t delay_ms) { (void) delay_ms; }
-void asdf_arch_pulse_delay_short(void) {}
-void asdf_arch_pulse_delay_long(void) {}
+// PROCEDURE: asdf_arch_common_clock_init
+// The OSCHF reset default (4 MHz on GCLK0 -> MCLK CPUDIV=1 -> core) is already
+// in effect out of reset, so there is nothing to configure. Raising OSCHF to
+// 24 MHz (OSCCTRL_OSCHFCTRL FRQSEL_24M) plus the attendant flash wait states is
+// deferred to hardware bring-up; see F_CPU in the header.
+void asdf_arch_common_clock_init(void)
+{
+}
+
+static volatile uint8_t tick = 0;
+
+// SysTick interrupt: fires once per millisecond, sets the tick flag. Overrides
+// the weak SysTick_Handler in the DFP startup file.
+void SysTick_Handler(void) { tick = 1; }
+
+// PROCEDURE: asdf_arch_common_tick_init
+// Configure SysTick for a 1 ms period off the core clock.
+void asdf_arch_common_tick_init(void) { (void) SysTick_Config(F_CPU / 1000u); }
+
+// PROCEDURE: asdf_arch_tick
+// Returns 1 once per elapsed millisecond, 0 otherwise (drains the flag).
+uint8_t asdf_arch_tick(void)
+{
+  uint8_t result = tick;
+  tick = 0;
+  return result;
+}
+
+// PROCEDURE: arch_delay_us
+// Cortex-M0+ has no DWT cycle counter, so use a calibrated busy-loop. The loop
+// body is roughly 4 cycles; F_CPU/1e6 gives cycles per microsecond.
+void arch_delay_us(uint16_t us)
+{
+  volatile uint32_t loops = ((uint32_t) us * (F_CPU / 1000000u)) / 4u;
+
+  while (loops--) {
+    __asm volatile("nop");
+  }
+}
+
+// PROCEDURE: asdf_arch_delay_ms
+void asdf_arch_delay_ms(uint16_t delay_ms)
+{
+  while (delay_ms--) {
+    arch_delay_us(1000);
+  }
+}
+
+// PROCEDURE: asdf_arch_pulse_delay_short
+void asdf_arch_pulse_delay_short(void) { arch_delay_us(ASDF_PULSE_DELAY_SHORT_US); }
+
+// PROCEDURE: asdf_arch_pulse_delay_long
+void asdf_arch_pulse_delay_long(void) { asdf_arch_delay_ms(ASDF_PULSE_DELAY_LONG_MS); }

@@ -20,9 +20,13 @@
 #include <stdint.h>
 #include "pic32c.h" // selects the part header from -D__PIC32CM6408PL100NN__
 
-// Core/peripheral clock from the internal oscillator on GCLK0.
-// Confirmed/adjusted in Task 4 against the DFP system_*.c SystemInit().
-#define F_CPU 48000000UL
+// Core clock. The PIC32CM PL10 internal high-frequency oscillator (OSCHF)
+// powers up at its 4 MHz reset default and feeds GCLK0 -> MCLK (CPUDIV=1) ->
+// the Cortex-M0+ core. We run at that verified reset default: ample for matrix
+// scanning, and free of the oscillator/flash-wait-state bring-up that 24 MHz
+// (OSCHF max, via OSCCTRL_OSCHFCTRL FRQSEL_24M) would require and that cannot be
+// validated without hardware. All timing derives from F_CPU.
+#define F_CPU 4000000UL
 
 // Cortex-M flash is directly addressable: neutralize the AVR PROGMEM macros so
 // keymap tables are read as plain arrays.
