@@ -100,7 +100,7 @@ You will also need to activate GitHub pages.  To do this:
             -c   Clean all artifacts
             -s   Copy dist files to sphinx directory
 
-    Valid targets: atmega88p, atmega168p, atmega328p, atmega640, atmega1280, atmega2560, test, simavr_test
+    Valid targets: atmega88p, atmega168p, atmega328p, atmega640, atmega1280, atmega2560, pic32cm_pl10_q64, pic32cm_pl10_dip28, test, simavr_test
 
     (`test` runs the host-side Unity unit tests; `simavr_test` runs
     simavr-driven integration tests against the built AVR ELFs.)
@@ -171,6 +171,18 @@ This firmware was written in modular, portable C99, to be compiled with GCC
 adapt the Atmega port for additional hardware, enter the ./src/Arch directory,
 and copy the files asdf_arch_atmega2560.c and asdf_arch_atmega2560.h to new
 filenames, and edit them to suit the hardware changes.
+
+A non-AVR port already exists as a worked example: the `pic32cm_pl10_q64` and
+`pic32cm_pl10_dip28` targets build the firmware for the Microchip PIC32CM PL10
+(Arm Cortex-M0+, 5V). They reuse the same arch abstraction — `pic32cm_pl10_q64`
+mirrors the atmega2560 (16 one-hot rows, parallel columns) and
+`pic32cm_pl10_dip28` mirrors the atmega328p (encoded rows to a 74LS138, serial
+shift-register columns). Shared ARM mechanics live in
+`src/Arch/asdf_arch_pic32cm_common.{c,h}`; vendored device-support files are in
+`src/third_party/cmsis/`. These targets are **build-verified only** (clean
+`arm-none-eabi-gcc` cross-compile that fits the device flash/RAM); they have not
+yet been validated on hardware or in an emulator, and run at the OSCHF 4 MHz
+reset default. Building them requires `arm-none-eabi-gcc`.
 
 The firmware is designed to run from ROM on a slow vintage processor, with a
 small RAM footprint, and is not re-entrant. It is designed to compile on small
