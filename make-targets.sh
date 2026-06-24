@@ -23,6 +23,8 @@ add_valid_target atmega88p
 add_valid_target atmega2560
 add_valid_target atmega1280
 add_valid_target atmega640
+add_valid_target pic32cm_pl10_q64
+add_valid_target pic32cm_pl10_dip28
 add_valid_target simavr_test  INTEGRATION_TEST
 
 
