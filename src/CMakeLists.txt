@@ -134,6 +134,14 @@ if(ARCH_TYPE STREQUAL "ARM")
     COMMAND arm-none-eabi-objcopy -O binary $<TARGET_FILE:${PROJECT_EXECUTABLE_TARGET_NAME}> ${PROJECT_TARGET_NAME}.bin
     COMMAND arm-none-eabi-objcopy -O ihex   $<TARGET_FILE:${PROJECT_EXECUTABLE_TARGET_NAME}> ${PROJECT_TARGET_NAME}.hex
     COMMAND arm-none-eabi-size $<TARGET_FILE:${PROJECT_EXECUTABLE_TARGET_NAME}>)
+  # Deploy the flashable images to dist/ on `make install` (-i). This also gives
+  # the build an install rule, so deploy_arch does not fail on ARM targets.
+  # Note: unlike the AVR path, no Sphinx download-page link is generated, since
+  # these targets are build-verified only and not part of the release artifacts.
+  install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_TARGET_NAME}.hex
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_TARGET_NAME}.bin
+    DESTINATION dist)
 endif()
 
 #target_link_libraries(${PROJECT_EXECUTABLE_TARGET_NAME}
