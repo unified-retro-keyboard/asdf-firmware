@@ -14,12 +14,19 @@
 #include "asdf_config.h" // ASDF_PULSE_DELAY_SHORT_US / ASDF_PULSE_DELAY_LONG_MS
 
 // PROCEDURE: asdf_arch_common_clock_init
-// The OSCHF reset default (4 MHz on GCLK0 -> MCLK CPUDIV=1 -> core) is already
-// in effect out of reset, so there is nothing to configure. Raising OSCHF to
-// 24 MHz (OSCCTRL_OSCHFCTRL FRQSEL_24M) plus the attendant flash wait states is
-// deferred to hardware bring-up; see F_CPU in the header.
+// Switch OSCHF from its 4 MHz reset default to 24 MHz (its maximum). GCLK0
+// already sources OSCHF and MCLK CPUDIV is DIV1 out of reset, so the core clock
+// follows to 24 MHz. The PL10 flash is single-cycle (the NVMCTRL exposes no
+// wait-state field), so no flash configuration is required. The OSCHF frequency
+// calibration is applied by hardware for the selected FRQSEL.
 void asdf_arch_common_clock_init(void)
 {
+  OSCCTRL_REGS->OSCCTRL_OSCHFCTRL = (OSCCTRL_REGS->OSCCTRL_OSCHFCTRL & ~OSCCTRL_OSCHFCTRL_FRQSEL_Msk)
+                                    | OSCCTRL_OSCHFCTRL_FRQSEL(OSCCTRL_OSCHFCTRL_FRQSEL_24M_Val);
+
+  // Wait for OSCHF to re-lock at the new frequency before relying on the clock.
+  while ((OSCCTRL_REGS->OSCCTRL_STATUS & OSCCTRL_STATUS_OSCHFRDY_Msk) == 0u) {
+  }
 }
 
 static volatile uint8_t tick = 0;
