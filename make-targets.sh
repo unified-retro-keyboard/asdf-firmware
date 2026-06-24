@@ -23,8 +23,11 @@ add_valid_target atmega88p
 add_valid_target atmega2560
 add_valid_target atmega1280
 add_valid_target atmega640
-add_valid_target pic32cm_pl10_q64
-add_valid_target pic32cm_pl10_dip28
+# ARM firmware targets: excluded from -a (the AVR release flow) so they do not
+# require arm-none-eabi-gcc there; build explicitly with -t. FIRMWARE_ARM also
+# tells build_arch to compile (configure + make), since these are not deployed.
+add_valid_target pic32cm_pl10_q64   FIRMWARE_ARM
+add_valid_target pic32cm_pl10_dip28 FIRMWARE_ARM
 add_valid_target simavr_test  INTEGRATION_TEST
 
 
@@ -120,6 +123,9 @@ build_arch() {
 
     if [[ $target_type == UNIT_TEST || $target_type == INTEGRATION_TEST ]]; then
         (cd "build-$target_arch" && make && ctest --output-on-failure) || exit 1
+    elif [[ $target_type == FIRMWARE_ARM ]]; then
+        # ARM firmware is build-verified only (not installed/deployed): compile it.
+        (cd "build-$target_arch" && make) || exit 1
     fi
 
 }
