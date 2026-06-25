@@ -43,7 +43,7 @@ jobs:
             echo "Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match CMakeLists VERSION ($CMAKE_VERSION)" >&2
             exit 1
           fi
-      - run: /bin/bash ./make-targets.sh -a -i -s
+      - run: /bin/bash ./make-targets.sh -a avr -i -s
       - name: Upload built ELFs
         uses: actions/upload-artifact@v4
         with:
@@ -76,6 +76,17 @@ jobs:
       - name: Run host unit tests
         run: bash ./make-targets.sh -t test
 
+  build_arm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential gcc-arm-none-eabi
+      - name: Build PIC32CM PL10 firmware (build-verified, no hardware/emulator validation yet)
+        run: bash ./make-targets.sh -a arm_m0+
+
   integration_test:
     needs: build_firmware
     runs-on: ubuntu-latest
@@ -93,7 +104,7 @@ jobs:
       - name: Re-layout downloaded ELFs
         run: |
           VER="${{ needs.build_firmware.outputs.version }}"
-          for t in atmega328p atmega168p atmega640 atmega1280 atmega2560; do
+          for t in $(bash ./make-targets.sh -l simavr); do
             mkdir -p build-$t/src
             mv "asdf-v${VER}-$t.elf" build-$t/src/ 2>/dev/null || \
               find . -maxdepth 4 -name "asdf-v${VER}-$t.elf" \
