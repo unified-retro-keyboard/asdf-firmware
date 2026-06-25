@@ -1,0 +1,19 @@
+# ASDF build-target registry — single source of truth.
+#
+# Consumed by make-targets.sh (target list + build category), by
+# test/simavr/CMakeLists.txt (which targets the simavr tests run against), and
+# by CI. Keep this file as the only place target membership is defined.
+#
+# Columns: name,category,simavr
+#   category : avr | test | arm_m0+ | sim   (determines how the target is built)
+#   simavr   : yes => exercised by the simavr integration tests (AVR only)
+test,test,no
+atmega328p,avr,yes
+atmega168p,avr,yes
+atmega88p,avr,no
+atmega2560,avr,yes
+atmega1280,avr,yes
+atmega640,avr,no
+pic32cm_pl10_q64,arm_m0+,no
+pic32cm_pl10_dip28,arm_m0+,no
+simavr_test,sim,no

@@ -59,6 +59,24 @@ elseif(ARCH MATCHES atmega640 OR ARCH MATCHES atmega1280 OR ARCH MATCHES atmega2
   set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic-gcc-avr.cmake)
   set (FINAL_TARGET ${TARGET}.elf)
 
+elseif(ARCH MATCHES pic32cm_pl10_q64)
+  set(ARCH_FAMILY pic32cm_pl10_q64)
+  set(ARCH_TYPE ARM)
+  set(PART_DEFINE __PIC32CM6408PL10064__)
+  set(ARM_STARTUP_BASE pic32cm6408pl10064)
+  set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/cmsis/pic32cm6408pl10064_flash.ld)
+  set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic-gcc-arm.cmake)
+  set (FINAL_TARGET ${TARGET}.elf)
+
+elseif(ARCH MATCHES pic32cm_pl10_dip28)
+  set(ARCH_FAMILY pic32cm_pl10_dip28)
+  set(ARCH_TYPE ARM)
+  set(PART_DEFINE __PIC32CM6408PL10028__)
+  set(ARM_STARTUP_BASE pic32cm6408pl10028)
+  set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/src/third_party/cmsis/pic32cm6408pl10028_flash.ld)
+  set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/cmake/generic-gcc-arm.cmake)
+  set (FINAL_TARGET ${TARGET}.elf)
+
 endif()
 
 project("asdf"
