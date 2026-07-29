@@ -73,7 +73,8 @@ const FLASH apple_keycode_matrix_t apple_plain_matrix = {
    [2] = { ACTION_NOTHING, ASCII_COMMA, 'm', 'n', 'b', 'v', 'c', 'x' },
    [3] = { ACTION_NOTHING, 'k', 'j', 'h', 'g', 'f', 'd', 's' },
    [4] = { ACTION_NOTHING, 'i', 'u', 'y', 't', 'r', 'e', 'w' },
-   [5] = { ACTION_NOTHING, ACTION_NOTHING, ACTION_NOTHING, ASCII_CR, '^', 'o', 'l', ASCII_PERIOD },
+   [5] = { ACTION_NOTHING, ACTION_NOTHING, ACTION_NOTHING, ASCII_CR, ACTION_REPEAT, 'o', 'l',
+           ASCII_PERIOD },
    [6] = { ACTION_NOTHING, ACTION_NOTHING, ACTION_NOTHING, '-', ':', ASCII_ZERO, '9', '8' },
    [7] = { APPLE_LEFT_ARROW, '7', '6', '5', '4', '3', '2', '1' },
    ASDF_APPLE2_DIP_SWITCHES
@@ -86,7 +87,7 @@ const FLASH apple_keycode_matrix_t apple_shift_matrix = {
    [2] = { ACTION_NOTHING, '<', 'M', 'N', 'B', 'V', 'C', 'X' },
    [3] = { ACTION_NOTHING, 'K', 'J', 'H', 'G', 'F', 'D', 'S' },
    [4] = { ACTION_NOTHING, 'I', 'U', 'Y', 'T', 'R', 'E', 'W' },
-   [5] = { ACTION_NOTHING, ACTION_NOTHING, ACTION_NOTHING, ASCII_CR, ASCII_AT, 'O', 'L', '>' },
+   [5] = { ACTION_NOTHING, ACTION_NOTHING, ACTION_NOTHING, ASCII_CR, ACTION_REPEAT, 'O', 'L', '>' },
    [6] = { ACTION_NOTHING, ACTION_NOTHING, APPLE_ACTION_CLEAR, '=',
            '*', ASCII_AT, ASCII_RT_PAREN, ASCII_LT_PAREN },
    [7] = { APPLE_LEFT_ARROW, ASCII_SINGLE_QUOTE, '&', '%', '$', '#', ASCII_DOUBLE_QUOTE, '!' },

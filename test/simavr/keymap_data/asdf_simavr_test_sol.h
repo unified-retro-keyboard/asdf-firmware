@@ -16,11 +16,31 @@
  *
  * Note: SOL calls asdf_arch_set_neg_strobe so strobe polarity is inverted,
  * but the harness captures on both edges and handles this transparently.
+ *
+ * The bit-paired punctuation keys are also covered here.  On the Sol-20 (as on
+ * any bit-paired ASCII keyboard) SHIFT toggles one code bit, so each of these
+ * keys has a distinct upper legend:
+ * sol_plain_map[1][3] = ';'  sol_shift_map[1][3] = '+'
+ * sol_plain_map[1][4] = ':'  sol_shift_map[1][4] = '*'
+ * sol_plain_map[5][5] = '['  sol_shift_map[5][5] = '{'
+ * sol_plain_map[5][6] = '\\' sol_shift_map[5][6] = '|'
+ * sol_plain_map[5][7] = ']'  sol_shift_map[5][7] = '}'
  */
 static const sim_event_t sol_events[] = {
     { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_NONE  },
     { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_SHIFT },
     { .row = 7, .col = 5, .hold_cycles = 400000, .expected = '\r', .with_modifier = SIM_MOD_NONE  },
+    /* bit-paired punctuation: unshifted lower legend, then shifted upper legend */
+    { .row = 1, .col = 3, .hold_cycles = 400000, .expected = ';',  .with_modifier = SIM_MOD_NONE  },
+    { .row = 1, .col = 3, .hold_cycles = 400000, .expected = '+',  .with_modifier = SIM_MOD_SHIFT },
+    { .row = 1, .col = 4, .hold_cycles = 400000, .expected = ':',  .with_modifier = SIM_MOD_NONE  },
+    { .row = 1, .col = 4, .hold_cycles = 400000, .expected = '*',  .with_modifier = SIM_MOD_SHIFT },
+    { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '[',  .with_modifier = SIM_MOD_NONE  },
+    { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '{',  .with_modifier = SIM_MOD_SHIFT },
+    { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '\\', .with_modifier = SIM_MOD_NONE  },
+    { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '|',  .with_modifier = SIM_MOD_SHIFT },
+    { .row = 5, .col = 7, .hold_cycles = 400000, .expected = ']',  .with_modifier = SIM_MOD_NONE  },
+    { .row = 5, .col = 7, .hold_cycles = 400000, .expected = '}',  .with_modifier = SIM_MOD_SHIFT },
 };
 
 static const sim_keymap_test_t sol_test = {
