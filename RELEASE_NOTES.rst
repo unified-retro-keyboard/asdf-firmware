@@ -1,6 +1,24 @@
 ASDF Firmware Release Notes
 ===========================
 
+Version 1.7.1 (Release)
+-----------------------
+
+This release fixes mis-mapped keys in the Sol-20 and Apple II keymaps. If you
+use either keymap, you should upgrade the firmware.
+
+Highlights
+~~~~~~~~~~
+
+- *Bug Fix*: On the Sol-20 keymap, SHIFT and SHIFT LOCK now emit the upper legend for the ``[``, ``\``, ``]``, ``;`` and ``:`` keys.
+- *Bug Fix*: On the Apple II keymap, the REPEAT key now repeats instead of emitting a character.
+
+Details
+~~~~~~~
+
+- *Bug Fix*: ``sol_shift_map`` held the unshifted codes for five bit-paired punctuation keys, so SHIFT and SHIFT LOCK emitted ``[ \ ] ; :`` instead of ``{ | } + *``. Present since 0.9.0; reported by Michael Gardi.
+- *Bug Fix*: ``apple_plain_matrix`` and ``apple_shift_matrix`` carried ``^`` and ``@`` at the REPEAT key position, so on the ``apple2`` keymap REPEAT emitted a character and only repeated with CAPS LOCK on or CTRL held. The ``apple2_caps`` keymap was unaffected.
+
 Version 1.7.0 (Release)
 -----------------------
 
