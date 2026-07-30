@@ -60,6 +60,13 @@
 //    ASDF_ASCII_DIP_SWITCHES macro is defined. Keeping the ACTION_MAPSEL0-3
 //    definitions in positions 0-3 ensures consistent map selection among all
 //    keymaps.
+//
+// 3) These matrices serve two keymaps targeting different physical keyboards,
+//    so "@" sits on a different key in each. On the traditional all-caps Apple
+//    2 keyboard (apple2_caps), SHIFT-P emits "@" as the keycap is legended, and
+//    SHIFT-N emits "^". An upper/lower case keyboard (apple2) needs SHIFT-P for
+//    "P", so "@" moves to SHIFT-0, which has no upper legend, and "^" is
+//    reached with CTRL-6. The two matrices are meant to differ here.
 
 #define ASDF_APPLE2_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
