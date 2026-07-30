@@ -22,9 +22,9 @@ row,column format, with separate keymaps shift, capslock, and control-key modes.
 
 The latest downloads are available at:
 
-- **Download page**: <https://osiweb.github.io/unified_retro_keyboard/> — per-target `.hex` files and the release notes for every version.
+- **Download page**: <https://unified-retro-keyboard.github.io/asdf-firmware/> — per-target `.hex` files and the release notes for every version.
 
-<!-- **GitHub Releases**: <https://github.com/osiweb/unified_retro_keyboard/releases/latest> — the same `.hex` files plus `.elf` builds and a zipped copy of the docs site, attached as release assets. -->
+- **GitHub Releases**: <https://github.com/unified-retro-keyboard/asdf-firmware/releases/latest> — the same `.hex` files plus `.elf` builds and a zipped copy of the docs site, attached as release assets.
 
 ## Supported keymaps:
 
