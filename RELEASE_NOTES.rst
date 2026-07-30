@@ -4,8 +4,10 @@ ASDF Firmware Release Notes
 Version 1.7.1 (Release)
 -----------------------
 
-This release fixes mis-mapped keys in the Sol-20 and Apple II keymaps. If you
-use either keymap, you should upgrade the firmware.
+This release fixes mis-mapped keys in the Sol-20 and Apple II keymaps.  If you are running 1.7.0 and use one of these keymaps, you should update to 1.7.1.
+
+If you are using any version of the software before 1.7.0, you are strongly encouraged to update to 1.7.1
+
 
 Highlights
 ~~~~~~~~~~
@@ -22,9 +24,7 @@ Details
 Version 1.7.0 (Release)
 -----------------------
 
-This release includes fixes for bugs that could cause incorrect key
-behaviors and could crash Sol-20 and Franklin keymaps. If you have 1.6.5, you
-should upgrade the firmware.
+This release includes fixes for virtual outputs affecting multiple keymaps.
 
 Highlights
 ~~~~~~~~~~
