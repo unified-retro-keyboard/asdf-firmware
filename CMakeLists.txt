@@ -80,7 +80,7 @@ elseif(ARCH MATCHES pic32cm_pl10_dip28)
 endif()
 
 project("asdf"
-  VERSION 1.7.0
+  VERSION 1.7.1
   DESCRIPTION "A customizable keyboard matrix controller for retrocomputers"
   LANGUAGES C)
 
