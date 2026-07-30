@@ -1,0 +1,7 @@
+.. _atmega88p Rev 1.7.1:
+
+ASDF Rev 1.7.1 hex file (atmega88p)
+----------------------------------------------------------------------------------
+
+:ASDF Firmware 1.7.1-atmega88p:
+   :download:`asdf-v1.7.1-atmega88p.hex`
