@@ -18,8 +18,13 @@ Highlights
 Details
 ~~~~~~~
 
-- *Bug Fix*: ``sol_shift_map`` held the unshifted codes for five bit-paired punctuation keys, so SHIFT and SHIFT LOCK emitted ``[ \ ] ; :`` instead of ``{ | } + *``. Present since 0.9.0; reported by Michael Gardi.
-- *Bug Fix*: ``apple_plain_matrix`` and ``apple_shift_matrix`` carried ``^`` and ``@`` at the REPEAT key position, so on the ``apple2`` keymap REPEAT emitted a character and only repeated with CAPS LOCK on or CTRL held. The ``apple2_caps`` keymap was unaffected.
+- *Bug Fix*: ``sol_shift_map`` held the unshifted codes for five bit-paired
+  punctuation keys, so SHIFT and SHIFT LOCK emitted ``[ \ ] ; :`` instead of ``{
+  | } + *``.  Long running bug affecting all released versions.
+- *Bug Fix*: ``apple_plain_matrix`` and ``apple_shift_matrix`` carried ``^`` and
+  ``@`` at the REPEAT key position, so on the ``apple2`` keymap REPEAT emitted a
+  character and only repeated with CAPS LOCK on or CTRL held. The
+  ``apple2_caps`` keymap was unaffected.
 
 Version 1.7.0 (Release)
 -----------------------
