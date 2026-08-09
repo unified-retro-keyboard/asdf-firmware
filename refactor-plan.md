@@ -1,0 +1,427 @@
+# Reentrant ASDF Firmware Refactor Plan
+
+## Purpose
+
+Refactor the ASDF keyboard firmware into an allocation-free, instance-based
+library that can be embedded safely in larger programs while retaining a simple
+single-keyboard interface for hobbyists and Arduino-style environments.
+
+The existing design remains the behavioral reference. The matrix scanner,
+keymaps, actions, and hardware support should evolve incrementally rather than
+being rewritten at once.
+
+## Motivation
+
+The firmware is organized into useful components, but those components store
+their mutable state in module-level singletons. This makes the source reusable,
+but prevents independent keyboard instances and creates hidden coupling between
+the scanner, buffers, keymaps, modifiers, repeat logic, hooks, and virtual
+outputs.
+
+Several related issues should be addressed as part of the refactor:
+
+- Hooks are stored as `void (*)(void)` and cast to incompatible function types.
+- Message pacing and output pulses use blocking delays.
+- Keymap setup is procedural and configures several global subsystems by side
+  effect.
+- A keymap change can occur while a scan is in progress.
+- Buffer overflow and several invalid inputs are silently ignored.
+- The one-bit architecture tick flag can lose elapsed ticks.
+- The host test build defines `C_FLAGS` but applies `CFLAGS`, so its intended
+  warning set is not consistently enabled.
+
+## Definitions and concurrency contract
+
+For this project, *reentrant* means:
+
+1. All mutable keyboard-library state belongs to an explicit instance.
+2. Operations on one instance cannot affect another instance.
+3. Separate instances may be driven independently or concurrently.
+4. Normal operations on the same instance are serialized by its owner.
+5. Interrupt code has a deliberately small interface, initially limited to
+   recording elapsed ticks in platform-owned state.
+
+The first version will not promise arbitrary concurrent or recursive calls on
+the same instance. Callbacks must not mutate an instance while it is being
+scanned; requests such as keymap changes will be recorded and applied at a safe
+boundary. If same-instance multi-threaded access is later required, it can be
+provided by an RTOS adapter without putting locks in the portable core.
+
+The goal is to remove hidden *mutable* globals from the core. Immutable keymap
+tables, constant lookup tables, interrupt vectors, and memory-mapped register
+definitions may retain static storage duration.
+
+## Design principles
+
+- No mandatory dynamic allocation.
+- Preserve support for the smallest AVR targets.
+- Keep the portable core in C99.
+- Keep hardware policy in platform adapters.
+- Prefer typed interfaces over generic function-pointer registries.
+- Make time explicit and keep core operations nonblocking.
+- Preserve a beginner-friendly single-keyboard facade.
+- Change one subsystem at a time and retain behavioral tests throughout.
+- Measure flash, static RAM, and worst-case stack growth at every phase.
+
+## Target architecture
+
+### Explicit keyboard instance
+
+The application owns an `asdf_t` object. It contains nested state objects rather
+than exposing unrelated module singletons:
+
+```c
+typedef struct {
+  asdf_scanner_state_t scanner;
+  asdf_ring_t keycodes;
+  asdf_ring_t messages;
+  asdf_modifier_state_t modifiers;
+  asdf_repeat_state_t repeat;
+  asdf_keymap_state_t keymap;
+  asdf_virtual_state_t virtual_outputs;
+  asdf_physical_state_t physical_outputs;
+  asdf_pacing_state_t pacing;
+  const asdf_config_t *config;
+  const asdf_platform_t *platform;
+} asdf_t;
+```
+
+The final layout may be flattened or conditionally compiled if nested structs
+cost extra space on a target. State types should nevertheless remain logically
+separate so their invariants can be tested directly.
+
+### Typed platform interface
+
+Replace the untyped hook table with operations that match their actual
+signatures and carry an adapter-owned context pointer:
+
+```c
+typedef struct {
+  void *user;
+  asdf_cols_t (*read_row)(void *user, uint8_t row);
+  void (*send_code)(void *user, asdf_keycode_t code);
+  void (*set_output)(void *user, asdf_physical_dev_t output, uint8_t value);
+  void (*set_strobe_polarity)(void *user, uint8_t positive);
+  asdf_irq_state_t (*irq_disable)(void *user);
+  void (*irq_restore)(void *user, asdf_irq_state_t state);
+} asdf_platform_t;
+```
+
+User actions should use one compatible callback type, for example:
+
+```c
+typedef void (*asdf_user_action_fn)(asdf_t *keyboard,
+                                    void *user,
+                                    uint8_t action,
+                                    uint8_t pressed);
+```
+
+The exact interface should be kept small. Compile-time/static dispatch may be
+provided for the smallest AVR build if indirect calls cause unacceptable flash
+or RAM growth.
+
+### Declarative keymaps
+
+Replace setup functions that mutate global registries with immutable keymap
+descriptors. A descriptor should contain:
+
+- The plain, shift, caps, and control matrices and their dimensions.
+- Virtual-to-physical output bindings and initial values.
+- User-action bindings.
+- Initial modifier and repeat configuration.
+- Message pacing configuration.
+- Optional scanner/platform selection metadata.
+
+The generated keymap table should become a table of descriptor pointers rather
+than a switch that invokes setup functions. Keymap selection applies one
+descriptor to one `asdf_t` instance.
+
+### Nonblocking processing
+
+The core should be driven with elapsed time:
+
+```c
+void asdf_process(asdf_t *keyboard, uint16_t elapsed_ms);
+uint8_t asdf_read(asdf_t *keyboard, asdf_keycode_t *code);
+```
+
+`asdf_process()` advances debounce, repeat, message pacing, and output pulse
+state without sleeping. Platform code decides whether it is called from an
+Arduino `loop()`, a bare-metal superloop, an RTOS task, or a simulator.
+
+## Migration phases
+
+### Phase 0: Establish the baseline
+
+- Record clean host-test, simavr-test, AVR-build, and ARM-build results.
+- Record `text`, `data`, and `bss` sizes for every firmware target.
+- Add CI size reports and initially non-failing size-regression summaries.
+- Fix the `C_FLAGS`/`CFLAGS` host-test mismatch.
+- Enable useful warnings consistently across host, AVR, and ARM builds.
+- Add characterization tests for initialization, keymap switching, modifier
+  precedence, repeat timing, buffer priority, and output pulses.
+- Document current edge behavior where tests reveal ambiguity rather than
+  silently changing it.
+
+Exit criteria:
+
+- The existing behavior is captured well enough to distinguish an intentional
+  change from a refactor regression.
+- Every supported target has a reproducible size baseline.
+
+### Phase 1: Replace the global buffer allocator
+
+- Introduce an `asdf_ring_t` operating on caller-provided storage.
+- Embed the keycode and message storage in the owning keyboard instance.
+- Return success/failure from enqueue operations.
+- Track dropped keycodes/messages or expose an overflow status.
+- Reject zero and invalid capacities explicitly.
+- Retire integer buffer handles and the global buffer pool.
+- Preserve message-buffer priority over typed keycodes.
+
+This phase should reduce state and code size, creating budget for later context
+pointers and typed adapters.
+
+Exit criteria:
+
+- Ring-buffer tests require no global reset fixture.
+- Two ring-buffer objects can be interleaved without interference.
+- Existing output ordering remains unchanged.
+
+### Phase 2: Extract leaf-module state
+
+Convert modules with few dependencies before changing the scanner:
+
+1. Repeat state.
+2. Modifier state.
+3. Physical output shadows and allocation links.
+4. Virtual output mappings.
+
+Each operation receives its owning state explicitly. Split immutable tables,
+such as physical output capabilities, from mutable shadows and links. Add
+bounds checking at public API boundaries.
+
+Exit criteria:
+
+- Each module can be tested with two independent state objects.
+- No mutable file-scope state remains in these modules.
+- Existing modifier, repeat, and virtual-output tests remain behaviorally
+  equivalent.
+
+### Phase 3: Introduce typed platform operations
+
+- Add `asdf_platform_t` and a fake host platform.
+- Replace row-scanner and output hook casts with typed calls.
+- Replace the physical handler table with a typed platform output operation or
+  a compact typed driver table.
+- Move data polarity and other per-device configuration into platform-owned
+  state.
+- Keep user actions separate from mandatory platform operations.
+- Remove `asdf_hook_get()` once all incompatible uses have migrated.
+
+Exit criteria:
+
+- No call is made through an incompatible function-pointer type.
+- Host tests can provide independent fake hardware for two keyboard instances.
+- `-Wcast-function-type` passes for first-party code.
+
+### Phase 4: Make keymaps instance-based and declarative
+
+- Define immutable keymap and binding descriptors.
+- Convert one test keymap first and prove the descriptor design.
+- Convert the production keymaps incrementally.
+- Change generated setup files to produce a descriptor registry.
+- Store only the selected descriptor/index and mutable runtime state in
+  `asdf_t`.
+- Validate equal dimensions across modifier maps where required.
+- Preserve flash placement/`PROGMEM` behavior on AVR.
+- Apply map changes only after the current scan completes.
+
+Exit criteria:
+
+- Selecting a keymap mutates only the supplied instance and its platform.
+- Two instances can use different keymaps simultaneously in host tests.
+- All simavr keymap, identity, and typed-string traces remain equivalent.
+
+### Phase 5: Move the scanner into `asdf_t`
+
+- Move stable key rows, debounce counters, last-repeat key, print pacing, and
+  queue ownership into the keyboard instance.
+- Pass `asdf_t *` through internal action and lookup paths.
+- Track the repeating key by coordinate as well as keycode so duplicate
+  keycodes and N-key rollover have defined behavior.
+- Make initialization idempotent and define reset semantics explicitly.
+- Validate row and column dimensions before accessing fixed arrays.
+- Add a dual-instance integration test that alternates scans, modifiers,
+  keymaps, output, and repeat events.
+
+Exit criteria:
+
+- No mutable file-scope state remains in the portable scanner/core.
+- Independent instances show no cross-instance state leakage under randomized
+  event sequences.
+
+### Phase 6: Remove blocking timing
+
+- Replace the one-bit tick flag with a counted or elapsed-time interface.
+- Drain interrupt-owned tick state inside a short critical section so ticks
+  cannot be lost during read-and-clear.
+- Replace message-character delays with a next-eligible-output deadline.
+- Replace long and short output pulse delays with per-output pulse state and
+  deadlines.
+- Defer keymap changes and other structural mutations until a scan boundary.
+- Define behavior for large elapsed-time jumps and counter saturation.
+
+Exit criteria:
+
+- No portable-core operation calls a busy-wait delay.
+- Scanning continues while a message is paced or an output pulse is active.
+- Timing tests use a fake clock and require no real sleeping.
+
+### Phase 7: Adapt each platform
+
+- Add host/test, ATmega 328-class, ATmega 2560-class, PIC32CM DIP-28, and
+  PIC32CM Q64 platform objects.
+- Keep interrupt-vector ownership in the board/application layer.
+- Have each ISR record ticks for the platform instance and do no scanning or
+  callback work.
+- Verify GPIO initialization, strobe polarity, row scanning, and output timing
+  on each adapter.
+- Preserve an optional static-dispatch build for constrained AVR targets if
+  measurements justify it.
+
+Exit criteria:
+
+- Every existing target builds from the same instance-based core.
+- AVR simavr behavior remains equivalent.
+- PIC32CM builds remain warning-clean and within memory limits.
+
+### Phase 8: Add the compatibility and hobbyist facade
+
+- Provide the existing `asdf_init()`, `asdf_keyscan()`, and
+  `asdf_next_code()` workflow as a thin optional wrapper around one explicitly
+  owned default instance.
+- Keep the default instance in the application/facade layer, not distributed
+  among core modules.
+- Add a minimal Arduino-compatible example with `begin()`, `poll()`,
+  `available()`, and `read()` semantics.
+- If a C++ wrapper is added, keep it header-light and implement behavior through
+  the C99 core.
+- Document when to use the simple facade and when to use explicit instances.
+
+Exit criteria:
+
+- A hobbyist can build a one-keyboard firmware without understanding contexts
+  or callbacks.
+- An embedding application can instantiate the core without linking the
+  singleton facade.
+
+### Phase 9: Harden quality gates
+
+- Run host tests with AddressSanitizer and UndefinedBehaviorSanitizer.
+- Enable `-Wpedantic`, `-Wcast-function-type`, `-Wshadow`, and selected
+  conversion warnings; make stable warning sets fatal in CI.
+- Add host coverage reporting for the portable core.
+- Add randomized/fuzzed scan-event sequences with state invariants.
+- Convert silent failures to returned status, counters, or documented
+  assertions as appropriate for embedded builds.
+- Add enforceable per-target flash and RAM ceilings.
+- Add hardware-in-the-loop smoke tests for at least one AVR board and both
+  PIC32CM variants before describing those targets as behaviorally validated.
+- Replace stale procedure boilerplate with concise API contracts and module
+  invariants.
+
+## Compatibility strategy
+
+The migration should avoid one commit that changes every public function.
+During the transition:
+
+- Add instance APIs alongside the existing APIs.
+- Implement legacy functions through one compatibility-owned context whenever
+  practical.
+- Convert tests to instance APIs before removing the underlying singleton.
+- Mark legacy APIs clearly, but do not remove them until Arduino/simple-firmware
+  examples use the facade successfully.
+- Avoid compatibility macros that silently select a global context inside core
+  modules; wrappers should make that ownership visible.
+
+## Resource constraints
+
+The ATmega88P is the limiting target. The existing local v1.7.0 artifact uses
+approximately 7,766 bytes of its 8 KiB flash when initialized data is included,
+and approximately 694 bytes of its 1 KiB SRAM for `.data` plus `.bss`. That
+leaves little room for code growth and roughly 330 bytes for stack and runtime
+margin.
+
+Accordingly:
+
+- Capture a fresh baseline before implementation.
+- Treat size regressions as design feedback, not end-of-project cleanup.
+- Recover space early by removing the general buffer allocator.
+- Keep configuration and keymap descriptors immutable and in flash.
+- Avoid storing a full platform function table per instance; store a pointer to
+  shared immutable operations.
+- Consider nibble-sized/saturating debounce storage only if measurements require
+  it and behavioral tests prove equivalence.
+- Do not require two runtime instances to fit on the ATmega88P. The library must
+  be capable of independent instances, while constrained products may allocate
+  exactly one.
+
+## Major risks and mitigations
+
+### Behavioral drift
+
+Debounce, repeat, map-switch, and output timing contain implicit assumptions.
+Characterization and simavr trace tests must precede structural changes.
+
+### AVR flash and RAM growth
+
+Context pointers and indirect platform calls can increase code size. Measure
+each phase, simplify state representation early, and retain an evidence-driven
+static-dispatch option.
+
+### Harvard-architecture constant placement
+
+Declarative descriptors must not accidentally move keymaps or function tables
+from flash into SRAM. Inspect ELF sections and map files as part of AVR tests.
+
+### Interrupt races
+
+`volatile` alone does not make read-and-clear sequences safe. Keep the ISR
+surface tiny and use platform-provided critical sections around shared tick
+state.
+
+### Compatibility facade becoming permanent coupling
+
+Build and test the core without the facade in CI so convenience wrappers cannot
+reintroduce hidden dependencies.
+
+## Completion criteria
+
+The refactor is complete when:
+
+- The portable core has no hidden mutable file-scope state.
+- Two host-side `asdf_t` instances can run interleaved with different keymaps,
+  hardware fakes, modifier states, queues, and timing without interference.
+- No incompatible function-pointer casts remain in first-party code.
+- Core processing is nonblocking.
+- Existing host and simavr behavior is preserved except for explicitly approved
+  corrections.
+- All AVR and ARM targets build cleanly.
+- ATmega88P flash, RAM, and stack margins remain acceptable and enforced.
+- The explicit-instance API and beginner facade are both documented and tested.
+- The PIC32CM claims clearly distinguish build verification from hardware
+  validation until hardware tests exist.
+
+## Estimated effort
+
+For one experienced embedded-C developer:
+
+- Baseline and characterization: about 1 week.
+- State extraction and typed interfaces: 2-3 weeks.
+- Declarative keymaps and scanner migration: 1-2 weeks.
+- Nonblocking timing and platform adapters: 1-2 weeks.
+- Compatibility, size tuning, documentation, and full verification: 1-2 weeks.
+
+The recommended refactor is therefore approximately 6-10 engineer-weeks,
+excluding delays for obtaining and validating physical PIC32CM hardware.
