@@ -160,6 +160,19 @@ Arduino `loop()`, a bare-metal superloop, an RTOS task, or a simulator.
 - Enable useful warnings consistently across host, AVR, and ARM builds.
 - Add characterization tests for initialization, keymap switching, modifier
   precedence, repeat timing, buffer priority, and output pulses.
+- Record the current Shift Lock state transitions, including the intentional
+  behavior where pressing and releasing Shift clears Shift Lock on layouts that
+  use `ACTION_SHIFTLOCK_ON`.
+- Characterize debounce recovery when raw input returns to the stable state and
+  prove that a debounce counter is never decremented while zero.
+- Test keymap-switch action replay explicitly: persistent DIP/configuration
+  state must survive a switch, initial virtual outputs must be asserted after
+  their bindings are installed, and edge-triggered hooks or pulses must not be
+  invoked merely because a map was selected.
+- Test invalid modifier, row, column, virtual-device, and physical-device values
+  at every public boundary that accepts them.
+- Record LF-to-CRLF behavior when the message queue has zero, one, or at least
+  two slots remaining.
 - Document current edge behavior where tests reveal ambiguity rather than
   silently changing it.
 
@@ -176,6 +189,8 @@ Exit criteria:
 - Return success/failure from enqueue operations.
 - Track dropped keycodes/messages or expose an overflow status.
 - Reject zero and invalid capacities explicitly.
+- Normalize LF to CRLF without recursive enqueue calls. Reserve both bytes
+  atomically, or return a failure without leaving a partial CRLF sequence.
 - Retire integer buffer handles and the global buffer pool.
 - Preserve message-buffer priority over typed keycodes.
 
@@ -187,6 +202,7 @@ Exit criteria:
 - Ring-buffer tests require no global reset fixture.
 - Two ring-buffer objects can be interleaved without interference.
 - Existing output ordering remains unchanged.
+- CRLF conversion and overflow behavior are deterministic and reported.
 
 ### Phase 2: Extract leaf-module state
 
@@ -200,6 +216,11 @@ Convert modules with few dependencies before changing the scanner:
 Each operation receives its owning state explicitly. Split immutable tables,
 such as physical output capabilities, from mutable shadows and links. Add
 bounds checking at public API boundaries.
+
+While migrating these modules, remove misleading control flow and compound
+side effects: express the CAPS toggle as a separate state transition, terminate
+the `V_SET_LO` case explicitly, and validate virtual/physical identifiers before
+using them as array indices.
 
 Exit criteria:
 
@@ -233,6 +254,13 @@ Exit criteria:
 - Change generated setup files to produce a descriptor registry.
 - Store only the selected descriptor/index and mutable runtime state in
   `asdf_t`.
+- Classify actions as edge-triggered events or replayable level/configuration
+  state. Replay eligibility must be explicit descriptor metadata rather than an
+  incidental property of an action number.
+- On keymap selection, replay only actions marked as safe configuration state;
+  never replay user hooks, output pulses, or other edge-triggered actions.
+- Synchronize initial virtual outputs only after the new descriptor's complete
+  virtual-to-physical binding set has been installed.
 - Validate equal dimensions across modifier maps where required.
 - Preserve flash placement/`PROGMEM` behavior on AVR.
 - Apply map changes only after the current scan completes.
@@ -241,6 +269,10 @@ Exit criteria:
 
 - Selecting a keymap mutates only the supplied instance and its platform.
 - Two instances can use different keymaps simultaneously in host tests.
+- Selecting a keymap preserves marked configuration state without invoking
+  unmarked user actions or pulses.
+- Initial virtual output shadows are asserted exactly once after their bindings
+  are complete.
 - All simavr keymap, identity, and typed-string traces remain equivalent.
 
 ### Phase 5: Move the scanner into `asdf_t`
@@ -251,13 +283,20 @@ Exit criteria:
 - Track the repeating key by coordinate as well as keycode so duplicate
   keycodes and N-key rollover have defined behavior.
 - Make initialization idempotent and define reset semantics explicitly.
-- Validate row and column dimensions before accessing fixed arrays.
+- Validate modifier, row, and column indices before selecting a map or
+  accessing fixed arrays.
+- Replace debounce pre-decrement with a saturating state transition that cannot
+  underflow. Define and test whether a return to the stable raw state resets the
+  debounce interval before changing the existing behavior.
 - Add a dual-instance integration test that alternates scans, modifiers,
   keymaps, output, and repeat events.
 
 Exit criteria:
 
 - No mutable file-scope state remains in the portable scanner/core.
+- Invalid public indices cannot cause out-of-bounds reads or writes.
+- Shift Lock, modifier precedence, and the selected debounce semantics are
+  documented by state-transition tests.
 - Independent instances show no cross-instance state leakage under randomized
   event sequences.
 
@@ -319,8 +358,9 @@ Exit criteria:
 ### Phase 9: Harden quality gates
 
 - Run host tests with AddressSanitizer and UndefinedBehaviorSanitizer.
-- Enable `-Wpedantic`, `-Wcast-function-type`, `-Wshadow`, and selected
-  conversion warnings; make stable warning sets fatal in CI.
+- Enable `-Wpedantic`, `-Wcast-function-type`, `-Wshadow`,
+  `-Wimplicit-fallthrough`, and selected conversion warnings; make stable
+  warning sets fatal in CI.
 - Add host coverage reporting for the portable core.
 - Add randomized/fuzzed scan-event sequences with state invariants.
 - Convert silent failures to returned status, counters, or documented
@@ -371,8 +411,9 @@ Accordingly:
 
 ### Behavioral drift
 
-Debounce, repeat, map-switch, and output timing contain implicit assumptions.
-Characterization and simavr trace tests must precede structural changes.
+Debounce, repeat, Shift Lock, map-switch action replay, line-ending conversion,
+and output timing contain implicit assumptions. Characterization and simavr
+trace tests must precede structural changes.
 
 ### AVR flash and RAM growth
 
@@ -405,6 +446,10 @@ The refactor is complete when:
   hardware fakes, modifier states, queues, and timing without interference.
 - No incompatible function-pointer casts remain in first-party code.
 - Core processing is nonblocking.
+- Invalid public indices cannot access state outside their owning tables.
+- Keymap selection replays only explicitly marked configuration actions and
+  cannot invoke edge-triggered hooks or pulses as an initialization side effect.
+- LF-to-CRLF conversion cannot leave an unreported partial sequence.
 - Existing host and simavr behavior is preserved except for explicitly approved
   corrections.
 - All AVR and ARM targets build cleanly.
