@@ -32,6 +32,14 @@ int vcd_begin(avr_t *cpu, const asdf_io_map_t *io, const char *path)
         avr_vcd_add_signal(&g_vcd, led, 1, name);
     }
 
+    /* Named output used by the OUT2 regression. Including it in every trace
+     * makes a failed pulse assertion diagnosable from the CI artifact. */
+    if (io->out2_port) {
+        avr_irq_t *out2 = avr_io_getirq(cpu,
+            AVR_IOCTL_IOPORT_GETIRQ(io->out2_port), io->out2_bit);
+        avr_vcd_add_signal(&g_vcd, out2, 1, "out2");
+    }
+
     /* Row port (lo for family B, the only row port for family A) */
     avr_irq_t *row_irq = avr_io_getirq(cpu,
         AVR_IOCTL_IOPORT_GETIRQ(io->row_port), IOPORT_IRQ_REG_PORT);

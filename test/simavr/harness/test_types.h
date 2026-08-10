@@ -69,4 +69,37 @@ typedef struct {
     int                 expected_len;
 } sim_identity_test_t;
 
+/* Regression data for the out2 mode: press one key whose action drives the
+ * OUT2 physical output, then assert OUT2 moved and LED2 did not.  Only
+ * meaningful for a keymap that maps a virtual output to PHYSICAL_OUT2. */
+typedef struct {
+    uint8_t     dip_value;
+    uint32_t    boot_scan_ticks;   /* ms to settle before pressing the trigger */
+    sim_coord_t trigger_key;       /* matrix coord of the key driving OUT2 */
+    uint32_t    hold_ms;           /* ms to hold the trigger down */
+    uint32_t    settle_ms;         /* ms after release for the pulse to finish */
+} sim_out2_test_t;
+
+/* Regression data for the repeat mode (GitHub issue #15).  Holds one key at a
+ * time in several columns of a single row and requires the autorepeat count to
+ * agree across columns.  Guards against a scan loop whose per-row cost — and
+ * so the effective key servicing rate — varies with column position.
+ *
+ * This is only observable on a simulated CPU: repeat cadence is driven by how
+ * many times asdf_keyscan() runs, and the host test harness calls it a fixed
+ * number of times, making scan cost invisible there. */
+#define SIM_REPEAT_MAX_COLS 8
+
+typedef struct {
+    uint8_t  dip_value;
+    uint32_t boot_scan_ticks;              /* ms to settle before the first press */
+    int      row;                          /* row holding the keys to compare */
+    int      cols[SIM_REPEAT_MAX_COLS];    /* columns compared, all must emit output */
+    int      num_cols;
+    uint32_t hold_ms;                      /* ms to hold each key down */
+    uint32_t settle_ms;                    /* quiet ms between columns */
+    unsigned minimum_count;                /* initial byte + at least one repeat */
+    unsigned tolerance;                    /* allowed max-min spread in repeat counts */
+} sim_repeat_test_t;
+
 #endif

@@ -41,6 +41,15 @@ static const asdf_io_map_t asdf_io_familyA = {
         { .port = 'B', .bit = 4, .active_low = 0 },
     },
 
+    /* OUT2 = PORTB[3], LED2 = PORTB[5].  Both live on PORTB, which is what
+     * made the historical 328P defect possible: asdf_arch_out2_set() wrote
+     * ASDF_OUT2_PORT using ASDF_OUT1_BIT (5) instead of ASDF_OUT2_BIT (3),
+     * so OUT2 pulses lit LED2 and never reached the OUT2 pin. */
+    .out2_port = 'B',
+    .out2_bit  = 3,
+    .led2_port = 'B',
+    .led2_bit  = 5,
+
     .dip_row = 8,                 /* DIPs read as matrix row 8 */
     .dip_col_count = 8,
 

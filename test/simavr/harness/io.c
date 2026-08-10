@@ -21,6 +21,58 @@ static uint8_t g_familyA_col_shift   = 0;   /* shift register contents */
 static int     g_familyA_in_load_phase = 0; /* 1 when COLMODE is LOW (load mode) */
 static int     g_familyA_last_clock  = 0;   /* for rising-edge detection */
 
+/* ── pin transition watching ─────────────────────────────────────────────── */
+static unsigned g_watch_count[IO_WATCH_SLOTS];
+static int      g_watch_last[IO_WATCH_SLOTS];
+static int      g_watch_primed[IO_WATCH_SLOTS];
+
+static void on_watch_pin(struct avr_irq_t *irq, uint32_t value, void *param)
+{
+    (void)irq;
+    int slot  = (int)(intptr_t)param;
+    int level = (int)(value & 1);
+
+    /* The IOPORT bit IRQ normally fires only on change, but compare levels
+     * anyway so a redundant notify cannot inflate the count. */
+    if (!g_watch_primed[slot]) {
+        g_watch_last[slot]   = level;
+        g_watch_primed[slot] = 1;
+        return;
+    }
+    if (level != g_watch_last[slot]) {
+        g_watch_last[slot] = level;
+        g_watch_count[slot]++;
+    }
+}
+
+int io_watch_pin(avr_t *cpu, int slot, char port, int bit)
+{
+    if (!cpu || slot < 0 || slot >= IO_WATCH_SLOTS ||
+        port == '\0' || bit < 0 || bit > 7)
+        return -1;
+
+    avr_irq_t *irq = avr_io_getirq(cpu, AVR_IOCTL_IOPORT_GETIRQ(port), bit);
+    if (!irq) return -1;
+
+    g_watch_count[slot]  = 0;
+    g_watch_last[slot]   = (int)(irq->value & 1);
+    g_watch_primed[slot] = 1;
+    avr_irq_register_notify(irq, on_watch_pin, (void *) (intptr_t) slot);
+    return 0;
+}
+
+void io_watch_reset(void)
+{
+    for (int i = 0; i < IO_WATCH_SLOTS; i++)
+        g_watch_count[i] = 0;
+}
+
+unsigned io_watch_count(int slot)
+{
+    if (slot < 0 || slot >= IO_WATCH_SLOTS) return 0;
+    return g_watch_count[slot];
+}
+
 static void on_data_port(struct avr_irq_t *irq, uint32_t value, void *param)
 {
     (void)irq; (void)param;

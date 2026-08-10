@@ -55,21 +55,50 @@ Runner flags:
 - `--gdb <port>` — start the simavr GDB stub on the given port and wait
   for a debugger attach. Then connect with:
   `avr-gdb build-atmega2560/src/asdf-v1.7.0-atmega2560.elf -ex 'target remote :1234'`
-- `--mode events|identity|string` — pick which test mode the runner
-  drives. Default `events` preserves backwards-compatible behavior.
+- `--mode events|identity|string|out2|repeat` — pick which test mode the
+  runner drives. Default `events` preserves backwards-compatible behavior.
   See Test modes below.
 
 ## Test modes
 
-Each (target, keymap) pair runs three ctest cases:
+Each (target, keymap) pair runs three ctest cases, plus two sol-only
+regression cases per target:
 
 | ctest case suffix | runner `--mode` | what it asserts |
 |---|---|---|
 | `simavr_<tgt>_<km>` | `events` (default) | A small set of atomic keypresses with optional shift/ctrl modifier; one expected ASCII byte per press. |
 | `simavr_<tgt>_<km>_identity` | `identity` | Presses the keymap's ID-message trigger key (typically CTRL+0, which fires ACTION_FN_10 / ASDF_HOOK_USER_10) and asserts the exact byte sequence printed in response. |
 | `simavr_<tgt>_<km>_string` | `string` | A typed sentence (`<shift>t</shift>his is a <caps>test<caps> of the <mapname> keymap.<ctrl>m</ctrl>`) that exercises shift held, shift released mid-stream, a sticky caps-toggle, and ctrl held in one capture. |
+| `simavr_<tgt>_sol_out2` | `out2` | Presses Sol-20 BREAK (6,0) and asserts OUT2 produced exactly one pulse (two edges) while LED2 did not change. Sol-only: it is the one keymap routing a virtual output to `PHYSICAL_OUT2`. |
+| `simavr_<tgt>_sol_repeat` | `repeat` | Holds each of sol row 6 columns 1-7 in turn, requires actual repeat activity, and asserts the emission count agrees across columns. |
 
-The runner takes `--mode events|identity|string`; default is `events`.
+The runner takes `--mode events|identity|string|out2|repeat`; default is
+`events`.
+
+### Why the two regression modes are simulator-only
+
+Both guard defects that the host test suite structurally cannot see.
+
+`out2` covers a defect in which `asdf_arch_out2_set()` wrote
+`ASDF_OUT2_PORT` using `ASDF_OUT1_BIT`, so OUT2 pulses landed on LED2
+(PB5) and never reached the OUT2 pin (PB3) — Sol-20 BREAK lit an LED
+instead of signalling the host. The host suite links
+`Arch/asdf_arch_test.c`, a separate stub that never carried the defect, so
+only a run against real AVR code can catch it. Pin identity comes from the
+per-target map (`out2_port` / `led2_port`) rather than being hardcoded, so
+family B runs it as a cross-target invariant even though it never had the
+bug.
+
+`repeat` covers GitHub issue #15, where `asdf_keyscan()`'s column loop
+carried an early-exit term (`(changed || row_key_state) &&`). The loop
+stopped once the remaining changed/pressed bits shifted to zero, so
+per-scan cost — and therefore the servicing rate of a held key — depended
+on the key's column position. The skipped iterations do no work, so the
+sequence of key events is identical and only timing differs; because the
+host harness calls `asdf_keyscan()` a fixed number of times, scan cost is
+invisible there and a host test passes with the defect present. Under
+simavr the firmware is tick-driven, and the defect shows up as a >2x
+spread in repeat count across the columns of a single row.
 
 ## Add a new keymap test
 

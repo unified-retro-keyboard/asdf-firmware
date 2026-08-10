@@ -32,7 +32,7 @@ static void usage(const char *argv0)
         "  --verbose   log every captured output byte\n"
         "  --vcd PATH  dump VCD of watched pins to PATH\n"
         "  --gdb PORT  start simavr gdb stub on PORT and wait for attach\n"
-        "  --mode M    events (default) | identity | string\n",
+        "  --mode M    events (default) | identity | string | out2 | repeat\n",
         argv0);
     exit(2);
 }
@@ -64,7 +64,9 @@ static args_t parse_args(int argc, char **argv)
     }
     if (!a.target || !a.keymap || !a.elf_path) usage(argv[0]);
     if (!a.mode) a.mode = "events";
-    if (strcmp(a.mode, "events") && strcmp(a.mode, "identity") && strcmp(a.mode, "string")) {
+    if (strcmp(a.mode, "events") && strcmp(a.mode, "identity") &&
+        strcmp(a.mode, "string") && strcmp(a.mode, "out2") &&
+        strcmp(a.mode, "repeat")) {
         fprintf(stderr, "unknown mode: %s\n", a.mode);
         usage(argv[0]);
     }
@@ -111,6 +113,20 @@ static const sim_string_test_t *pick_string_test(const char *name)
     if (!strcmp(name, "apple2_caps"))  return &apple2_caps_string_test;
     if (!strcmp(name, "sol"))          return &sol_string_test;
     if (!strcmp(name, "ace1000"))      return &ace1000_string_test;
+    return 0;
+}
+
+/* Only the sol keymap routes a virtual output to PHYSICAL_OUT2, so it is the
+ * only keymap with out2 regression data. */
+static const sim_out2_test_t *pick_out2_test(const char *name)
+{
+    if (!strcmp(name, "sol")) return &sol_out2_test;
+    return 0;
+}
+
+static const sim_repeat_test_t *pick_repeat_test(const char *name)
+{
+    if (!strcmp(name, "sol")) return &sol_repeat_test;
     return 0;
 }
 
@@ -371,6 +387,193 @@ int main(int argc, char **argv)
         vcd_end();
         printf("OK: %s/%s passed %d string steps at cycle %" PRIu64 "\n",
                a.target, a.keymap, st->num_steps, (uint64_t)cpu->cycle);
+        return 0;
+    }
+
+    if (!strcmp(a.mode, "out2")) {
+        const sim_out2_test_t *o2 = pick_out2_test(a.keymap);
+        if (!o2) {
+            fprintf(stderr, "FAIL: no out2 test data for keymap %s\n", a.keymap);
+            vcd_end();
+            return 1;
+        }
+        if (!io->out2_port || !io->led2_port) {
+            fprintf(stderr, "FAIL: %s has no OUT2/LED2 pin map\n", a.target);
+            vcd_end();
+            return 1;
+        }
+
+        /* Slot 0 = the pin OUT2 must drive; slot 1 = the pin the historical
+         * 328P defect drove instead. */
+        if (io_watch_pin(cpu, 0, io->out2_port, io->out2_bit) != 0 ||
+            io_watch_pin(cpu, 1, io->led2_port, io->led2_bit) != 0) {
+            fprintf(stderr, "FAIL: could not watch %s OUT2/LED2 pins\n", a.target);
+            vcd_end();
+            return 1;
+        }
+
+        set_dip(o2->dip_value);
+
+        if (sim_wait_ms(cpu, o2->boot_scan_ticks, io->cpu_frequency_hz) < 0) {
+            fprintf(stderr, "FAIL: cpu halted during out2 boot wait\n");
+            vcd_end();
+            return 1;
+        }
+
+        /* Discard boot-time pin settling: LED2 legitimately moves during
+         * init, and only transitions caused by the keypress are of interest. */
+        io_watch_reset();
+
+        matrix_press(o2->trigger_key.row, o2->trigger_key.col);
+        if (sim_wait_ms(cpu, o2->hold_ms, io->cpu_frequency_hz) < 0) {
+            fprintf(stderr, "FAIL: cpu halted while holding out2 trigger\n");
+            vcd_end();
+            return 1;
+        }
+        matrix_release(o2->trigger_key.row, o2->trigger_key.col);
+        if (sim_wait_ms(cpu, o2->settle_ms, io->cpu_frequency_hz) < 0) {
+            fprintf(stderr, "FAIL: cpu halted while settling out2 pulse\n");
+            vcd_end();
+            return 1;
+        }
+
+        unsigned out2_edges = io_watch_count(0);
+        unsigned led2_edges = io_watch_count(1);
+        int failed = 0;
+
+        if (out2_edges != 2) {
+            fprintf(stderr,
+                    "FAIL: %s/%s OUT2 (P%c%d) changed %u time(s), expected exactly "
+                    "2 edges after pressing (%d,%d)\n",
+                    a.target, a.keymap, io->out2_port, io->out2_bit,
+                    out2_edges,
+                    o2->trigger_key.row, o2->trigger_key.col);
+            failed = 1;
+        }
+        if (led2_edges != 0) {
+            fprintf(stderr,
+                    "FAIL: %s/%s LED2 (P%c%d) changed %u time(s) on an OUT2 action; "
+                    "the output is driving the wrong pin\n",
+                    a.target, a.keymap, io->led2_port, io->led2_bit, led2_edges);
+            failed = 1;
+        }
+        if (failed) {
+            vcd_end();
+            return 1;
+        }
+
+        vcd_end();
+        printf("OK: %s/%s OUT2 (P%c%d) toggled %u time(s), LED2 (P%c%d) untouched, "
+               "at cycle %" PRIu64 "\n",
+               a.target, a.keymap, io->out2_port, io->out2_bit, out2_edges,
+               io->led2_port, io->led2_bit, (uint64_t)cpu->cycle);
+        return 0;
+    }
+
+    if (!strcmp(a.mode, "repeat")) {
+        const sim_repeat_test_t *rp = pick_repeat_test(a.keymap);
+        if (!rp) {
+            fprintf(stderr, "FAIL: no repeat test data for keymap %s\n", a.keymap);
+            vcd_end();
+            return 1;
+        }
+        if (rp->num_cols <= 0 || rp->num_cols > SIM_REPEAT_MAX_COLS ||
+            rp->minimum_count < 2) {
+            fprintf(stderr,
+                    "FAIL: invalid repeat data for %s: num_cols=%d, minimum_count=%u\n",
+                    a.keymap, rp->num_cols, rp->minimum_count);
+            vcd_end();
+            return 1;
+        }
+
+        set_dip(rp->dip_value);
+
+        if (sim_wait_ms(cpu, rp->boot_scan_ticks, io->cpu_frequency_hz) < 0) {
+            fprintf(stderr, "FAIL: cpu halted during repeat boot wait\n");
+            vcd_end();
+            return 1;
+        }
+
+        unsigned counts[SIM_REPEAT_MAX_COLS];
+
+        for (int i = 0; i < rp->num_cols; i++) {
+            int col = rp->cols[i];
+
+            cap_clear();
+            matrix_press(rp->row, col);
+            if (sim_wait_ms(cpu, rp->hold_ms, io->cpu_frequency_hz) < 0) {
+                fprintf(stderr, "FAIL: cpu halted holding (%d,%d)\n", rp->row, col);
+                vcd_end();
+                return 1;
+            }
+            matrix_release(rp->row, col);
+
+            /* Both strobe edges are captured, so the raw record count is
+             * twice the number of bytes the firmware actually emitted. */
+            size_t captured = cap_count();
+            if (captured == ASDF_CAP_RING_SIZE) {
+                fprintf(stderr,
+                        "FAIL: %s/%s repeat capture for (%d,%d) filled the "
+                        "capture ring; results may be truncated\n",
+                        a.target, a.keymap, rp->row, col);
+                vcd_end();
+                return 1;
+            }
+            if (captured & 1u) {
+                fprintf(stderr,
+                        "FAIL: %s/%s repeat capture for (%d,%d) has an unmatched "
+                        "strobe edge (%zu records)\n",
+                        a.target, a.keymap, rp->row, col, captured);
+                vcd_end();
+                return 1;
+            }
+            counts[i] = (unsigned)(captured / 2);
+
+            if (sim_wait_ms(cpu, rp->settle_ms, io->cpu_frequency_hz) < 0) {
+                fprintf(stderr, "FAIL: cpu halted while settling (%d,%d)\n",
+                        rp->row, col);
+                vcd_end();
+                return 1;
+            }
+            cap_clear();
+        }
+
+        unsigned lo = counts[0], hi = counts[0];
+        for (int i = 1; i < rp->num_cols; i++) {
+            if (counts[i] < lo) lo = counts[i];
+            if (counts[i] > hi) hi = counts[i];
+        }
+
+        /* A uniformly broken autorepeat implementation would otherwise pass
+         * the spread check with one initial byte from every column. */
+        if (lo < rp->minimum_count) {
+            fprintf(stderr,
+                    "FAIL: %s/%s repeat: minimum emission count %u is below "
+                    "required %u; keys must emit and autorepeat\n",
+                    a.target, a.keymap, lo, rp->minimum_count);
+            for (int i = 0; i < rp->num_cols; i++)
+                fprintf(stderr, "  col %d: %u\n", rp->cols[i], counts[i]);
+            vcd_end();
+            return 1;
+        }
+
+        if (hi - lo > rp->tolerance) {
+            fprintf(stderr,
+                        "FAIL: %s/%s emission rate depends on column position: "
+                        "spread %u (min %u, max %u) exceeds tolerance %u\n",
+                    a.target, a.keymap, hi - lo, lo, hi, rp->tolerance);
+            for (int i = 0; i < rp->num_cols; i++)
+                fprintf(stderr, "  row %d col %d: %u emissions in %u ms\n",
+                        rp->row, rp->cols[i], counts[i], rp->hold_ms);
+            vcd_end();
+            return 1;
+        }
+
+        vcd_end();
+        printf("OK: %s/%s autorepeat uniform across %d columns "
+               "(%u-%u emissions, tolerance %u) at cycle %" PRIu64 "\n",
+               a.target, a.keymap, rp->num_cols, lo, hi, rp->tolerance,
+               (uint64_t)cpu->cycle);
         return 0;
     }
 
