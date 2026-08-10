@@ -26,4 +26,24 @@ void matrix_clear(void);
  * any previous DIP state. */
 void set_dip(uint8_t value);
 
+/* ── pin transition watching ─────────────────────────────────────────────
+ * Count level changes on an arbitrary port bit.  Used to prove which pin an
+ * output action actually drives, independent of the strobe/data capture path.
+ * Two independent watch slots are provided: enough to compare an intended
+ * pin against the one a mis-wired action would hit instead. */
+#define IO_WATCH_SLOTS 2
+
+/* Attach slot (0..IO_WATCH_SLOTS-1) to port/bit and prime it from the pin's
+ * current level. Safe to call once per slot. Returns 0 on success, -1 for an
+ * invalid slot/pin or a pin that simavr cannot expose. */
+int io_watch_pin(avr_t *cpu, int slot, char port, int bit);
+
+/* Zero all transition counts, keeping each slot's last-known level, so
+ * transitions are measured relative to the level at the time of the reset.
+ * Call after boot to discard power-on pin settling. */
+void io_watch_reset(void);
+
+/* Transitions observed on a slot since the last io_watch_reset(). */
+unsigned io_watch_count(int slot);
+
 #endif

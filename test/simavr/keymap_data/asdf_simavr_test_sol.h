@@ -164,4 +164,52 @@ static const sim_string_test_t sol_string_test = {
     .num_steps             = sizeof(sol_string_steps) / sizeof(sol_string_steps[0]),
 };
 
+/* OUT2 regression data (see --mode out2).
+ *
+ * Sol-20 BREAK at (6,0) is the only place in the tree that reaches
+ * PHYSICAL_OUT2: SOL_KBD_BREAK_ACTION -> VOUT2 -> SOL_KBD_TTLOUT_BREAK
+ * (= PHYSICAL_OUT2) -> asdf_arch_out2_set().  That makes it the trigger for
+ * the historical 328P defect in which asdf_arch_out2_set() wrote
+ * ASDF_OUT2_PORT using ASDF_OUT1_BIT, driving LED2 (PB5) instead of OUT2
+ * (PB3) — so BREAK lit an LED and never reached the Sol-20.
+ *
+ * The virtual output is assigned V_PULSE_LONG, so a press produces a pulse
+ * rather than a level change; settle_ms must outlast the pulse so both of
+ * its edges are observed. */
+static const sim_out2_test_t sol_out2_test = {
+    .dip_value       = 4,
+    .boot_scan_ticks = 1000,
+    .trigger_key     = { .row = 6, .col = 0 },   /* BREAK */
+    .hold_ms         = 50,
+    .settle_ms       = 400,
+};
+
+/* Column-independent autorepeat regression (see --mode repeat), for
+ * GitHub issue #15.
+ *
+ * Row 6 is { BREAK, TAB, q, w, e, r, t, y }: columns 1-7 all emit a byte and
+ * autorepeat, so their repeat counts are directly comparable.  Column 0 is
+ * BREAK, which drives a virtual output and emits nothing, so it is excluded.
+ *
+ * With the fix in place every column yields an identical count.  With the old
+ * early-exit term in asdf_keyscan()'s column loop the count varies by more
+ * than 2x across these columns, because the loop stopped as soon as the
+ * remaining changed/pressed bits shifted to zero — making per-scan cost, and
+ * therefore the servicing rate of a held key, a function of its column. */
+static const sim_repeat_test_t sol_repeat_test = {
+    .dip_value       = 4,
+    .boot_scan_ticks = 1000,
+    .row             = 6,
+    .cols            = { 1, 2, 3, 4, 5, 6, 7 },
+    .num_cols        = 7,
+    .hold_ms         = 3000,
+    .settle_ms       = 100,
+    /* One byte is emitted by the initial press. Requiring at least two proves
+     * that autorepeat actually ran rather than failing uniformly. */
+    .minimum_count   = 2,
+    /* Counts are exactly equal in practice; 1 absorbs any scan-phase
+     * alignment jitter without admitting the >2x spread the defect causes. */
+    .tolerance       = 1,
+};
+
 #endif

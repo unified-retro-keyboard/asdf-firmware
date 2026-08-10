@@ -45,6 +45,16 @@ typedef struct {
     int led_count;
     asdf_io_led_t leds[ASDF_IO_MAX_LEDS];
 
+    /* OUT2 and LED2, named explicitly for the out2 regression mode.  LED2
+     * also appears in leds[] above; it is repeated here because the mode
+     * asserts on it by name, and indexing into leds[] would silently follow
+     * any future reordering of that array.
+     * out2_port is '\0' if OUT2 is not mapped for this family. */
+    char out2_port;
+    int  out2_bit;
+    char led2_port;
+    int  led2_bit;
+
     int dip_row;
     int dip_col_count;
 

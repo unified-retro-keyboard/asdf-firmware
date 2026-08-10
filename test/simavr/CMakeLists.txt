@@ -102,3 +102,33 @@ foreach(tgt ${SIMAVR_TARGETS})
     endforeach()
   endforeach()
 endforeach()
+
+# The out2 regression is sol-only: sol is the sole keymap routing a virtual
+# output to PHYSICAL_OUT2 (Sol-20 BREAK), so it is the only one that can
+# exercise asdf_arch_out2_set(). Kept out of the mode loop above rather than
+# emitting failing tests for the five keymaps that never touch OUT2.
+foreach(tgt ${SIMAVR_TARGETS})
+  set(elf_path ${CMAKE_SOURCE_DIR}/build-${tgt}/src/asdf-v${PROJECT_VERSION}-${tgt}.elf)
+  add_test(
+    NAME simavr_${tgt}_sol_out2
+    COMMAND asdf_simavr_runner
+            --target ${tgt} --keymap sol
+            --mode out2
+            --elf ${elf_path}
+            --vcd ${CMAKE_CURRENT_BINARY_DIR}/simavr_${tgt}_sol_out2.vcd
+  )
+  set_tests_properties(simavr_${tgt}_sol_out2 PROPERTIES TIMEOUT 30)
+
+  # Column-independent autorepeat (issue #15). Sol row 6 gives seven
+  # comparable emitting keys; the invariant is shared scan-loop behaviour, so
+  # one keymap is enough to guard it. Holds 7 keys for 3 simulated seconds
+  # each, so it needs a longer timeout than the other modes.
+  add_test(
+    NAME simavr_${tgt}_sol_repeat
+    COMMAND asdf_simavr_runner
+            --target ${tgt} --keymap sol
+            --mode repeat
+            --elf ${elf_path}
+  )
+  set_tests_properties(simavr_${tgt}_sol_repeat PROPERTIES TIMEOUT 120)
+endforeach()

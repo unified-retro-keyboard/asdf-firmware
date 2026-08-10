@@ -49,6 +49,14 @@ static const asdf_io_map_t asdf_io_familyB = {
         { .port = 'D', .bit = 7, .active_low = 1 },
     },
 
+    /* OUT2 = PORTB[6], LED2 = PORTD[6].  Family B keeps them on separate
+     * ports, so it never carried the 328P OUT2/LED2 defect; the out2 mode
+     * runs here as a cross-target invariant. */
+    .out2_port = 'B',
+    .out2_bit  = 6,
+    .led2_port = 'D',
+    .led2_bit  = 6,
+
     .dip_row = 8,
     .dip_col_count = 8,
 
