@@ -49,6 +49,9 @@ typedef uint8_t asdf_cols_t;
 // codes (enumerated in action_t) do not conflict with the encoding scheme.
 typedef uint8_t asdf_keycode_t;
 
+// One keyboard: all of its changeable state (defined in asdf_keyboard.h).
+typedef struct asdf_keyboard asdf_t;
+
 
 // This typedef enumerates the valid ACTIONS than can be specified in a keymap.
 typedef enum {

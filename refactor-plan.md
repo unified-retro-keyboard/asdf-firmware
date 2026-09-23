@@ -306,6 +306,10 @@ Exit criteria:
   debounce interval before changing the existing behavior.
 - Add a dual-instance integration test that alternates scans, modifiers,
   keymaps, output, and repeat events.
+- Hooks remain `void (void)` functions, so a hook cannot tell which keyboard
+  fired it; the keymap ID-message hooks print to the default keyboard. The
+  typed user-action callback (see Typed platform interface) replaces them in
+  Phase 8. Physical outputs still drive shared hardware until Phase 7.
 
 Exit criteria:
 

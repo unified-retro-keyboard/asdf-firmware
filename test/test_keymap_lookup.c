@@ -92,8 +92,9 @@ void test_plain_and_shift_maps_can_have_independent_sizes(void)
     expect_plain_lookup(0, 1, 'a');
     expect_plain_lookup(1, 1, 'b');
 
-    // Out-of-bounds on the plain map should return 0 without affecting shift
-    expect_plain_lookup(3, 3, 0);
+    // Out-of-bounds on the plain map returns ACTION_NOTHING without affecting
+    // shift
+    expect_plain_lookup(3, 3, ACTION_NOTHING);
 }
 
 void test_switching_between_keyboard_layouts_updates_dimensions(void)
@@ -109,7 +110,7 @@ void test_switching_between_keyboard_layouts_updates_dimensions(void)
     expect_shift_lookup(1, 1, 'B');
 }
 
-void test_unconfigured_modifier_returns_zero(void)
+void test_unconfigured_modifier_returns_nothing(void)
 {
     load_keymap((const asdf_keycode_t *)small_plain_matrix, 2, 2,
                 NULL, 0, 0);
@@ -117,9 +118,9 @@ void test_unconfigured_modifier_returns_zero(void)
     expect_plain_lookup(0, 0, 0x01);
     expect_plain_lookup(1, 1, 'b');
 
-    // SHIFT map was never configured, so lookups should return 0
-    expect_shift_lookup(0, 0, 0);
-    expect_shift_lookup(1, 1, 0);
+    // SHIFT map was never configured, so lookups return ACTION_NOTHING
+    expect_shift_lookup(0, 0, ACTION_NOTHING);
+    expect_shift_lookup(1, 1, ACTION_NOTHING);
 }
 
 int main(void)
@@ -128,7 +129,7 @@ int main(void)
 
     RUN_TEST(test_plain_and_shift_maps_can_have_independent_sizes);
     RUN_TEST(test_switching_between_keyboard_layouts_updates_dimensions);
-    RUN_TEST(test_unconfigured_modifier_returns_zero);
+    RUN_TEST(test_unconfigured_modifier_returns_nothing);
 
     return UNITY_END();
 }

@@ -26,7 +26,16 @@
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
 
+#include "asdf.h"
 #include "asdf_arch.h"
+
+// PROCEDURE: asdf_print_flash_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (const char *) str - NUL-terminated string stored in flash
+// OUTPUTS: none
+// DESCRIPTION: Queues the string on the keyboard's system message output,
+// sending each newline as CR LF.
+void asdf_print_flash_r(asdf_t *kb, const char *str);
 
 // PROCEDURE: asdf_print_flash
 // INPUTS: (const char *) str - NUL-terminated string stored in flash (see

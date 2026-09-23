@@ -25,6 +25,7 @@
 #include "asdf_arch.h"
 #include "asdf_config.h"
 #include "asdf_hook.h"
+#include "asdf_keyboard.h"
 #include "asdf_keymap_setup.h"
 #include "asdf_modifiers.h"
 #include "asdf_platform.h"
@@ -33,97 +34,95 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// The keymap array contains the keymap information for each modifier state
-// This structure is populated using the asdf_keymaps_add_map() function.
-static asdf_keycode_map_t keymaps[ASDF_MOD_NUM_MODIFIERS] = {};
+// The keymap functions operate on the caller's state: the keycode lookup
+// functions on an asdf_keymap_state_t, and the keymap selection functions,
+// which reset and configure the whole keyboard, on an asdf_t.
 
-// The current keymap index.  This is stored so bitwise operators on the ke
-// index can be performed.
-static uint8_t current_keyboard_index;
-
-// Keymap requested by the keymap select actions (DIP switches). It is applied
-// at the end of the scan in which it changes, by asdf_keymaps_apply_request().
-static uint8_t requested_keyboard_index;
-
-// PROCEDURE: asdf_keymaps_add_map
-// INPUTS: (asdf_keycode_t *) - pointer to the keycode matrix to add in to map
-//         (uint8_t) modifier_index - the modifier value for the keycode matrix
-//         being added
-//         (uint8_t) rows - number of rows in the keymap
-//         (uint8_t) cols - number of columns in the keymap
-//
+// PROCEDURE: asdf_keymaps_add_map_r
+// INPUTS: (asdf_keymap_state_t *) keymap - keymap state
+//         (const asdf_keycode_t *) matrix - keycode matrix (in flash), or NULL
+//         (modifier_index_t) modifier_index - the modifier state it is used for
+//         (uint8_t) num_rows, num_cols - dimensions of the matrix
 // OUTPUTS: none
 //
 // DESCRIPTION: Called when a keymap descriptor is applied. Sets the keycode
 // matrix used for one modifier state.
 //
-// SIDE EFFECTS:
-//
-// NOTES: If the keymap modifier index, num_rows, or num_cols are not valid then
-// no action is performed.
+// NOTES: If the modifier index, num_rows, or num_cols are not valid then no
+// action is performed.
 //
 // SCOPE: public
 //
-// COMPLEXITY: 1
-void asdf_keymaps_add_map(const asdf_keycode_t *matrix,
-                          modifier_index_t modifier_index, uint8_t num_rows,
-                          uint8_t num_cols) {
-    if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) &&
-        (num_rows <= ASDF_MAX_ROWS) && (num_cols <= ASDF_MAX_COLS)) {
-        keymaps[modifier_index].matrix = (asdf_keycode_t *)matrix;
-        keymaps[modifier_index].rows = num_rows;
-        keymaps[modifier_index].cols = num_cols;
+// COMPLEXITY: 2
+//
+void asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_keycode_t *matrix,
+                            modifier_index_t modifier_index, uint8_t num_rows,
+                            uint8_t num_cols) {
+    if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) && (num_rows <= ASDF_MAX_ROWS) &&
+        (num_cols <= ASDF_MAX_COLS)) {
+        keymap->maps[modifier_index].matrix = matrix;
+        keymap->maps[modifier_index].rows = num_rows;
+        keymap->maps[modifier_index].cols = num_cols;
     }
 }
 
-// PROCEDURE: asdf_keymaps_num_rows
-// INPUTS: none
-// OUTPUTS: uint8_t - returns number of rows in keymap for current modifier
-// state
+// PROCEDURE: asdf_keymaps_num_rows_r, asdf_keymaps_num_cols_r
+// INPUTS: (const asdf_keymap_state_t *) keymap - keymap state
+//         (modifier_index_t) modifier_index - modifier state
+// OUTPUTS: number of rows (columns) of the matrix for that modifier state, or 0
+//          if the modifier index is invalid
 //
-// DESCRIPTION: See OUTPUTS
+// SCOPE: public
 //
-// SIDE EFFECTS: none
+// COMPLEXITY: 2
 //
-// NOTES:
-//
-// SCOPE: publice
-//
-// COMPLEXITY: 1
-//
-uint8_t asdf_keymaps_num_rows(void) {
-    return keymaps[asdf_modifier_index()].rows;
+uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
+                                modifier_index_t modifier_index) {
+    return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].rows : 0;
 }
 
-// PROCEDURE: asdf_keymaps_num_cols
-// INPUTS: none
-// OUTPUTS: uint8_t - returns number of columns in keymap for current modifier
-// state
-//
-// DESCRIPTION: See OUTPUTS
-//
-// SIDE EFFECTS: none
-//
-// NOTES:
-//
-// SCOPE: publice
-//
-// COMPLEXITY: 1
-//
-uint8_t asdf_keymaps_num_cols(void) {
-    return keymaps[asdf_modifier_index()].cols;
+uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
+                                modifier_index_t modifier_index) {
+    return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].cols : 0;
 }
 
-// PROCEDURE: asdf_keymaps_reset
-// INPUTS: none
+// PROCEDURE: asdf_keymaps_get_code_r
+// INPUTS: (const asdf_keymap_state_t *) keymap - keymap state
+//         (uint8_t) row, col - key position
+//         (uint8_t) modifier_index - modifier state
+// OUTPUTS: returns the keycode at that position in the matrix for that modifier
+//          state, or ACTION_NOTHING if the modifier index, row, or column is out
+//          of range, or no matrix is set.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 3
+//
+asdf_keycode_t asdf_keymaps_get_code_r(const asdf_keymap_state_t *keymap, uint8_t row,
+                                       uint8_t col, uint8_t modifier_index) {
+    if (modifier_index >= ASDF_MOD_NUM_MODIFIERS) {
+        return ACTION_NOTHING;
+    }
+
+    const asdf_keycode_map_t *map = &keymap->maps[modifier_index];
+    if (!map->matrix || row >= map->rows || col >= map->cols) {
+        return ACTION_NOTHING;
+    }
+
+    const asdf_keycode_t(*keycode_matrix)[map->cols] = (const void *)map->matrix;
+    return FLASH_READ_MATRIX_ELEMENT(keycode_matrix, row, col);
+}
+
+// PROCEDURE: asdf_keymaps_reset_r
+// INPUTS: (asdf_t *) kb - keyboard
 // OUTPUTS: none
 //
-// DESCRIPTION: Reset keymaps to initial state:
+// DESCRIPTION: Reset the keyboard's keymap-dependent state:
 //              - Clear all keycode mapping matrices.
 //              - Clear all virtual devices
 //              - Reset modifier and repeat state.
 //              - Reset all hooks to default state.
-//              - Restore the architecture's platform.
+//              - Restore the keyboard's base platform.
 //
 // SIDE EFFECTS: see DESCRIPTION
 //
@@ -131,28 +130,25 @@ uint8_t asdf_keymaps_num_cols(void) {
 //
 // COMPLEXITY: 2
 //
-static void asdf_keymaps_reset(void) {
-    // Clear all keycode mappings
+static void asdf_keymaps_reset_r(asdf_t *kb) {
     for (uint8_t i = 0; i < ASDF_MOD_NUM_MODIFIERS; i++) {
-        asdf_keymaps_add_map((const asdf_keycode_t *)NULL, (modifier_index_t)i,
-                             0, 0);
+        asdf_keymaps_add_map_r(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
     }
 
-    // Clear virtual devices
-    asdf_virtual_init();
+    asdf_virtual_init_r(&kb->outputs);
 
     // Reset modifiers and repeat state, so each keymap starts from a known
     // state regardless of the keymap it replaces.
-    asdf_modifiers_init();
-    asdf_repeat_init();
+    asdf_modifiers_init_r(&kb->modifiers);
+    asdf_repeat_init_r(&kb->repeat);
 
-    // Reset hooks, and restore the architecture's platform
-    asdf_hook_init();
-    asdf_install_platform(NULL);
+    asdf_hook_init_r(&kb->hooks);
+    asdf_install_platform_r(kb, NULL);
 }
 
-// PROCEDURE: asdf_keymaps_apply
-// INPUTS: (const asdf_keymap_t *) keymap - keymap descriptor, in flash
+// PROCEDURE: asdf_keymaps_apply_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (const asdf_keymap_t *) keymap - keymap descriptor, in flash
 // OUTPUTS: none
 //
 // DESCRIPTION: Configures the keyboard from a keymap descriptor, in the order
@@ -168,57 +164,57 @@ static void asdf_keymaps_reset(void) {
 //
 // COMPLEXITY: 6
 //
-static void asdf_keymaps_apply(const asdf_keymap_t *keymap) {
+static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
     asdf_keymap_t k;
     FLASH_MEMCPY(&k, keymap, sizeof(k));
 
     for (uint8_t m = 0; m < ASDF_MOD_NUM_MODIFIERS; m++) {
-        asdf_keymaps_add_map(k.maps[m], (modifier_index_t)m, k.rows, k.cols);
+        asdf_keymaps_add_map_r(&kb->keymap, k.maps[m], (modifier_index_t)m, k.rows, k.cols);
     }
 
-    asdf_set_print_delay(k.print_delay_ms);
+    kb->print_delay_ms = k.print_delay_ms;
 
     for (uint8_t i = 0; i < k.num_hooks; i++) {
         asdf_hook_binding_t binding;
         FLASH_MEMCPY(&binding, &k.hooks[i], sizeof(binding));
-        asdf_hook_assign(binding.hook, binding.function);
+        asdf_hook_assign_r(&kb->hooks, binding.hook, binding.function);
     }
 
     for (uint8_t i = 0; i < k.num_outputs; i++) {
         asdf_virtual_initializer_t out;
         FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
-        asdf_virtual_assign(out.virtual_device, out.physical_device, out.function,
-                            out.initial_value);
+        asdf_virtual_assign_r(&kb->outputs, out.virtual_device, out.physical_device,
+                              out.function, out.initial_value);
     }
 
     if (k.flags & ASDF_KEYMAP_CAPS_ON) {
-        asdf_modifier_capslock_activate();
+        asdf_modifier_capslock_activate_r(&kb->modifiers);
+        asdf_sync_lock_leds_r(kb);
     }
     if (k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) {
         asdf_arch_set_neg_strobe();
     }
 
     if (k.platform) {
-        asdf_install_platform(k.platform);
+        asdf_install_platform_r(kb, k.platform);
     }
 }
 
-// PROCEDURE: asdf_keymaps_switch
-// INPUTS: (uint8_t) index - index of the keymap number to switch to
+// PROCEDURE: asdf_keymaps_switch_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint8_t) index - index of the keymap number to switch to
 // OUTPUTS: none
 //
-// DESCRIPTION: accepts a index value.
-// 1) assign the value to the global (to the module) current_keyboard_index
-// variable
+// DESCRIPTION: If the keymap exists:
+// 1) record it as the current (and requested) keymap
 // 2) execute the architecture-dependent init routine, and reset keymaps,
-// virtual devices, modifiers, repeat state, and hooks, to undo any settings
-// from the previous keymap
+// virtual devices, modifiers, repeat state, hooks, and platform, to undo any
+// settings from the previous keymap
 // 3) apply the keymap descriptor.
 // 4) Re-apply the configuration actions of held switches (DIP switch keymap
 // select, strobe polarity, autorepeat select). Other held keys, such as a held
 // SHIFT, are not re-activated.
-// 5) Apply any initial virtual outputs to the hardware by calling
-// asdf_virtual_sync()
+// 5) Apply any initial virtual outputs to the hardware.
 //
 // SIDE EFFECTS: See DESCRIPTION
 //
@@ -228,68 +224,74 @@ static void asdf_keymaps_apply(const asdf_keymap_t *keymap) {
 //
 // COMPLEXITY: 2
 //
-void asdf_keymaps_switch(uint8_t index) {
-    // we set the current keymap index in order to track the state of the DIP
-    // switches, but only switch to a valid map
-
+void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index) {
     if (asdf_keymap_valid(index)) {
-        current_keyboard_index = index;
-        requested_keyboard_index = index;
+        kb->keymap.current = index;
+        kb->keymap.requested = index;
 
         asdf_arch_init();
-        asdf_keymaps_reset();
+        asdf_keymaps_reset_r(kb);
 
-        asdf_keymaps_apply(asdf_keymap_descriptor(index));
+        asdf_keymaps_apply_r(kb, asdf_keymap_descriptor(index));
 
-        // Re-apply DIP/configuration switches; other held keys are not
-        // re-activated.
-        asdf_apply_configuration();
-
-        // Apply the initial virtual device settings
-        asdf_virtual_sync();
+        asdf_apply_configuration_r(kb);
+        asdf_virtual_sync_r(&kb->outputs);
     }
 }
 
-// PROCEDURE: asdf_keymaps_select
-// INPUTS: (uint8_t) index - index of the keymap number to select
+// PROCEDURE: asdf_keymaps_select_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint8_t) index - index of the keymap number to select
 // OUTPUTS: none
 //
-// DESCRIPTION: accepts a index value. If the keyboard is different from the
-// currently active keyboard, then attempt to switch to the new keyboard index
-//
-// SIDE EFFECTS: See DESCRIPTION
-//
-// NOTES:
+// DESCRIPTION: Switch to the keymap if it differs from the current keymap.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 2
 //
-void asdf_keymaps_select(uint8_t index) {
-
-    if (index != current_keyboard_index) {
-        asdf_keymaps_switch(index);
+void asdf_keymaps_select_r(asdf_t *kb, uint8_t index) {
+    if (index != kb->keymap.current) {
+        asdf_keymaps_switch_r(kb, index);
     }
 }
 
-// PROCEDURE: asdf_keymaps_init
-// INPUTS: none
+// PROCEDURE: asdf_keymaps_init_r
+// INPUTS: (asdf_t *) kb - keyboard
 // OUTPUTS: none
 //
-// DESCRIPTION: initialize the keymap list. Called at startup. This function
-// switches to keyboard 0. The switch routine cleans up the keyboard data
-// structures.
-//
-// SIDE EFFECTS: See DESCRIPTION
+// DESCRIPTION: Select keymap 0.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 1
 //
-void asdf_keymaps_init(void) { asdf_keymaps_switch(0); }
+void asdf_keymaps_init_r(asdf_t *kb) { asdf_keymaps_switch_r(kb, 0); }
 
-// PROCEDURE: asdf_keymaps_apply_request
-// INPUTS: none
+// PROCEDURE: asdf_keymaps_request_bit_r
+// INPUTS: (asdf_keymap_state_t *) keymap - keymap state
+//         (uint8_t) bit - ASDF_KEYMAP_BIT_n mask of the keymap select bit
+//         (uint8_t) set - TRUE (nonzero) to set the bit, FALSE (0) to clear it
+// OUTPUTS: none
+//
+// DESCRIPTION: Called by the keymap select actions (DIP switches). Sets or
+// clears one bit of the requested keymap number. The request is applied at the
+// end of the scan by asdf_keymaps_apply_request_r().
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_keymaps_request_bit_r(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set) {
+    if (set) {
+        keymap->requested |= bit;
+    } else {
+        keymap->requested &= (uint8_t)~bit;
+    }
+}
+
+// PROCEDURE: asdf_keymaps_apply_request_r
+// INPUTS: (asdf_t *) kb - keyboard
 // OUTPUTS: none
 //
 // DESCRIPTION: If the keymap select actions have requested a different keymap,
@@ -304,189 +306,10 @@ void asdf_keymaps_init(void) { asdf_keymaps_switch(0); }
 //
 // COMPLEXITY: 1
 //
-void asdf_keymaps_apply_request(void) { asdf_keymaps_select(requested_keyboard_index); }
-
-// PROCEDURE: asdf_keymaps_map_select_0_clear
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 0 switch is open. Clears the 0 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_0_clear(void) {
-    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_0;
+void asdf_keymaps_apply_request_r(asdf_t *kb) {
+    asdf_keymaps_select_r(kb, kb->keymap.requested);
 }
 
-// PROCEDURE: asdf_keymaps_map_select_0_set
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 0 switch is closed. Sets the 0 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_0_set(void) {
-    requested_keyboard_index |= ASDF_KEYMAP_BIT_0;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_1_clear
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 1 switch is open. Clears the 1 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_1_clear(void) {
-    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_1;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_1_set
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 1 switch is closed. Sets the 1 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_1_set(void) {
-    requested_keyboard_index |= ASDF_KEYMAP_BIT_1;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_2_clear
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 2 switch is open. Clears the 2 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_2_clear(void) {
-    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_2;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_2_set
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 2 switch is closed. Sets the 2 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_2_set(void) {
-    requested_keyboard_index |= ASDF_KEYMAP_BIT_2;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_3_clear
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 3 switch is open. Clears the 3 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_3_clear(void) {
-    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_3;
-}
-
-// PROCEDURE: asdf_keymaps_map_select_3_set
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: called when map select 3 switch is closed. Sets the 3 bit in the
-// keymap index.
-//
-// SIDE EFFECTS: changes selected keymap
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_keymaps_map_select_3_set(void) {
-    requested_keyboard_index |= ASDF_KEYMAP_BIT_3;
-}
-
-// PROCEDURE: asdf_keymaps_get_code
-// INPUTS: row, col: row and column of key that has been pressed
-//         modifiers_index: index into the keymap array, based on modifier state
-// OUTPUTS: returns a key code.
-//
-// DESCRIPTION: Given a key row and column, and an index based on modifier
-// state, return the appropriate keycode.
-//
-// SIDE EFFECTS: none
-//
-// SCOPE: public
-//
-// NOTES: Since the first value in each row is the physical row number, we add 1
-// to the column number to read the code for a given row and column number.
-//
-// COMPLEXITY: 1
-//
-asdf_keycode_t asdf_keymaps_get_code(const uint8_t row, const uint8_t col,
-                                     const uint8_t modifier_index) {
-    uint8_t num_cols = keymaps[modifier_index].cols;
-    asdf_keycode_t keycode = 0;
-
-    if (keymaps[modifier_index].cols && keymaps[modifier_index].rows) {
-        asdf_keycode_t(*keycode_matrix)[num_cols] =
-            (void *)(keymaps[modifier_index].matrix);
-        keycode = FLASH_READ_MATRIX_ELEMENT(keycode_matrix, row, col);
-    }
-    return keycode;
-}
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
