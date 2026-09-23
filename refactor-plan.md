@@ -263,11 +263,13 @@ Exit criteria:
 - Change generated setup files to produce a descriptor registry.
 - Store only the selected descriptor/index and mutable runtime state in
   `asdf_t`.
-- Classify actions as edge-triggered events or replayable level/configuration
-  state. Replay eligibility must be explicit descriptor metadata rather than an
-  incidental property of an action number.
-- On keymap selection, replay only actions marked as safe configuration state;
-  never replay user hooks, output pulses, or other edge-triggered actions.
+- Keymap selection resets runtime state (modifiers, repeat, last key, virtual
+  outputs, hooks) rather than replaying held keys, then re-applies only the
+  configuration actions of held switches (keymap select, strobe polarity,
+  autorepeat select). Other held keys are not re-activated. This is already
+  implemented, with configuration identified by action number
+  (`asdf_is_configuration_action`); move that classification into explicit
+  descriptor metadata.
 - Synchronize initial virtual outputs only after the new descriptor's complete
   virtual-to-physical binding set has been installed.
 - Validate equal dimensions across modifier maps where required.
@@ -442,9 +444,9 @@ Accordingly:
 
 ### Behavioral drift
 
-Debounce, repeat, Shift Lock, map-switch action replay, line-ending conversion,
-and output timing contain implicit assumptions. Characterization and simavr
-trace tests must precede structural changes.
+Debounce, repeat, Shift Lock, map-switch reset and configuration, line-ending
+conversion, and output timing contain implicit assumptions. Characterization
+and simavr trace tests must precede structural changes.
 
 ### AVR flash and RAM growth
 
@@ -478,8 +480,9 @@ The refactor is complete when:
 - No incompatible function-pointer casts remain in first-party code.
 - Core processing is nonblocking.
 - Invalid public indices cannot access state outside their owning tables.
-- Keymap selection replays only explicitly marked configuration actions and
-  cannot invoke edge-triggered hooks or pulses as an initialization side effect.
+- Keymap selection resets runtime state, re-applies only explicitly marked
+  configuration actions, and cannot invoke edge-triggered hooks or pulses as an
+  initialization side effect.
 - LF-to-CRLF conversion cannot leave an unreported partial sequence.
 - Existing host and simavr behavior is preserved except for explicitly approved
   corrections.

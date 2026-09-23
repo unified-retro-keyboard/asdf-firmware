@@ -27,6 +27,7 @@
 #include "asdf_hook.h"
 #include "asdf_keymap_setup.h"
 #include "asdf_modifiers.h"
+#include "asdf_repeat.h"
 #include "asdf_virtual.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -115,6 +116,7 @@ uint8_t asdf_keymaps_num_cols(void) {
 // DESCRIPTION: Reset keymaps to initial state:
 //              - Clear all keycode mapping matrices.
 //              - Clear all virtual devices
+//              - Reset modifier and repeat state.
 //              - Reset all hooks to default state.
 //
 // SIDE EFFECTS: see DESCRIPTION
@@ -133,6 +135,11 @@ static void asdf_keymaps_reset(void) {
     // Clear virtual devices
     asdf_virtual_init();
 
+    // Reset modifiers and repeat state, so each keymap starts from a known
+    // state regardless of the keymap it replaces.
+    asdf_modifiers_init();
+    asdf_repeat_init();
+
     // Reset hooks
     asdf_hook_init();
 }
@@ -144,14 +151,13 @@ static void asdf_keymaps_reset(void) {
 // DESCRIPTION: accepts a index value.
 // 1) assign the value to the global (to the module) current_keyboard_index
 // variable
-// 2) execute the architecture-dependent init routine, to undo any
-// settings
-//    from the previous keymap
+// 2) execute the architecture-dependent init routine, and reset keymaps,
+// virtual devices, modifiers, repeat state, and hooks, to undo any settings
+// from the previous keymap
 // 3) execute the keymap-specific setup routine.
-// 4) Iterate over the most recent cached key switch states and apply any
-// actions required by the current set of switch states. For example, a shift
-// key held down should invoke shift mode, and any DIP switch settings should be
-// applied.
+// 4) Re-apply the configuration actions of held switches (DIP switch keymap
+// select, strobe polarity, autorepeat select). Other held keys, such as a held
+// SHIFT, are not re-activated.
 // 5) Apply any initial virtual outputs to the hardware by calling
 // asdf_virtual_sync()
 //
@@ -175,8 +181,9 @@ void asdf_keymaps_switch(uint8_t index) {
 
         asdf_keymap_setup(index);
 
-        // Ensure DIP/action state persists across map changes.
-        asdf_apply_all_actions();
+        // Re-apply DIP/configuration switches; other held keys are not
+        // re-activated.
+        asdf_apply_configuration();
 
         // Apply the initial virtual device settings
         asdf_virtual_sync();
