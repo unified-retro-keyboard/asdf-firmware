@@ -9,6 +9,7 @@
 #include "asdf_simavr_io_select.h"
 #include "sim.h"
 #include "io.h"
+#include "run.h"
 #include "capture.h"
 #include "sim_assert.h"
 #include "vcd.h"
@@ -19,6 +20,16 @@
 #include "keymap_data/asdf_simavr_test_apple2_caps.h"
 #include "keymap_data/asdf_simavr_test_sol.h"
 #include "keymap_data/asdf_simavr_test_ace1000.h"
+
+/* Latency mode: presses sampled across one scan tick; the longest accepted
+ * press-to-output time (the worst case measured at v1.7.1 is 19.9 ms, sol on
+ * atmega1280, against 10 ms of debounce); and how long to wait for any output
+ * before the sample fails. */
+#define SIM_LATENCY_SAMPLES 20
+#define SIM_LATENCY_MAX_MS 25
+#define SIM_LATENCY_LIMIT_MS 50
+
+static int pred_capture_nonempty(void *ctx) { (void)ctx; return cap_count() > 0; }
 
 static void usage(const char *argv0)
 {
@@ -32,7 +43,8 @@ static void usage(const char *argv0)
         "  --verbose   log every captured output byte\n"
         "  --vcd PATH  dump VCD of watched pins to PATH\n"
         "  --gdb PORT  start simavr gdb stub on PORT and wait for attach\n"
-        "  --mode M    events (default) | identity | string | out2 | repeat\n",
+        "  --mode M    events (default) | identity | string | out2 | repeat\n"
+        "              | latency\n",
         argv0);
     exit(2);
 }
@@ -66,7 +78,7 @@ static args_t parse_args(int argc, char **argv)
     if (!a.mode) a.mode = "events";
     if (strcmp(a.mode, "events") && strcmp(a.mode, "identity") &&
         strcmp(a.mode, "string") && strcmp(a.mode, "out2") &&
-        strcmp(a.mode, "repeat")) {
+        strcmp(a.mode, "repeat") && strcmp(a.mode, "latency")) {
         fprintf(stderr, "unknown mode: %s\n", a.mode);
         usage(argv[0]);
     }
@@ -467,6 +479,81 @@ int main(int argc, char **argv)
                "at cycle %" PRIu64 "\n",
                a.target, a.keymap, io->out2_port, io->out2_bit, out2_edges,
                io->led2_port, io->led2_bit, (uint64_t)cpu->cycle);
+        return 0;
+    }
+
+    if (!strcmp(a.mode, "latency")) {
+        /* Key-registration latency: time from a key press to the first strobe
+         * edge of its code. Each sample shifts the press by a fraction of the
+         * 1 ms scan tick, so the samples cover the full tick phase. */
+        const sim_keymap_test_t *km = pick_keymap(a.keymap);
+        const sim_event_t *e = 0;
+        if (km) {
+            for (int i = 0; i < km->num_events && !e; i++)
+                if (km->events[i].with_modifier == SIM_MOD_NONE) e = &km->events[i];
+        }
+        if (!e) {
+            fprintf(stderr, "FAIL: no unmodified event for keymap %s\n", a.keymap);
+            vcd_end();
+            return 1;
+        }
+
+        set_dip(km->dip_value);
+        if (sim_wait_ms(cpu, km->boot_scan_ticks, io->cpu_frequency_hz) < 0) {
+            fprintf(stderr, "FAIL: cpu halted during latency boot wait\n");
+            vcd_end();
+            return 1;
+        }
+
+        const uint64_t cycles_per_ms = io->cpu_frequency_hz / 1000;
+        uint64_t min_cycles = UINT64_MAX, max_cycles = 0;
+
+        for (int i = 0; i < SIM_LATENCY_SAMPLES; i++) {
+            cap_clear();
+            if (sim_run_for(cpu, (cycles_per_ms * i) / SIM_LATENCY_SAMPLES) < 0) {
+                fprintf(stderr, "FAIL: cpu halted before latency sample %d\n", i);
+                vcd_end();
+                return 1;
+            }
+
+            uint64_t pressed_at = cpu->cycle;
+            matrix_press(e->row, e->col);
+            if (sim_run_until(cpu, pred_capture_nonempty, 0,
+                              cycles_per_ms * SIM_LATENCY_LIMIT_MS) != 1) {
+                fprintf(stderr,
+                        "FAIL: %s/%s latency sample %d: no output within %d ms\n",
+                        a.target, a.keymap, i, SIM_LATENCY_LIMIT_MS);
+                vcd_end();
+                return 1;
+            }
+            asdf_cap_record_t r;
+            cap_pop(&r);
+            if (r.byte != e->expected) {
+                fprintf(stderr, "FAIL: %s/%s latency sample %d: got 0x%02x, expected 0x%02x\n",
+                        a.target, a.keymap, i, r.byte, e->expected);
+                vcd_end();
+                return 1;
+            }
+
+            uint64_t latency = r.cycle - pressed_at;
+            if (latency < min_cycles) min_cycles = latency;
+            if (latency > max_cycles) max_cycles = latency;
+
+            matrix_release(e->row, e->col);
+            sim_wait_ms(cpu, 50, io->cpu_frequency_hz);
+        }
+
+        vcd_end();
+        if (max_cycles > cycles_per_ms * SIM_LATENCY_MAX_MS) {
+            fprintf(stderr, "FAIL: %s/%s key latency max %.2f ms exceeds %d ms\n",
+                    a.target, a.keymap, (double)max_cycles / cycles_per_ms,
+                    SIM_LATENCY_MAX_MS);
+            return 1;
+        }
+        printf("OK: %s/%s key latency min %.2f ms, max %.2f ms over %d presses\n",
+               a.target, a.keymap,
+               (double)min_cycles / cycles_per_ms, (double)max_cycles / cycles_per_ms,
+               SIM_LATENCY_SAMPLES);
         return 0;
     }
 

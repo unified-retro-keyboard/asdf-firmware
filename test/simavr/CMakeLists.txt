@@ -79,7 +79,7 @@ foreach(_row ${_target_rows})
 endforeach()
 message(STATUS "simavr targets (from targets.csv): ${SIMAVR_TARGETS}")
 set(SIMAVR_KEYMAPS classic classic_caps apple2 apple2_caps sol ace1000)
-set(SIMAVR_MODES   events identity string)
+set(SIMAVR_MODES   events identity string latency)
 
 foreach(tgt ${SIMAVR_TARGETS})
   foreach(km ${SIMAVR_KEYMAPS})
