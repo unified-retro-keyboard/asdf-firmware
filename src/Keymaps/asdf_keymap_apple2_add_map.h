@@ -5,7 +5,7 @@
 //
 // asdf_keymap_apple_add_map.h
 //
-// defines keymap matrices and add_map() function for apple2 layouts
+// defines keymap matrices for apple2 layouts
 //
 // Copyright 2019 David Fenyes
 //
@@ -32,6 +32,7 @@
 #define ASDF_KEYMAP_APPLE_ADD_MAP_H
 
 #include "asdf_keymap_defs_dipswitch.h"
+#include "asdf_arch.h"
 #include "asdf_modifiers.h"
 
 #define ASDF_APPLE2_NUM_ROWS 9 // DIP switches are row 8 (zero-based)
@@ -60,19 +61,20 @@
 #define APPLE_LEFT_ARROW ASCII_CTRL_H
 #define APPLE_RIGHT_ARROW ASCII_CTRL_U
 
-typedef enum {
-  APPLE_PLAIN_MAP,
-  APPLE_CAPS_MAP,
-  APPLE_SHIFT_MAP,
-  APPLE_CAPS_SHIFT_MAP,
-  APPLE_CTRL_MAP
-} apple_map_index_t;
+// Keycode matrices, one per modifier state, used by the Apple II keymap
+// descriptors.
+typedef asdf_keycode_t apple_keycode_matrix_t[ASDF_APPLE2_NUM_ROWS][ASDF_APPLE2_NUM_COLS];
+
+extern const FLASH apple_keycode_matrix_t apple_plain_matrix;
+extern const FLASH apple_keycode_matrix_t apple_shift_matrix;
+extern const FLASH apple_keycode_matrix_t apple_caps_shift_matrix;
+extern const FLASH apple_keycode_matrix_t apple_caps_matrix;
+extern const FLASH apple_keycode_matrix_t apple_ctrl_matrix;
 
 
 // function prototypes
 void applesoft_keyboard_test(void);
 
-void apple_add_map(const apple_map_index_t map_index, modifier_index_t modifier_index);
 
 #endif /* !defined (ASDF_KEYMAP_APPLE_ADD_MAP_H) */
 

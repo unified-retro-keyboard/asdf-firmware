@@ -70,7 +70,6 @@
 
 #define ASDF_APPLE2_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
-typedef asdf_keycode_t apple_keycode_matrix_t[ASDF_APPLE2_NUM_ROWS][ASDF_APPLE2_NUM_COLS];
 
 
 const FLASH apple_keycode_matrix_t apple_plain_matrix = {
@@ -149,31 +148,10 @@ const FLASH apple_keycode_matrix_t apple_ctrl_matrix = {
 };
 
 
-static const apple_keycode_matrix_t *apple_maps[] = {
-  [APPLE_CAPS_MAP] = &apple_caps_matrix,
-  [APPLE_PLAIN_MAP] = &apple_plain_matrix,
-  [APPLE_SHIFT_MAP] = &apple_shift_matrix,
-  [APPLE_CTRL_MAP] = &apple_ctrl_matrix,
-  [APPLE_CAPS_SHIFT_MAP] = &apple_caps_shift_matrix
-};
-
 void applesoft_keyboard_test(void)
 {
     asdf_print("10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
 }
-
-void apple_add_map(const apple_map_index_t map_index,
-                       modifier_index_t modifier_index)
-{
-
-  asdf_keycode_t (*matrix)[ASDF_APPLE2_NUM_COLS] =
-    (asdf_keycode_t (*)[ASDF_APPLE2_NUM_COLS]) apple_maps[map_index];
-
-    asdf_keymaps_add_map(&matrix[0][0], modifier_index, (uint8_t) ASDF_APPLE2_NUM_ROWS,
-                       (uint8_t) ASDF_APPLE2_NUM_COLS);
-}
-
-
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

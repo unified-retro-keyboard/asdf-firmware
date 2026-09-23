@@ -41,6 +41,10 @@ static asdf_keycode_map_t keymaps[ASDF_MOD_NUM_MODIFIERS] = {};
 // index can be performed.
 static uint8_t current_keyboard_index;
 
+// Keymap requested by the keymap select actions (DIP switches). It is applied
+// at the end of the scan in which it changes, by asdf_keymaps_apply_request().
+static uint8_t requested_keyboard_index;
+
 // PROCEDURE: asdf_keymaps_add_map
 // INPUTS: (asdf_keycode_t *) - pointer to the keycode matrix to add in to map
 //         (uint8_t) modifier_index - the modifier value for the keycode matrix
@@ -50,8 +54,8 @@ static uint8_t current_keyboard_index;
 //
 // OUTPUTS: none
 //
-// DESCRIPTION: Called by keymap building modules. This routine adds a keymap to
-// the current setup function into the keymap setup array.
+// DESCRIPTION: Called when a keymap descriptor is applied. Sets the keycode
+// matrix used for one modifier state.
 //
 // SIDE EFFECTS:
 //
@@ -153,8 +157,7 @@ static void asdf_keymaps_reset(void) {
 //
 // DESCRIPTION: Configures the keyboard from a keymap descriptor, in the order
 // documented for asdf_keymap_t: modifier maps, print delay, hook bindings,
-// virtual output assignments, flags, platform, and finally the transitional
-// setup function.
+// virtual output assignments, flags, and platform.
 //
 // SIDE EFFECTS: see DESCRIPTION
 //
@@ -198,10 +201,6 @@ static void asdf_keymaps_apply(const asdf_keymap_t *keymap) {
     if (k.platform) {
         asdf_install_platform(k.platform);
     }
-
-    if (k.setup) {
-        k.setup();
-    }
 }
 
 // PROCEDURE: asdf_keymaps_switch
@@ -235,6 +234,7 @@ void asdf_keymaps_switch(uint8_t index) {
 
     if (asdf_keymap_valid(index)) {
         current_keyboard_index = index;
+        requested_keyboard_index = index;
 
         asdf_arch_init();
         asdf_keymaps_reset();
@@ -288,6 +288,24 @@ void asdf_keymaps_select(uint8_t index) {
 //
 void asdf_keymaps_init(void) { asdf_keymaps_switch(0); }
 
+// PROCEDURE: asdf_keymaps_apply_request
+// INPUTS: none
+// OUTPUTS: none
+//
+// DESCRIPTION: If the keymap select actions have requested a different keymap,
+// switch to it. Called at the end of each scan, so that a keymap never changes
+// part-way through a scan, and DIP switch bits that change in the same scan
+// select the final keymap directly rather than passing through intermediate
+// keymaps. A request for a keymap that does not exist is ignored.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_keymaps_apply_request(void) { asdf_keymaps_select(requested_keyboard_index); }
+
 // PROCEDURE: asdf_keymaps_map_select_0_clear
 // INPUTS: none
 // OUTPUTS: none
@@ -304,7 +322,7 @@ void asdf_keymaps_init(void) { asdf_keymaps_switch(0); }
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_0_clear(void) {
-    asdf_keymaps_select(current_keyboard_index & (~ASDF_KEYMAP_BIT_0));
+    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_0;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_0_set
@@ -323,7 +341,7 @@ void asdf_keymaps_map_select_0_clear(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_0_set(void) {
-    asdf_keymaps_select(current_keyboard_index | ASDF_KEYMAP_BIT_0);
+    requested_keyboard_index |= ASDF_KEYMAP_BIT_0;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_1_clear
@@ -342,7 +360,7 @@ void asdf_keymaps_map_select_0_set(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_1_clear(void) {
-    asdf_keymaps_select(current_keyboard_index & (~ASDF_KEYMAP_BIT_1));
+    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_1;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_1_set
@@ -361,7 +379,7 @@ void asdf_keymaps_map_select_1_clear(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_1_set(void) {
-    asdf_keymaps_select(current_keyboard_index | ASDF_KEYMAP_BIT_1);
+    requested_keyboard_index |= ASDF_KEYMAP_BIT_1;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_2_clear
@@ -380,7 +398,7 @@ void asdf_keymaps_map_select_1_set(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_2_clear(void) {
-    asdf_keymaps_select(current_keyboard_index & (~ASDF_KEYMAP_BIT_2));
+    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_2;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_2_set
@@ -399,7 +417,7 @@ void asdf_keymaps_map_select_2_clear(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_2_set(void) {
-    asdf_keymaps_select(current_keyboard_index | ASDF_KEYMAP_BIT_2);
+    requested_keyboard_index |= ASDF_KEYMAP_BIT_2;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_3_clear
@@ -418,7 +436,7 @@ void asdf_keymaps_map_select_2_set(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_3_clear(void) {
-    asdf_keymaps_select(current_keyboard_index & (~ASDF_KEYMAP_BIT_3));
+    requested_keyboard_index &= ~ASDF_KEYMAP_BIT_3;
 }
 
 // PROCEDURE: asdf_keymaps_map_select_3_set
@@ -437,7 +455,7 @@ void asdf_keymaps_map_select_3_clear(void) {
 // COMPLEXITY: 1
 //
 void asdf_keymaps_map_select_3_set(void) {
-    asdf_keymaps_select(current_keyboard_index | ASDF_KEYMAP_BIT_3);
+    requested_keyboard_index |= ASDF_KEYMAP_BIT_3;
 }
 
 // PROCEDURE: asdf_keymaps_get_code

@@ -630,6 +630,9 @@ void asdf_keyscan(void) {
             row_key_state >>= 1;
         }
     }
+
+    // Apply any keymap change requested during this scan.
+    asdf_keymaps_apply_request();
 }
 
 // PROCEDURE: asdf_is_configuration_action

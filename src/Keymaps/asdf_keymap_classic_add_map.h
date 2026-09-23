@@ -5,7 +5,7 @@
 //
 // asdf_keymap_classic_add_map.h
 //
-// defines keymap matrices and add_map() function for classic layouts
+// defines keymap matrices for classic layouts
 //
 // Copyright 2019 David Fenyes
 //
@@ -31,18 +31,17 @@
 #if !defined(ASDF_KEYMAP_CLASSIC_ADD_MAP_H)
 #define ASDF_KEYMAP_CLASSIC_ADD_MAP_H
 
-#include "asdf_modifiers.h"
+#include "asdf_arch.h"
+#include "asdf_keymap_classic.h"
 
-typedef enum {
-  CLASSIC_PLAIN_MAP,
-  CLASSIC_CAPS_MAP,
-  CLASSIC_SHIFT_MAP,
-  CLASSIC_CTRL_MAP,
-} classic_map_index_t;
+// Keycode matrices, one per modifier state, used by the classic keymap
+// descriptors.
+typedef asdf_keycode_t classic_keycode_matrix_t[CLASSIC_NUM_ROWS][CLASSIC_NUM_COLS];
 
-
-// function prototypes
-void classic_add_map(const classic_map_index_t map_index, modifier_index_t modifier_index);
+extern const FLASH classic_keycode_matrix_t classic_plain_matrix;
+extern const FLASH classic_keycode_matrix_t classic_shift_matrix;
+extern const FLASH classic_keycode_matrix_t classic_caps_matrix;
+extern const FLASH classic_keycode_matrix_t classic_ctrl_matrix;
 
 #endif /* !defined (ASDF_KEYMAP_CLASSIC_ADD_MAP_H) */
 

@@ -1,27 +1,32 @@
 * Keymap architecture
 ** Keymap definition modules are in src/Keymaps
-** Each keymap has its own keymap setup routine
-*** void setup_mapname_keymap(void) - keymap setup function
-**** register a keycode map for each modifier combination
+** Each keymap is described by one immutable descriptor
+*** const asdf_keymap_t FLASH mapname_keymap - keymap descriptor (asdf_keymaps.h)
+**** a keycode map for each modifier state (plain, shift, caps, ctrl)
 ***** The keycode maps are in flash (ROM)
-**** set up virtual devices for the keymap
+***** all maps share the descriptor's row and column count
+**** the delay between system message characters
+**** hook bindings: table of { hook id, function }
+**** virtual output assignments: table of asdf_virtual_initializer_t
 ***** virtual device to physical device mapping
-***** associated virtual device function on activate/deactivate
+***** associated virtual device function on activate
 ***** initial state
-**** set up function hooks used by keymap
+**** flags: start with CAPSLOCK on, start with negative strobe
+**** optional platform, for keymaps that need special scanning or output
+** The descriptor and its tables are stored in flash
+** Keymap registry
+*** keymap_list.cmake lists each keymap as <name:number>
+*** The build generates a flash table of descriptor pointers by number
+    (asdf_keymap_setup.c.in); asdf_keymap_descriptor(number) looks one up.
 
-** Keymap definition API
-*** mapping keys
-    #include "asdf_keymaps.h" 
-**** asdf_keymaps_add_map() - called from 
-     Assigns a specified keymap matrix (ptr to FLASH) to a given keymap and modifier type.
-*** adding virtual devices - called from keymap setup routine
-**** asdf_virtual_init()
-***** Clears the virtual device table for the keymap
-***** initialize first entry in virtual device table to NULL
-**** asdf_virtual_add_device()
-***** Accept a virtual device code, a physical device code, a default function, and a default initial value, and create a new entry in the virtual device table.
-***** increment the virtual device table pointer and set next (last) entry to NULL
+** Selecting a keymap (asdf_keymaps_switch)
+*** reset the architecture and all runtime state (maps, virtual outputs,
+    modifiers, repeat, hooks, platform)
+*** apply the descriptor, in field order: maps, print delay, hooks, virtual
+    outputs, flags, platform
+*** re-apply the configuration actions of held switches (keymap select,
+    strobe polarity, autorepeat select); other held keys are not re-activated
+*** drive every output to its initial value (asdf_virtual_sync)
 
 
 * DIP SWITCHES
@@ -30,4 +35,3 @@
   keymap is consistent with the presumed initial state of the DIP switches. If
   the DIP switches are not set to Keymap 0, then their position will be detected
   as keypresses, and the correct keymap will be set.
-

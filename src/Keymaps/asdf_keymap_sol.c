@@ -122,70 +122,51 @@ static const FLASH asdf_keycode_t sol_ctrl_map[ASDF_SOL_NUM_ROWS][ASDF_SOL_NUM_C
 };
 
 
-// PROCEDURE: sol_add_map
-// INPUTS: asdf_keycode_t (*matrix) - a SOL_NUM_ROWS x SOL_NUM_COLS matrix of keycodes for each physical row/column pair
-//         modifier_index_t modifier index - the modifier state corresponding to the keycode matrix
-// OUTPUTS: none
-// DESCRIPTION: Passes the keycode matrix and modifier state through to
-// asdf_keymaps_add_map(), along with the row/column dimensions.
-//
-// SIDE EFFECTS: the matrix is added to the keymap
-//
-// SCOPE: private
-//
-// COMPLEXITY: 1
-//
-static void sol_add_map(const asdf_keycode_t (*matrix)[ASDF_SOL_NUM_COLS],
-                        modifier_index_t modifier_index)
-{
-  asdf_keymaps_add_map(&matrix[0][0], modifier_index, (uint8_t) ASDF_SOL_NUM_ROWS,
-                       (uint8_t) ASDF_SOL_NUM_COLS);
-}
-
-
 static void sol_id_message(void)
 {
   asdf_print("[Keybd: Sol-20]");
 }
 
-static void setup_sol_keymap(void)
-{
-  sol_add_map(sol_plain_map, MOD_PLAIN_MAP);
-  sol_add_map(sol_caps_map, MOD_CAPS_MAP);
-  sol_add_map(sol_shift_map, MOD_SHIFT_MAP);
-  sol_add_map(sol_ctrl_map, MOD_CTRL_MAP);
+static const asdf_hook_binding_t FLASH sol_hooks[] = {
+  { SOL_ID_MESSAGE_HOOK, sol_id_message },
+};
 
-  asdf_set_print_delay(SOL_PRINT_DELAY);
-
+static const asdf_virtual_initializer_t FLASH sol_outputs[] = {
   // Set up the ALL CAPS LED, default = off
-  asdf_virtual_assign(VCAPS_LED, SOL_KBD_LED_UPPERCASE, V_NOFUNC, SOL_KBD_LED_OFF);
+  { VCAPS_LED, SOL_KBD_LED_UPPERCASE, V_NOFUNC, SOL_KBD_LED_OFF },
 
   // Set up the SHIFT LED, default = off
-  asdf_virtual_assign(VSHIFT_LED, SOL_KBD_LED_SHIFTLOCK, V_NOFUNC, SOL_KBD_LED_OFF);
+  { VSHIFT_LED, SOL_KBD_LED_SHIFTLOCK, V_NOFUNC, SOL_KBD_LED_OFF },
 
   // Set up the LOCAL LED and output, default LED=OFF, TTL output HIGH. Both LED
   // and TTL out are bound to the save virtual device.
-  asdf_virtual_assign(SOL_KBD_VLOCAL, SOL_KBD_TTLOUT_LOCAL, V_TOGGLE, SOL_KBD_TTL_HIGH);
-  asdf_virtual_assign(SOL_KBD_VLOCAL, SOL_KBD_LED_LOCAL, V_TOGGLE, SOL_KBD_LED_OFF);
+  { SOL_KBD_VLOCAL, SOL_KBD_TTLOUT_LOCAL, V_TOGGLE, SOL_KBD_TTL_HIGH },
+  { SOL_KBD_VLOCAL, SOL_KBD_LED_LOCAL, V_TOGGLE, SOL_KBD_LED_OFF },
 
-  // Set up the RESET output, produce a short pulse when activated. Default output HIGH
-  asdf_virtual_assign(SOL_KBD_VRESET, SOL_KBD_TTLOUT_RESET, V_PULSE_SHORT, SOL_KBD_TTL_HIGH);
+  // Set up the RESET output, produce a short pulse when activated. Default
+  // output HIGH
+  { SOL_KBD_VRESET, SOL_KBD_TTLOUT_RESET, V_PULSE_SHORT, SOL_KBD_TTL_HIGH },
 
-  // Set up the BREAK output, produce a long pulse when activated, default output high
-  asdf_virtual_assign(SOL_KBD_VBREAK, SOL_KBD_TTLOUT_BREAK, V_PULSE_LONG, SOL_KBD_TTL_HIGH);
+  // Set up the BREAK output, produce a long pulse when activated, default
+  // output high
+  { SOL_KBD_VBREAK, SOL_KBD_TTLOUT_BREAK, V_PULSE_LONG, SOL_KBD_TTL_HIGH },
+};
 
-  // Activate the ALL CAPS mode to emulate the original keyboard:
-  asdf_modifier_capslock_activate();
-
-  // Configure negative strobe
-  asdf_arch_set_neg_strobe();
-
-  asdf_hook_assign(SOL_ID_MESSAGE_HOOK, sol_id_message);
-}
-
-// Keymap descriptor. The keymap is still configured procedurally by setup_sol_keymap().
+// Start in ALL CAPS mode, to emulate the original keyboard, with a negative
+// strobe.
 const asdf_keymap_t FLASH sol_keymap = {
-  .setup = setup_sol_keymap,
+  .maps = { [MOD_PLAIN_MAP] = &sol_plain_map[0][0],
+            [MOD_SHIFT_MAP] = &sol_shift_map[0][0],
+            [MOD_CAPS_MAP] = &sol_caps_map[0][0],
+            [MOD_CTRL_MAP] = &sol_ctrl_map[0][0] },
+  .rows = ASDF_SOL_NUM_ROWS,
+  .cols = ASDF_SOL_NUM_COLS,
+  .print_delay_ms = SOL_PRINT_DELAY,
+  .flags = ASDF_KEYMAP_CAPS_ON | ASDF_KEYMAP_NEGATIVE_STROBE,
+  .num_hooks = ASDF_NUM_ELEMENTS(sol_hooks),
+  .hooks = sol_hooks,
+  .num_outputs = ASDF_NUM_ELEMENTS(sol_outputs),
+  .outputs = sol_outputs,
 };
 
 

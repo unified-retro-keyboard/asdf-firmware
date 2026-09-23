@@ -245,7 +245,9 @@ Exit criteria:
 - Replace the physical handler table with a typed platform output operation or
   a compact typed driver table.
 - Move data polarity and other per-device configuration into platform-owned
-  state.
+  state. Deferred: polarity stays in each architecture adapter until Phase 7
+  makes adapters per-instance, and the interrupt operations
+  (`irq_disable`/`irq_restore`) are added with their first user in Phase 6.
 - Keep user actions separate from mandatory platform operations.
 - Remove `asdf_hook_get()` once all incompatible uses have migrated.
 
@@ -267,14 +269,17 @@ Exit criteria:
   outputs, hooks) rather than replaying held keys, then re-applies only the
   configuration actions of held switches (keymap select, strobe polarity,
   autorepeat select). Other held keys are not re-activated. This is already
-  implemented, with configuration identified by action number
-  (`asdf_is_configuration_action`); move that classification into explicit
-  descriptor metadata.
+  implemented. Configuration is identified by action type
+  (`asdf_is_configuration_action`) rather than descriptor metadata, since
+  whether an action is configuration does not depend on the keymap.
 - Synchronize initial virtual outputs only after the new descriptor's complete
   virtual-to-physical binding set has been installed.
 - Validate equal dimensions across modifier maps where required.
 - Preserve flash placement/`PROGMEM` behavior on AVR.
-- Apply map changes only after the current scan completes.
+- Apply map changes only after the current scan completes: keymap select
+  actions record a request, applied at the end of the scan, so DIP switch bits
+  that change together select the final keymap without passing through
+  intermediate keymaps.
 
 Exit criteria:
 
@@ -323,7 +328,8 @@ Exit criteria:
   pulse, as bounded busy-waits in the platform adapter. They are far shorter
   than the scan tick, so scheduling them would add complexity, or stretch them
   to a full tick, for no practical gain.
-- Defer keymap changes and other structural mutations until a scan boundary.
+- Defer any remaining structural mutations until a scan boundary (keymap
+  changes are already deferred; see Phase 4).
 - Define behavior for large elapsed-time jumps and counter saturation.
 
 Exit criteria:

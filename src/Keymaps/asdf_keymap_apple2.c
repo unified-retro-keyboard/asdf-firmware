@@ -52,40 +52,43 @@ void apple2_id_message(void)
   asdf_print("[Keymap: Apple 2 (u/l case)]");
 }
 
-static void setup_apple2_keymap(void)
-{
-  asdf_set_print_delay(APPLE2_PRINT_DELAY);
+static const asdf_hook_binding_t FLASH apple2_hooks[] = {
+  { APPLESOFT_KEYBOARD_TEST, applesoft_keyboard_test },
+  { APPLE2_ID_MESSAGE, apple2_id_message },
+};
 
-
-  apple_add_map(APPLE_PLAIN_MAP, MOD_PLAIN_MAP);
-  apple_add_map(APPLE_CAPS_MAP, MOD_CAPS_MAP);
-  apple_add_map(APPLE_SHIFT_MAP, MOD_SHIFT_MAP);
-  apple_add_map(APPLE_CTRL_MAP, MOD_CTRL_MAP);
-
-  asdf_hook_assign(APPLESOFT_KEYBOARD_TEST, applesoft_keyboard_test);
-  asdf_hook_assign(APPLE2_ID_MESSAGE, apple2_id_message);
-
+static const asdf_virtual_initializer_t FLASH apple2_outputs[] = {
   // Attach the physical POWER LED as the CAPS LED. Assign no triggered
   // function, and initialize to initial state of the CAPS logic. The CAPS LED
   // will be controlled by the state of the CAPSLOCK logic.
-
-  asdf_virtual_assign(VCAPS_LED, APPLE_POWER_LED, V_NOFUNC, APPLE_POWER_LED_INIT_VALUE);
+  { VCAPS_LED, APPLE_POWER_LED, V_NOFUNC, APPLE_POWER_LED_INIT_VALUE },
 
   // Assign CAPS LED to off (disabled)
-  asdf_virtual_assign(APPLE_VIRTUAL_DISABLED_LED, APPLE_DISABLED_LED, V_NOFUNC, APPLE_DISABLED_INIT_VALUE);
+  { APPLE_VIRTUAL_DISABLED_LED, APPLE_DISABLED_LED, V_NOFUNC, APPLE_DISABLED_INIT_VALUE },
 
-  // assign RESET output to the virtual RESET output, configure to produce a short pulse when activated
-  asdf_virtual_assign(APPLE_VIRTUAL_RESET, APPLE_RESET_OUTPUT, V_PULSE_SHORT, !APPLE_RESET_ACTIVE_VALUE);
+  // assign RESET output to the virtual RESET output, configure to produce a
+  // short pulse when activated
+  { APPLE_VIRTUAL_RESET, APPLE_RESET_OUTPUT, V_PULSE_SHORT, !APPLE_RESET_ACTIVE_VALUE },
 
-  // assign the CLRSCR output to the virtual CLRSCR output, configure to produce a long pulse when activated
-  asdf_virtual_assign(APPLE_VIRTUAL_CLR_SCR, APPLE_CLR_SCR_OUTPUT, V_PULSE_LONG, !APPLE_CLR_SCR_ACTIVE_VALUE);
+  // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
+  // a long pulse when activated
+  { APPLE_VIRTUAL_CLR_SCR, APPLE_CLR_SCR_OUTPUT, V_PULSE_LONG, !APPLE_CLR_SCR_ACTIVE_VALUE },
+};
 
-  asdf_modifier_capslock_activate(); // For Apple 2, start with CAPS active
-}
-
-// Keymap descriptor. The keymap is still configured procedurally by setup_apple2_keymap().
+// For Apple 2, start with CAPS active.
 const asdf_keymap_t FLASH apple2_keymap = {
-  .setup = setup_apple2_keymap,
+  .maps = { [MOD_PLAIN_MAP] = &apple_plain_matrix[0][0],
+            [MOD_SHIFT_MAP] = &apple_shift_matrix[0][0],
+            [MOD_CAPS_MAP] = &apple_caps_matrix[0][0],
+            [MOD_CTRL_MAP] = &apple_ctrl_matrix[0][0] },
+  .rows = ASDF_APPLE2_NUM_ROWS,
+  .cols = ASDF_APPLE2_NUM_COLS,
+  .print_delay_ms = APPLE2_PRINT_DELAY,
+  .flags = ASDF_KEYMAP_CAPS_ON,
+  .num_hooks = ASDF_NUM_ELEMENTS(apple2_hooks),
+  .hooks = apple2_hooks,
+  .num_outputs = ASDF_NUM_ELEMENTS(apple2_outputs),
+  .outputs = apple2_outputs,
 };
 
 
