@@ -308,8 +308,8 @@ Exit criteria:
   keymaps, output, and repeat events.
 - Hooks remain `void (void)` functions, so a hook cannot tell which keyboard
   fired it; the keymap ID-message hooks print to the default keyboard. The
-  typed user-action callback (see Typed platform interface) replaces them in
-  Phase 8. Physical outputs still drive shared hardware until Phase 7.
+  per-key press and release actions of Phase 8 replace them. Physical outputs
+  still drive shared hardware until Phase 7.
 
 Exit criteria:
 
@@ -362,7 +362,57 @@ Exit criteria:
 - AVR simavr behavior remains equivalent.
 - PIC32CM builds remain warning-clean and within memory limits.
 
-### Phase 8: Add the compatibility and hobbyist facade
+### Phase 8: Per-key press and release actions
+
+Replace each keymap matrix element, today a single keycode in which values of
+`ASDF_ACTION` (0xA0) and above name built-in actions, with a press action and
+a release action:
+
+```c
+typedef struct {
+  uint8_t press_fn;      // index into the action function table
+  uint8_t press_param;
+  uint8_t release_fn;
+  uint8_t release_param;
+} asdf_key_t;
+```
+
+- The functions are indices into one immutable table of typed action
+  functions in flash, not pointers, so each costs one byte. A function
+  receives the keyboard and its parameter, for example
+  `void (*)(asdf_t *kb, uint8_t param)`.
+- Sending a code becomes an action with the code as its parameter: a plain
+  key is press `insert_code(value)`, release `no_action`. A key can therefore
+  send any byte 0x00-0xFF. This removes the 0xA0 ceiling on output codes
+  (for example, host-specific codes such as the MCM/70 emulator's) and the
+  collision between codes and action numbers, including ACTION_NOTHING being
+  queued as a code.
+- Modifiers, repeat, keymap select, strobe polarity, virtual outputs, and
+  keymap-specific functions (ID messages, keyboard tests) become table
+  entries with parameters, replacing the numbered action codes, the
+  `ACTION_FN_n` / `ASDF_HOOK_USER_n` indirection, and `void (void)` hooks. A
+  keymap-specific function receives the keyboard that fired it.
+- Release behavior is explicit per key rather than implied by the action
+  code.
+- Whether an action is configuration (re-applied on a keymap switch) becomes
+  a property of its table entry.
+
+Cost: each matrix element grows from 1 to 4 bytes, so keymap flash grows
+roughly fourfold (a 9 x 8 keymap with four modifier maps goes from 288 to
+1152 bytes). The ATmega328P and ATmega2560 have ample flash. The ATmega88P
+may hold only one keymap, or be dropped under the AVR target policy; decide
+at this phase's size checkpoint.
+
+Exit criteria:
+
+- Every keymap is expressed in press/release actions, with simavr traces
+  unchanged except for intended corrections.
+- A key can send any code 0x00-0xFF.
+- No `void (void)` hooks or numbered action codes remain.
+- Per-target flash use is measured and each secondary target is kept or
+  dropped explicitly.
+
+### Phase 9: Add the compatibility and hobbyist facade
 
 - Provide the existing `asdf_init()`, `asdf_keyscan()`, and
   `asdf_next_code()` workflow as a thin optional wrapper around one explicitly
@@ -382,7 +432,7 @@ Exit criteria:
 - An embedding application can instantiate the core without linking the
   singleton facade.
 
-### Phase 9: Harden quality gates
+### Phase 10: Harden quality gates
 
 - Run host tests with AddressSanitizer and UndefinedBehaviorSanitizer.
 - Enable `-Wpedantic`, `-Wcast-function-type`, `-Wshadow`,
