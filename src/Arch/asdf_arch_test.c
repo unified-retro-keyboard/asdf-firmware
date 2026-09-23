@@ -110,11 +110,7 @@ static pulse_state_t pulse_transition_table[PD_ST_NUM_VALID_PULSE_STATES][NUM_PU
 static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES];
 static pulse_state_t pulses[ASDF_PHYSICAL_NUM_RESOURCES];
 
-static uint32_t delay_ms_calls;
-static uint16_t last_delay_ms;
 static uint8_t strobe_is_positive;
-
-
 
 static asdf_keycode_t code_register;
 static uint8_t code_sent;
@@ -528,61 +524,6 @@ void asdf_arch_pulse_delay(void)
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     pulses[i] = pulse_detect(pulses[i], PULSE_EVENT_DELAY);
   }
-}
-
-// PROCEDURE: asdf_arch_pulse_delay_long
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Emulates a long delay by advancing the pulse detector state machine
-// for each output.
-//
-// SIDE EFFECTS: see above.
-//
-// NOTES: Set ASDF_PULSE_DELAY_US in asdf_config.h
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_pulse_delay_long(void)
-{
-  asdf_arch_pulse_delay();
-}
-
-// PROCEDURE: asdf_arch_delay_ms
-// INPUTS: (uint16) delay_ms - the delay in msec.
-// OUTPUTS: none
-//
-// DESCRIPTION: Delays a specified number of milliseconds
-//
-// SIDE EFFECTS: see above.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_delay_ms(uint16_t delay_ms)
-{
-  delay_ms_calls++;
-  last_delay_ms = delay_ms;
-  asdf_arch_pulse_delay();
-}
-
-uint32_t asdf_arch_delay_ms_call_count(void)
-{
-  return delay_ms_calls;
-}
-
-uint16_t asdf_arch_delay_ms_last_value(void)
-{
-  return last_delay_ms;
-}
-
-void asdf_arch_delay_ms_reset_count(void)
-{
-  delay_ms_calls = 0;
-  last_delay_ms = 0;
 }
 
 // PROCEDURE: asdf_arch_pulse_delay_short

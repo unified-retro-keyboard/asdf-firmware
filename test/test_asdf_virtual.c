@@ -340,6 +340,36 @@ void test_invalid_virtual_output_is_ignored(void)
   TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
 }
 
+// A long pulse toggles its outputs, and toggles them back after
+// ASDF_PULSE_DELAY_LONG_MS ticks without blocking. Activating it again while
+// it is in progress does not restart it.
+void test_long_pulse_is_scheduled(void)
+{
+  asdf_virtual_state_t v;
+
+  asdf_virtual_init_r(&v);
+  asdf_virtual_assign_r(&v, VOUT1, PHYSICAL_OUT1, V_PULSE_LONG, 1);
+  asdf_virtual_sync_r(&v);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_OUT1));
+
+  asdf_virtual_activate_r(&v, VOUT1);
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_OUT1));
+
+  asdf_virtual_tick_r(&v, ASDF_PULSE_DELAY_LONG_MS - 10);
+  asdf_virtual_activate_r(&v, VOUT1); // ignored: pulse in progress
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_OUT1));
+
+  asdf_virtual_tick_r(&v, 9);
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_OUT1));
+
+  asdf_virtual_tick_r(&v, 1);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_OUT1));
+
+  // a later tick has no further effect
+  asdf_virtual_tick_r(&v, 100);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_OUT1));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -358,5 +388,6 @@ int main(void)
   RUN_TEST(test_cant_assign_real_output_twice);
   RUN_TEST(test_independent_virtual_states);
   RUN_TEST(test_invalid_virtual_output_is_ignored);
+  RUN_TEST(test_long_pulse_is_scheduled);
   return UNITY_END();
 }

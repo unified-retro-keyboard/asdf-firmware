@@ -64,8 +64,5 @@ void arch_delay_us(uint16_t us);
 // Shared public-API functions, identical for both variants (also declared in
 // the variant header, which mirrors the AVR reference header).
 uint8_t asdf_arch_tick(void);
-void asdf_arch_delay_ms(uint16_t delay_ms);
 void asdf_arch_pulse_delay_short(void);
-void asdf_arch_pulse_delay_long(void);
-
 #endif /* !defined (ASDF_ARCH_PIC32CM_COMMON_H) */

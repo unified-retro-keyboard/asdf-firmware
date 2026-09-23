@@ -46,4 +46,8 @@ void io_watch_reset(void);
 /* Transitions observed on a slot since the last io_watch_reset(). */
 unsigned io_watch_count(int slot);
 
+/* Cycle of the first (edge 0) or second (edge 1) transition on a slot since
+ * the last io_watch_reset(); 0 if it has not happened. */
+uint64_t io_watch_edge_cycle(int slot, int edge);
+
 #endif

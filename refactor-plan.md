@@ -246,8 +246,10 @@ Exit criteria:
   a compact typed driver table.
 - Move data polarity and other per-device configuration into platform-owned
   state. Deferred: polarity stays in each architecture adapter until Phase 7
-  makes adapters per-instance, and the interrupt operations
-  (`irq_disable`/`irq_restore`) are added with their first user in Phase 6.
+  makes adapters per-instance. The interrupt operations
+  (`irq_disable`/`irq_restore`) turned out not to be needed: only the
+  architecture's tick drain shares state with an interrupt, and it masks
+  interrupts itself (Phase 6).
 - Keep user actions separate from mandatory platform operations.
 - Remove `asdf_hook_get()` once all incompatible uses have migrated.
 
@@ -335,6 +337,12 @@ Exit criteria:
 - Defer any remaining structural mutations until a scan boundary (keymap
   changes are already deferred; see Phase 4).
 - Define behavior for large elapsed-time jumps and counter saturation.
+- Done as: the tick interrupt counts elapsed ticks (saturating at 255), read
+  and cleared with interrupts masked. `asdf_process()` scans once per call and
+  advances debounce, repeat, pacing, and pulses by the elapsed ticks, so timing
+  follows real time even when a scan takes longer than a tick (the 8 MHz
+  ATmega328P scans in about 1.3 ms). The 10 us strobe and short pulse remain
+  bounded busy-waits in the adapters.
 
 Exit criteria:
 

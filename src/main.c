@@ -38,11 +38,11 @@
 // NOTES: This code just initializes the hardware, and then loops. The loop
 // includes:
 //
-//     - Check every 1 ms (or whatever the tick is set to), calls the keyboard
-//       scan routine.
-//
-//     - Check every pass through if any characters are buffered to send. If so,
-//       send them.
+//     - Collect the 1 ms ticks counted by the timer interrupt since the last
+//       pass, and run the keyboard for that many ticks. For each tick, the
+//       keyboard advances its timers, sends at most one buffered character,
+//       and scans the key matrix. Ticks that elapse while a pass is busy are
+//       caught up on the next pass, so no time is lost. Nothing blocks.
 //
 // This is not the most efficient use of the hardware, but is an example of how
 // the keyboard scanner is used. Of course, this loop can be replaced with an
@@ -63,14 +63,10 @@ int main(void)
   asdf_init();
 
   while (1) {
+    uint8_t elapsed_ms = asdf_arch_tick();
 
-    if (asdf_arch_tick()) {
-      asdf_keycode_t code = asdf_next_code();
-
-      if (code < ASDF_INVALID_CODE) {
-          asdf_send_code(code);
-      }
-      asdf_keyscan();
+    if (elapsed_ms) {
+      asdf_process(elapsed_ms);
     }
   }
 }

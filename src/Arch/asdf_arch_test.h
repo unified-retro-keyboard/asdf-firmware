@@ -182,13 +182,6 @@ uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device);
 // for each output.
 void asdf_arch_pulse_delay_short(void);
 
-// PROCEDURE: asdf_arch_pulse_delay_long
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Emulates a long delay by advancing the pulse detector state machine
-// for each output.
-void asdf_arch_pulse_delay_long(void);
-
 // PROCEDURE: asdf_arch_read_row
 // INPUTS: (uint8_t) row: the row number to be scanned
 // OUTPUTS: returns a word containing the emulated active (pressed) columns
@@ -203,24 +196,6 @@ asdf_cols_t asdf_arch_read_row(uint8_t row);
 // DESCRIPTION: emulates sending a code, by copying code to a register that can
 // be tested.
 void asdf_arch_send_code(asdf_keycode_t);
-
-// PROCEDURE: asdf_arch_delay_ms
-// INPUTS: (uint16) delay_ms - the delay in msec.
-// OUTPUTS: none
-// DESCRIPTION: Delays a specified number of milliseconds
-void asdf_arch_delay_ms(uint16_t delay_ms);
-
-// PROCEDURE: asdf_arch_delay_ms_call_count
-// Returns: number of times asdf_arch_delay_ms has been invoked (testing aid)
-uint32_t asdf_arch_delay_ms_call_count(void);
-
-// PROCEDURE: asdf_arch_delay_ms_last_value
-// Returns: last delay value passed to asdf_arch_delay_ms (testing aid)
-uint16_t asdf_arch_delay_ms_last_value(void);
-
-// PROCEDURE: asdf_arch_delay_ms_reset_count
-// DESCRIPTION: clear call-count tracking for asdf_arch_delay_ms (testing aid)
-void asdf_arch_delay_ms_reset_count(void);
 
 // PROCEDURE: asdf_arch_get_sent_code
 // INPUTS: none

@@ -114,6 +114,21 @@ typedef enum {
 // DESCRIPTION: initialize the keyboard state and debounce counters
 void asdf_init(void);
 
+// PROCEDURE: asdf_process
+// INPUTS: (uint16_t) elapsed_ms - ticks elapsed since the last call
+// OUTPUTS: none
+// DESCRIPTION: Runs the keyboard for the elapsed ticks: advance timers, send
+// up to one code per tick, and scan once with debounce and repeat advanced by
+// the elapsed ticks. Never blocks.
+void asdf_process(uint16_t elapsed_ms);
+
+// PROCEDURE: asdf_tick
+// INPUTS: (uint8_t) elapsed_ms - ticks elapsed
+// OUTPUTS: none
+// DESCRIPTION: Advances the timers (message pacing, long output pulses)
+// without scanning or sending.
+void asdf_tick(uint8_t elapsed_ms);
+
 // PROCEDURE: asdf_keyscan
 // INPUTS: none
 // OUTPUTS: none

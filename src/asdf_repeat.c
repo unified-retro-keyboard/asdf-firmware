@@ -186,13 +186,34 @@ uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat)
 //
 uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat)
 {
-  uint8_t timeout = (repeat->timer && !(--repeat->timer));
+  return asdf_repeat_advance_r(repeat, 1);
+}
 
-  if (timeout) {
-    repeat->timer = REPEAT_ON;
+// PROCEDURE: asdf_repeat_advance_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
+//         (uint8_t) elapsed - ticks elapsed
+// OUTPUTS: returns TRUE (nonzero) when the current key should repeat
+//
+// DESCRIPTION: Advances the repeat timer by elapsed ticks. When it expires, the
+// key repeats once and the timer is reloaded for the repeat interval.
+//
+// NOTES: The timer only runs while it is nonzero (REPEAT_OFF stops it).
+//
+// SCOPE: public
+//
+// COMPLEXITY: 3
+//
+uint8_t asdf_repeat_advance_r(asdf_repeat_state_t *repeat, uint8_t elapsed)
+{
+  if (!repeat->timer) {
+    return 0;
   }
-
-  return timeout;
+  if (repeat->timer > elapsed) {
+    repeat->timer -= elapsed;
+    return 0;
+  }
+  repeat->timer = REPEAT_ON;
+  return 1;
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

@@ -52,6 +52,8 @@
 // Position of no key, for last_key_row/last_key_col when no key is repeating.
 #define NO_KEY_POSITION 0xff
 
+static void asdf_scan_elapsed_r(asdf_t *kb, uint8_t elapsed);
+
 // PROCEDURE: asdf_put_code_r
 // INPUTS: (asdf_t *) kb - keyboard
 //         (asdf_keycode_t) code: code to be buffered for output
@@ -133,24 +135,84 @@ void asdf_send_code_r(asdf_t *kb, asdf_keycode_t code) {
 // if present.  Otherwise, return the next code in the keycode
 // buffer.
 //
-// NOTES: A delay is enforced for system messages, to reduce the risk of dropped
-// characters with unbuffered polling hosts. No delay is needed for typed
-// keycodes, as these are generated at human speeds.
+// NOTES: After each system message character, output pauses for
+// print_delay_ms ticks, to reduce the risk of dropped characters with
+// unbuffered polling hosts. The pause is counted down by asdf_tick_r(), so it
+// does not block scanning. No delay is needed for typed keycodes, as these are
+// generated at human speeds.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 3
+//
+asdf_keycode_t asdf_next_code_r(asdf_t *kb) {
+    asdf_keycode_t code;
+
+    if (kb->output_wait_ms) {
+        code = ASDF_INVALID_CODE;
+    } else if (asdf_ring_get(&kb->messages, &code)) {
+        kb->output_wait_ms = kb->print_delay_ms;
+    } else if (!asdf_ring_get(&kb->keycodes, &code)) {
+        code = ASDF_INVALID_CODE;
+    }
+    return code;
+}
+
+// PROCEDURE: asdf_tick_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint8_t) elapsed_ms - ticks (ms) elapsed
+// OUTPUTS: none
+//
+// DESCRIPTION: Advances the keyboard's timers: the pause after a system
+// message character, and long output pulses.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 2
 //
-asdf_keycode_t asdf_next_code_r(asdf_t *kb) {
-    asdf_keycode_t code;
+void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms) {
+    kb->output_wait_ms = (kb->output_wait_ms > elapsed_ms) ? kb->output_wait_ms - elapsed_ms : 0;
+    asdf_virtual_tick_r(&kb->outputs, elapsed_ms);
+}
 
-    if (asdf_ring_get(&kb->messages, &code)) {
-        // for system message
-        asdf_arch_delay_ms(kb->print_delay_ms);
-    } else if (!asdf_ring_get(&kb->keycodes, &code)) {
-        code = ASDF_INVALID_CODE;
+// PROCEDURE: asdf_process_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint16_t) elapsed_ms - ticks (ms) elapsed since the last call
+// OUTPUTS: none
+//
+// DESCRIPTION: Runs the keyboard for the elapsed ticks: advance the timers by
+// the elapsed ticks, send up to one code per elapsed tick (subject to message
+// pacing), and scan the key matrix once, advancing debounce and repeat by the
+// elapsed ticks. Timing therefore follows real time even if a scan takes
+// longer than a tick.
+//
+// NOTES: Never blocks. Callers on a 1 ms tick call this with the ticks counted
+// since the last call (see asdf_arch_tick()). Elapsed times above 255 ticks are
+// treated as 255.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 4
+//
+void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms) {
+    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? UINT8_MAX : (uint8_t)elapsed_ms;
+
+    if (!elapsed) {
+        return;
     }
-    return code;
+
+    asdf_tick_r(kb, elapsed);
+
+    // send up to one code per elapsed tick, subject to message pacing
+    for (uint8_t n = elapsed; n; n--) {
+        asdf_keycode_t code = asdf_next_code_r(kb);
+        if (code >= ASDF_INVALID_CODE) {
+            break;
+        }
+        asdf_send_code_r(kb, code);
+    }
+
+    asdf_scan_elapsed_r(kb, elapsed);
 }
 
 // PROCEDURE: asdf_sync_lock_leds_r
@@ -384,11 +446,11 @@ static void asdf_deactivate_key(asdf_t *kb, asdf_keycode_t keycode, uint8_t row,
 // COMPLEXITY: 3
 //
 static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t col,
-                                             uint8_t key_was_pressed) {
+                                             uint8_t key_was_pressed, uint8_t elapsed) {
     uint8_t *debounce_count = &kb->debounce[row][col];
 
-    if (*debounce_count > 1) {
-        (*debounce_count)--;
+    if (*debounce_count > elapsed) {
+        *debounce_count -= elapsed;
         return;
     }
 
@@ -417,20 +479,24 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
 //
 // COMPLEXITY: 4
 //
-static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col) {
+static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
+                                         uint8_t elapsed) {
     if (row == kb->last_key_row && col == kb->last_key_col &&
         asdf_lookup_keycode_r(kb, row, col) == kb->last_key) {
-        if (asdf_repeat_r(&kb->repeat)) {
+        if (asdf_repeat_advance_r(&kb->repeat, elapsed)) {
             asdf_put_code_r(kb, kb->last_key);
         }
     }
 }
 
-// PROCEDURE: asdf_keyscan_r
+// PROCEDURE: asdf_scan_elapsed_r
 // INPUTS: (asdf_t *) kb - keyboard
+//         (uint8_t) elapsed - ticks elapsed since the previous scan
 // OUTPUTS: none
 //
-// DESCRIPTION: Scans the key matrix. For each row, read the columns and compare
+// DESCRIPTION: Scans the key matrix. Debounce counters and the repeat timer
+// advance by the elapsed ticks, so they keep real time however often the
+// matrix is scanned. For each row, read the columns and compare
 // with last stable state. For each changed key, call a key-change handler
 // function. For each stable pressed key, call a "continued press" handler
 // function. Finally, apply any keymap change requested during the scan.
@@ -440,11 +506,14 @@ static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col) {
 //
 //        2) The whole scan uses the platform current at its start.
 //
-// SCOPE: public
+//        3) A key first seen changed after a gap of several ticks is assumed to
+//           have been in its new state for the whole gap.
+//
+// SCOPE: private
 //
 // COMPLEXITY: 5
 //
-void asdf_keyscan_r(asdf_t *kb) {
+static void asdf_scan_elapsed_r(asdf_t *kb, uint8_t elapsed) {
     const asdf_platform_t *scan_platform = kb->platform;
 
     asdf_hook_execute_r(&kb->hooks, ASDF_HOOK_EACH_SCAN);
@@ -459,12 +528,12 @@ void asdf_keyscan_r(asdf_t *kb) {
              col++) {
             if (changed & 1) {
                 // key state is different from last stable state
-                asdf_handle_key_press_or_release(kb, row, col, row_key_state & 1);
+                asdf_handle_key_press_or_release(kb, row, col, row_key_state & 1, elapsed);
             } else {
                 // key is in its stable state: restart any debounce in progress
                 kb->debounce[row][col] = ASDF_DEBOUNCE_TIME_MS;
                 if (row_key_state & 1) {
-                    asdf_handle_key_held_pressed(kb, row, col);
+                    asdf_handle_key_held_pressed(kb, row, col, elapsed);
                 }
             }
             changed >>= 1;
@@ -475,6 +544,18 @@ void asdf_keyscan_r(asdf_t *kb) {
     // Apply any keymap change requested during this scan.
     asdf_keymaps_apply_request_r(kb);
 }
+
+// PROCEDURE: asdf_keyscan_r
+// INPUTS: (asdf_t *) kb - keyboard
+// OUTPUTS: none
+//
+// DESCRIPTION: Scans the key matrix once, for one elapsed tick.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_keyscan_r(asdf_t *kb) { asdf_scan_elapsed_r(kb, 1); }
 
 // PROCEDURE: asdf_is_configuration_action
 // INPUTS: (asdf_keycode_t) code - keycode to check
@@ -562,6 +643,7 @@ void asdf_init_r(asdf_t *kb, const asdf_platform_t *platform) {
     asdf_ring_init(&kb->keycodes, kb->keycode_storage, ASDF_KEYCODE_BUFFER_SIZE);
     asdf_ring_init(&kb->messages, kb->message_storage, ASDF_MESSAGE_BUFFER_SIZE);
     kb->print_delay_ms = 0;
+    kb->output_wait_ms = 0;
 
     kb->last_key = ACTION_NOTHING;
     kb->last_key_row = NO_KEY_POSITION;
