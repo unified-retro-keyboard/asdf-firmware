@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_arch.h"
-#include "asdf_buffer.h"
 #include "asdf_hook.h"
 
 // PROCEDURE: main
@@ -47,7 +46,7 @@
 //
 // This is not the most efficient use of the hardware, but is an example of how
 // the keyboard scanner is used. Of course, this loop can be replaced with an
-// RTOS process as well. If an RTOS is used, then asdf_buffer can be modified
+// RTOS process as well. If an RTOS is used, then the output queues can be modified
 // to use RTOS message queues instead of an internal buffer, or to keep the
 // internal buffer and use a counting semaphore to indicate characters in the
 // buffer.

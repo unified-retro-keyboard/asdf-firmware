@@ -52,9 +52,14 @@
 // size of the keycode output buffer.
 #define ASDF_KEYCODE_BUFFER_SIZE 16
 
+// size of the system message output buffer.
 #define ASDF_MESSAGE_BUFFER_SIZE 128
 
-#define ASDF_BUFFER_POOL_SIZE (ASDF_MESSAGE_BUFFER_SIZE + ASDF_KEYCODE_BUFFER_SIZE)
+// Ring buffer capacities are 8 bits (see asdf_ring.h).
+#if (ASDF_KEYCODE_BUFFER_SIZE < 1) || (ASDF_KEYCODE_BUFFER_SIZE > 255) \
+    || (ASDF_MESSAGE_BUFFER_SIZE < 1) || (ASDF_MESSAGE_BUFFER_SIZE > 255)
+#error "ASDF buffer sizes must be between 1 and 255"
+#endif
 
 // key debounce period (in msec)
 #define ASDF_DEBOUNCE_TIME_MS 10
