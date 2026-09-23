@@ -249,6 +249,32 @@ void ctrl_double_shiftlock_returns_to_ctrl_map(void)
   TESTMAP(MOD_CTRL_MAP);
 }
 
+// Two modifier states changed alternately do not affect each other, nor the
+// default state behind the single-keyboard API.
+void independent_modifier_states(void)
+{
+  asdf_modifier_state_t a, b;
+
+  asdf_modifiers_init_r(&a);
+  asdf_modifiers_init_r(&b);
+
+  asdf_modifier_capslock_activate_r(&a);
+  asdf_modifier_shiftlock_on_activate_r(&b);
+  asdf_modifier_ctrl_activate_r(&b);
+
+  TEST_ASSERT_EQUAL_INT(MOD_CAPS_MAP, asdf_modifier_index_r(&a));
+  TEST_ASSERT_EQUAL_INT(MOD_CTRL_MAP, asdf_modifier_index_r(&b));
+  TEST_ASSERT_TRUE(asdf_modifier_caps_locked_r(&a));
+  TEST_ASSERT_FALSE(asdf_modifier_caps_locked_r(&b));
+  TEST_ASSERT_FALSE(asdf_modifier_shift_locked_r(&a));
+  TEST_ASSERT_TRUE(asdf_modifier_shift_locked_r(&b));
+
+  asdf_modifier_ctrl_deactivate_r(&b);
+  TEST_ASSERT_EQUAL_INT(MOD_SHIFT_MAP, asdf_modifier_index_r(&b));
+  TEST_ASSERT_EQUAL_INT(MOD_CAPS_MAP, asdf_modifier_index_r(&a));
+  TEST_ASSERT_EQUAL_INT(MOD_PLAIN_MAP, asdf_modifier_index());
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -279,5 +305,6 @@ int main(void)
   // calling toggle_shiftlock_mode twice leaves shiftlock behavior in hold mode
   // calling toggle_shiftlock_mode three times leaves shiftlock behavior in toggle mode
 
+  RUN_TEST(independent_modifier_states);
   return UNITY_END();
 }
