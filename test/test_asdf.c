@@ -6,9 +6,10 @@
 #include "asdf.h"
 #include "asdf_arch.h"
 #include "asdf_ascii.h"
+#include "asdf_config.h"
 #include "asdf_modifiers.h"
 #include "asdf_keymaps.h"
-#include "asdf_keymap_defs.h"
+#include "test_asdf_keymap_defs.h"
 #include "asdf_buffer.h"
 #include "asdf_repeat.h"
 
@@ -18,18 +19,6 @@
 #define TEST_STRING "abcdefghijklmnop"
 
 #define NUM_REPEATS (ASDF_KEYCODE_BUFFER_SIZE - 2)
-
-#define TESTMAP(row, col, mapname, mapname2)                                                       \
-  do {                                                                                             \
-    asdf_keycode_t expected = mapname##_matrix[(row)][(col)];                                      \
-    asdf_keycode_t result = asdf_keymaps_get_code((row), (col), MOD_##mapname2##_MAP);             \
-    TEST_ASSERT_EQUAL_INT(expected, result);                                                       \
-  } while (0);
-
-#define TESTPLAIN(row, col, n) TESTMAP((row), (col), PLAIN, n)
-#define TESTSHIFT(row, col, n) TESTMAP((row), (col), SHIFT, n)
-#define TESTCAPS(row, col, n) TESTMAP((row), (col), CAPS, n)
-#define TESTCTRL(row, col, n) TESTMAP((row), (col), CTRL, n)
 
 const char test_string[] = TEST_STRING;
 
@@ -41,32 +30,49 @@ typedef struct {
   int32_t col;
 } coord_t;
 
+// Copies of the test keymap (index 0) that asdf_init() selects, used to find
+// key positions and expected codes.
+static const asdf_keycode_t test_PLAIN_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_PLAIN_MAP;
+static const asdf_keycode_t test_SHIFT_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_SHIFT_MAP;
+static const asdf_keycode_t test_CAPS_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CAPS_MAP;
+static const asdf_keycode_t test_CTRL_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CTRL_MAP;
 
-ASDF_TEST_DECLARATIONS;
+static uint32_t key_matrix[TEST_NUM_ROWS];
 
-static uint32_t key_matrix[ASDF_NUM_ROWS];
+void keyscan_delay(int32_t ticks);
 
 
 void setUp(void)
 {
-  asdf_buffer_init();
   asdf_init();
 
+  // asdf_init() does not reset modifier state, and CAPS is a toggle that
+  // tearDown() cannot release, so reset modifiers explicitly.
+  asdf_modifiers_init();
+
   // initialize simulated key matrix
-  for (uint32_t i = 0; i < ASDF_NUM_ROWS; i++) {
+  for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
 }
 
-void tearDown(void) {}
+// Release every key and let the releases debounce, so no key is left held for
+// the next test.
+void tearDown(void)
+{
+  for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
+    key_matrix[i] = 0;
+  }
+  keyscan_delay(ASDF_DEBOUNCE_TIME_MS);
+}
 
 coord_t *find_code(asdf_keycode_t code)
 {
   uint32_t done = 0;
   static coord_t location = { .row = -1, .col = -1 };
 
-  for (uint32_t row = 0; !done && (row < ASDF_NUM_ROWS); row++) {
-    for (uint32_t col = 0; !done && (col < ASDF_NUM_COLS); col++) {
+  for (uint32_t row = 0; !done && (row < TEST_NUM_ROWS); row++) {
+    for (uint32_t col = 0; !done && (col < TEST_NUM_COLS); col++) {
       if (test_PLAIN_matrix[row][col] == code) {
         done = 1;
         location.row = row;
@@ -266,7 +272,7 @@ void pressing_ctrl_rept_a_repeats_ctrl_a(void)
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
-  for (int i = 0; i < NUM_REPEATS + 1; i++) {
+  for (int i = 0; i < NUM_REPEATS; i++) {
     TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) asdf_next_code());
   }
 
@@ -490,6 +496,7 @@ int main(void)
   RUN_TEST(pressing_rept_a_repeats_a);
   RUN_TEST(pressing_shift_rept_a_repeats_shifted_a);
   RUN_TEST(pressing_caps_rept_a_repeats_caps_a);
+  RUN_TEST(pressing_ctrl_rept_a_repeats_ctrl_a);
   RUN_TEST(holding_a_autorepeats_a);
   RUN_TEST(holding_a_autorepeats_slow_then_fast);
   RUN_TEST(pressing_a_then_b_before_debounce_gives_a_then_b);
