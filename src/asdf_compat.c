@@ -111,10 +111,29 @@ void asdf_modifier_ctrl_deactivate(void) { asdf_modifier_ctrl_deactivate_r(&defa
 modifier_index_t asdf_modifier_index(void) { return asdf_modifier_index_r(&default_modifiers); }
 
 //
-// Physical outputs
+// Virtual and physical outputs
 //
 
-static asdf_physical_state_t default_physical;
+// The default physical output state is the one embedded in the default
+// virtual output state.
+static asdf_virtual_state_t default_virtual;
+#define default_physical (default_virtual.physical)
+
+void asdf_virtual_init(void) { asdf_virtual_init_r(&default_virtual); }
+void asdf_virtual_action(asdf_virtual_dev_t virtual_out, asdf_virtual_function_t function)
+{
+  asdf_virtual_action_r(&default_virtual, virtual_out, function);
+}
+void asdf_virtual_activate(asdf_virtual_dev_t virtual_out)
+{
+  asdf_virtual_activate_r(&default_virtual, virtual_out);
+}
+void asdf_virtual_assign(asdf_virtual_dev_t virtual_out, asdf_physical_dev_t physical_out,
+                         asdf_virtual_function_t function, uint8_t initial_value)
+{
+  asdf_virtual_assign_r(&default_virtual, virtual_out, physical_out, function, initial_value);
+}
+void asdf_virtual_sync(void) { asdf_virtual_sync_r(&default_virtual); }
 
 void asdf_physical_init(void) { asdf_physical_init_r(&default_physical); }
 void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value)

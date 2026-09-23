@@ -23,6 +23,7 @@
 #include "asdf_modifiers.h"
 #include "asdf_physical.h"
 #include "asdf_repeat.h"
+#include "asdf_virtual.h"
 #include "test_asdf_keymap_defs.h"
 
 // Key positions in the test keymap (ASDF_TEST_PLAIN_MAP) selected by
@@ -360,9 +361,11 @@ void unchecked_keymaps_get_code_modifier(void)
   TEST_IGNORE_MESSAGE("asdf_keymaps_get_code: modifier index is not validated (out-of-bounds read)");
 }
 
-void unchecked_virtual_action_and_activate(void)
+void invalid_virtual_devices_are_ignored(void)
 {
-  TEST_IGNORE_MESSAGE("asdf_virtual_action/asdf_virtual_activate: virtual device is not validated");
+  asdf_virtual_action((asdf_virtual_dev_t) 200, V_SET_HI);
+  asdf_virtual_activate((asdf_virtual_dev_t) 200);
+  TEST_PASS();
 }
 
 void invalid_physical_devices_are_ignored(void)
@@ -397,7 +400,7 @@ int main(void)
   RUN_TEST(invalid_virtual_assign_is_ignored);
   RUN_TEST(unchecked_keymaps_get_code_row_and_col);
   RUN_TEST(unchecked_keymaps_get_code_modifier);
-  RUN_TEST(unchecked_virtual_action_and_activate);
+  RUN_TEST(invalid_virtual_devices_are_ignored);
   RUN_TEST(invalid_physical_devices_are_ignored);
   return UNITY_END();
 }

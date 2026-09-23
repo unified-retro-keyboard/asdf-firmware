@@ -298,6 +298,48 @@ void test_cant_assign_real_output_twice(void)
   TEST_ASSERT_EQUAL_INT32(0, asdf_arch_check_output(PHYSICAL_LED1));
 }
 
+// Two virtual output states map and drive outputs independently. (The fake
+// hardware outputs behind them are shared, so each is checked right after it
+// is driven.)
+void test_independent_virtual_states(void)
+{
+  asdf_virtual_state_t a, b;
+
+  asdf_virtual_init_r(&a);
+  asdf_virtual_init_r(&b);
+  asdf_virtual_assign_r(&a, VOUT1, PHYSICAL_LED1, V_TOGGLE, 0);
+  asdf_virtual_assign_r(&b, VOUT1, PHYSICAL_LED2, V_TOGGLE, 1);
+  asdf_virtual_assign_r(&b, VOUT2, PHYSICAL_LED1, V_SET_HI, 0);
+  asdf_virtual_sync_r(&a);
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED1));
+
+  asdf_virtual_activate_r(&a, VOUT1);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
+
+  asdf_virtual_activate_r(&b, VOUT1);
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED2));
+
+  // b's LED1 shadow is still its initial 0, unaffected by a's toggle
+  asdf_virtual_sync_r(&b);
+  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED1));
+  asdf_virtual_sync_r(&a);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
+}
+
+void test_invalid_virtual_output_is_ignored(void)
+{
+  asdf_virtual_state_t v;
+
+  asdf_virtual_init_r(&v);
+  asdf_virtual_action_r(&v, ASDF_VIRTUAL_NUM_RESOURCES, V_SET_HI);
+  asdf_virtual_activate_r(&v, ASDF_VIRTUAL_NUM_RESOURCES);
+  asdf_virtual_assign_r(&v, ASDF_VIRTUAL_NUM_RESOURCES, PHYSICAL_LED1, V_SET_HI, 0);
+  // LED1 is still available, so the invalid assign did not allocate it
+  asdf_virtual_assign_r(&v, VOUT1, PHYSICAL_LED1, V_SET_HI, 0);
+  asdf_virtual_activate_r(&v, VOUT1);
+  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -314,5 +356,7 @@ int main(void)
   RUN_TEST(test_virtual_capslock_indicator);
   RUN_TEST(test_virtual_shiftlock_indicator);
   RUN_TEST(test_cant_assign_real_output_twice);
+  RUN_TEST(test_independent_virtual_states);
+  RUN_TEST(test_invalid_virtual_output_is_ignored);
   return UNITY_END();
 }
