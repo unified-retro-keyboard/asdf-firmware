@@ -247,6 +247,7 @@
 // a value, and parameters are expanded inside the parameter list, so this will
 // be valid when substituting for function-like syntax.
 #define FLASH_READ(a) pgm_read_byte((a))
+#define FLASH_READ_PTR(a) pgm_read_ptr((a))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) pgm_read_byte(&((matrix)[(row)][(col)]))
 
 // Places a string literal in flash; read it back with FLASH_READ.

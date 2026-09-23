@@ -30,7 +30,8 @@
 #include "asdf_arch.h"
 
 
-// For each physical resource, there is a handler and a "shadow" register for the output value.
+// For each physical resource, there is a handler and a "shadow" register for
+// the output value.
 //
 // For line outputs, the shadow register permits machine independent
 // implementations of the toggle and pulse functions to be implemented in this
@@ -38,147 +39,47 @@
 // architecture-dependent layer. This implementation is not as efficient, but
 // the timing is not critical, and the events are so infrequent that the
 // benefits of the refactoring far outweigh any performance penalty.
+//
+// The handlers are fixed and kept in flash. The shadow registers and the
+// allocation links are held in the caller's asdf_physical_state_t.
 
-typedef struct {
-  void (*handler)(uint8_t);
-  uint8_t shadow;
-  asdf_physical_dev_t next;
-} physical_device_table_entry_t;
+typedef void (*asdf_physical_handler_t)(uint8_t);
 
-
-// physical_handler[] contains the set() function for each real output device.
-static physical_device_table_entry_t physical_device_table[ASDF_PHYSICAL_NUM_RESOURCES] = {
-  [PHYSICAL_NO_OUT] = {.handler = &asdf_arch_null_output,},
-  [PHYSICAL_OUT1] = {.handler = &asdf_arch_out1_set,},
-  [PHYSICAL_OUT2] = {.handler = &asdf_arch_out2_set,},
-  [PHYSICAL_OUT3] = {.handler = &asdf_arch_out3_set,},
-  [PHYSICAL_OUT1_OPEN_HI] = {.handler = &asdf_arch_out1_open_hi_set,},
-  [PHYSICAL_OUT2_OPEN_HI] = {.handler = &asdf_arch_out2_open_hi_set,},
-  [PHYSICAL_OUT3_OPEN_HI] = {.handler = &asdf_arch_out3_open_hi_set,},
-  [PHYSICAL_OUT1_OPEN_LO] = {.handler = &asdf_arch_out1_open_lo_set,},
-  [PHYSICAL_OUT2_OPEN_LO] = {.handler = &asdf_arch_out2_open_lo_set,},
-  [PHYSICAL_OUT3_OPEN_LO] = {.handler = &asdf_arch_out3_open_lo_set,},
-  [PHYSICAL_LED1] = {.handler = &asdf_arch_led1_set,},
-  [PHYSICAL_LED2] = {.handler = &asdf_arch_led2_set,},
-  [PHYSICAL_LED3] = {.handler = &asdf_arch_led3_set,},
+// physical_handlers[] contains the set() function for each real output device.
+static const asdf_physical_handler_t FLASH physical_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
+  [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
+  [PHYSICAL_OUT1] = &asdf_arch_out1_set,
+  [PHYSICAL_OUT2] = &asdf_arch_out2_set,
+  [PHYSICAL_OUT3] = &asdf_arch_out3_set,
+  [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
+  [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
+  [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
+  [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
+  [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
+  [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
+  [PHYSICAL_LED1] = &asdf_arch_led1_set,
+  [PHYSICAL_LED2] = &asdf_arch_led2_set,
+  [PHYSICAL_LED3] = &asdf_arch_led3_set,
 };
 
-
-// PROCEDURE: asdf_physical_set
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set or clear
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
+// PROCEDURE: physical_index_valid
+// INPUTS: (asdf_physical_dev_t) device - device to check
+// OUTPUTS: returns TRUE (nonzero) if device indexes the physical tables,
+//          including PHYSICAL_NO_OUT.
 //
-// DESCRIPTION: If the physical resource is valid, set to high if value is true, low
-// if false.
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: No bounds checking.  The caller must ensure a valid device
-//
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 1
 //
-void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value)
+static uint8_t physical_index_valid(asdf_physical_dev_t device)
 {
-  physical_device_table[physical_out].handler(value);
-  physical_device_table[physical_out].shadow = value;
-}
-
-// PROCEDURE: asdf_physical_on
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set to ON
-// OUTPUTS: none
-//
-// DESCRIPTION: If the physical resource is valid, set to high
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: No bounds checking.  The caller must ensure a valid device
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_physical_on(asdf_physical_dev_t physical_out)
-{
-  physical_device_table[physical_out].handler(1);
-  physical_device_table[physical_out].shadow = 1;
-}
-
-// PROCEDURE: asdf_physical_off
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set to OFF
-// OUTPUTS: none
-//
-// DESCRIPTION: If the physical resource is valid, set to low
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: No bounds checking.  The caller must ensure a valid device
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_physical_off(asdf_physical_dev_t physical_out)
-{
-  physical_device_table[physical_out].handler(0);
-  physical_device_table[physical_out].shadow = 0;
-}
-
-
-// PROCEDURE: asdf_physical_assert
-// INPUTS: (asdf_physical_dev_t) physical_out: which physical resource to set or clear
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Assert the value of the physical resource shadow register on the output.
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: No bounds checking.  Only called from initialization code.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_physical_assert(asdf_physical_dev_t physical_out)
-{
-  uint8_t value = physical_device_table[physical_out].shadow;
-  physical_device_table[physical_out].handler(value);
-}
-
-// PROCEDURE: asdf_physical_toggle
-// INPUTS: (asdf_physical_dev_t) physical_out: which physical resource to toggle
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Toggle the value of the physical resource.
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: No bounds checking.  Only called from initialization code.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_physical_toggle(asdf_physical_dev_t physical_out)
-{
-  uint8_t value = physical_device_table[physical_out].shadow;
-
-  asdf_physical_set(physical_out, !value);
+  return device < ASDF_PHYSICAL_NUM_RESOURCES;
 }
 
 // PROCEDURE: valid_physical_device
-// INPUTS: (asdf_physical_dev_t) device
-// OUTPUTS: returns true (1) if the device is valid, false (0) if not valid.
-//
-// DESCRIPTION: test to see if device is a valid device value.
-//
-// SIDE EFFECTS:
-//
-// NOTES:
+// INPUTS: (asdf_physical_dev_t) device - device to check
+// OUTPUTS: returns TRUE (nonzero) if device is a real output (not
+//          PHYSICAL_NO_OUT).
 //
 // SCOPE: private
 //
@@ -189,71 +90,34 @@ static uint8_t valid_physical_device(asdf_physical_dev_t device)
   return (device > PHYSICAL_NO_OUT && device < ASDF_PHYSICAL_NUM_RESOURCES);
 }
 
-// PROCEDURE: physical_device_is_available
-// INPUTS: asdf_physical_dev_t requiested_device
-// OUTPUTS: returns PHYSICAL_NO_OUT if device is alreay allocated. If not yet allocated,
-// returns the index of the device in the available list before the requested
-// device.
+// PROCEDURE: physical_write
+// INPUTS: (asdf_physical_state_t *) phys, (asdf_physical_dev_t) device (valid
+//         index), (uint8_t) value
+// OUTPUTS: none
 //
-// DESCRIPTION: iterates through the linked list of available devices. If the
-// requested_device is encountered, return the element before the requested
-// device in the list.  If the end of the list is reached, return PHYSICAL_NO_OUT.
+// DESCRIPTION: Drives the output through its handler and records the value in
+// the shadow register.
 //
-// SIDE EFFECTS: none
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 3
-//
-uint8_t physical_device_is_available(asdf_physical_dev_t device)
-{
-  asdf_physical_dev_t current_out = PHYSICAL_NO_OUT;
-  asdf_physical_dev_t next_out = physical_device_table[current_out].next;
-
-  while (next_out != PHYSICAL_NO_OUT && next_out != device) {
-    current_out = next_out;
-    next_out = physical_device_table[current_out].next;
-  }
-  return (PHYSICAL_NO_OUT == next_out) ? ASDF_PHYSICAL_NUM_RESOURCES : current_out;
-}
-
-// PROCEDURE: asdf_physical_next_device
-// INPUTS: (asdf_physical_dev_t) device - the current physical resource attached
-// to the virtual output being operated on
-//
-// OUTPUTS: (asdf_physical_dev_t) returns the next physical resource assigned to
-// the virtual output.
-//
-// DESCRIPTION: See above.
-//
-// SIDE EFFECTS: None.
-//
-// NOTES:
-//
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 1
 //
-asdf_physical_dev_t asdf_physical_next_device(asdf_physical_dev_t device)
+static void physical_write(asdf_physical_state_t *phys, asdf_physical_dev_t device, uint8_t value)
 {
-  return physical_device_table[device].next;
+  asdf_physical_handler_t handler =
+    (asdf_physical_handler_t) FLASH_READ_PTR(&physical_handlers[device]);
+
+  handler(value);
+  phys->shadow[device] = value;
 }
 
-// PROCEDURE: asdf_physical_allocate
+// PROCEDURE: asdf_physical_set_r
+// INPUTS: (asdf_physical_state_t *) phys - physical output state
+//         (asdf_physical_dev_t) physical_out - the physical resource to be set.
+//         (uint8_t) value - the value to set the resource to.
+// OUTPUTS: none
 //
-// INPUTS: (asdf_physical_out_t) physical_out - the desired physical resource to allocate.
-//         (asdf_physical_out_t) tail - the list of physical resources to tack on
-//         to the requested resource, if available.
-//
-// OUTPUTS: (asdf_physical_out_t) returns TRUE if the allocation is succesful,
-//          FALSE (0) otherwise.
-//
-// DESCRIPTION: Check that the requested physical resource is valid and
-// available. If so, then remove the resource from the physical resource table
-// and assign an initial value, then return a TRUE (1). Return FALSE (0) if
-// allocation was not successful.
+// DESCRIPTION: If the physical resource is valid, set it to value.
 //
 // SIDE EFFECTS: see above.
 //
@@ -261,57 +125,197 @@ asdf_physical_dev_t asdf_physical_next_device(asdf_physical_dev_t device)
 //
 // COMPLEXITY: 2
 //
-uint8_t asdf_physical_allocate(asdf_physical_dev_t physical_out, asdf_physical_dev_t tail,
-                               uint8_t initial_value)
+void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+                         uint8_t value)
 {
-  uint8_t success = 0;
-  asdf_physical_dev_t predecessor = physical_device_is_available(physical_out);
-
-  if (valid_physical_device(physical_out) && (ASDF_PHYSICAL_NUM_RESOURCES != predecessor)) {
-
-    // remove from available list:
-    physical_device_table[predecessor].next = physical_device_table[physical_out].next;
-
-    // tack the tail on to the physical resource
-
-    physical_device_table[physical_out].next = tail;
-
-    // The physical resource shadow value is set here. The shadow values are
-    // asserted to the outputs only after all the assignments have been
-    // performed.
-    physical_device_table[physical_out].shadow = initial_value;
-
-    success = 1;
+  if (physical_index_valid(physical_out)) {
+    physical_write(phys, physical_out, value);
   }
-  return success;
 }
 
-// PROCEDURE: asdf_physical_init
-// INPUTS: none
+// PROCEDURE: asdf_physical_on_r
+// INPUTS: (asdf_physical_state_t *) phys, (asdf_physical_dev_t) physical_out
 // OUTPUTS: none
 //
-// DESCRIPTION: Initialize physical resource table
+// DESCRIPTION: If the physical resource is valid, set to high.
 //
-// SIDE EFFECTS: see above
+// SCOPE: public
 //
-// NOTES:
+// COMPLEXITY: 1
+//
+void asdf_physical_on_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+{
+  asdf_physical_set_r(phys, physical_out, 1);
+}
+
+// PROCEDURE: asdf_physical_off_r
+// INPUTS: (asdf_physical_state_t *) phys, (asdf_physical_dev_t) physical_out
+// OUTPUTS: none
+//
+// DESCRIPTION: If the physical resource is valid, set to low.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_physical_off_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+{
+  asdf_physical_set_r(phys, physical_out, 0);
+}
+
+// PROCEDURE: asdf_physical_assert_r
+// INPUTS: (asdf_physical_state_t *) phys, (asdf_physical_dev_t) physical_out
+// OUTPUTS: none
+//
+// DESCRIPTION: If the physical resource is valid, drive the output to the
+// value in its shadow register.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 2
 //
-void asdf_physical_init(void)
+void asdf_physical_assert_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
-  // initialize the linked list of free devices
-  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
-    physical_device_table[i].shadow = ASDF_VIRTUAL_OUT_DEFAULT_VALUE;
-    physical_device_table[i].next = i + 1; // initialize pointer to next in table
+  if (physical_index_valid(physical_out)) {
+    physical_write(phys, physical_out, phys->shadow[physical_out]);
   }
-  // The last item in the table is left with a bogus next pointer (beyond the
-  // end of the array) after the above loop. Make the last element point to
-  // PHYSICAL_NO_OUT.
-  physical_device_table[ASDF_PHYSICAL_NUM_RESOURCES - 1].next = PHYSICAL_NO_OUT; // end of list.
 }
+
+// PROCEDURE: asdf_physical_toggle_r
+// INPUTS: (asdf_physical_state_t *) phys, (asdf_physical_dev_t) physical_out
+// OUTPUTS: none
+//
+// DESCRIPTION: If the physical resource is valid, toggle its value.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_physical_toggle_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+{
+  if (physical_index_valid(physical_out)) {
+    physical_write(phys, physical_out, !phys->shadow[physical_out]);
+  }
+}
+
+// PROCEDURE: physical_device_predecessor
+// INPUTS: (const asdf_physical_state_t *) phys, (asdf_physical_dev_t) device
+// OUTPUTS: If device is on the available list, returns the element before it
+//          in the list. If device is already allocated, returns
+//          ASDF_PHYSICAL_NUM_RESOURCES.
+//
+// DESCRIPTION: iterates through the linked list of available devices, which
+// starts at PHYSICAL_NO_OUT.
+//
+// SIDE EFFECTS: none
+//
+// SCOPE: private
+//
+// COMPLEXITY: 3
+//
+static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state_t *phys,
+                                                       asdf_physical_dev_t device)
+{
+  asdf_physical_dev_t current_out = PHYSICAL_NO_OUT;
+  asdf_physical_dev_t next_out = phys->next[current_out];
+
+  while (next_out != PHYSICAL_NO_OUT && next_out != device) {
+    current_out = next_out;
+    next_out = phys->next[current_out];
+  }
+
+  return (PHYSICAL_NO_OUT == next_out) ? ASDF_PHYSICAL_NUM_RESOURCES : current_out;
+}
+
+// PROCEDURE: asdf_physical_next_device_r
+// INPUTS: (const asdf_physical_state_t *) phys
+//         (asdf_physical_dev_t) device - the current physical resource attached
+//         to the virtual output being operated on
+// OUTPUTS: (asdf_physical_dev_t) returns the next physical resource assigned to
+//          the virtual output, or PHYSICAL_NO_OUT if device is invalid.
+//
+// SIDE EFFECTS: None.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phys,
+                                                asdf_physical_dev_t device)
+{
+  return physical_index_valid(device) ? phys->next[device] : PHYSICAL_NO_OUT;
+}
+
+// PROCEDURE: asdf_physical_allocate_r
+//
+// INPUTS: (asdf_physical_state_t *) phys
+//         (asdf_physical_dev_t) physical_out - the desired physical resource to allocate.
+//         (asdf_physical_dev_t) tail - the list of physical resources to tack on
+//         to the requested resource, if available.
+//         (uint8_t) initial_value - initial shadow value of the resource
+//
+// OUTPUTS: returns TRUE if the allocation is succesful, FALSE (0) otherwise.
+//
+// DESCRIPTION: Check that the requested physical resource is valid and
+// available. If so, then remove the resource from the available list, link
+// the tail to it, and assign an initial shadow value, then return TRUE (1).
+// Return FALSE (0) if allocation was not successful.
+//
+// SIDE EFFECTS: see above.
+//
+// NOTES: The shadow values are asserted to the outputs only after all the
+// assignments have been performed.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+                                 asdf_physical_dev_t tail, uint8_t initial_value)
+{
+  if (!valid_physical_device(physical_out) || !physical_index_valid(tail)) {
+    return 0;
+  }
+
+  asdf_physical_dev_t predecessor = physical_device_predecessor(phys, physical_out);
+  if (ASDF_PHYSICAL_NUM_RESOURCES == predecessor) {
+    return 0;
+  }
+
+  // remove from available list:
+  phys->next[predecessor] = phys->next[physical_out];
+
+  // tack the tail on to the physical resource
+  phys->next[physical_out] = tail;
+  phys->shadow[physical_out] = initial_value;
+  return 1;
+}
+
+// PROCEDURE: asdf_physical_init_r
+// INPUTS: (asdf_physical_state_t *) phys
+// OUTPUTS: none
+//
+// DESCRIPTION: Initialize the shadow registers to the default value and place
+// every device on the available list.
+//
+// SIDE EFFECTS: see above
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_physical_init_r(asdf_physical_state_t *phys)
+{
+  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
+    phys->shadow[i] = ASDF_VIRTUAL_OUT_DEFAULT_VALUE;
+    phys->next[i] = (asdf_physical_dev_t) (i + 1);
+  }
+
+  // The last element is left pointing beyond the end of the table by the loop
+  // above. Terminate the list at PHYSICAL_NO_OUT.
+  phys->next[ASDF_PHYSICAL_NUM_RESOURCES - 1] = PHYSICAL_NO_OUT;
+}
+
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

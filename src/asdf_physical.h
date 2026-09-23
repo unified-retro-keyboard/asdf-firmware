@@ -49,76 +49,41 @@ typedef enum {
   ASDF_PHYSICAL_NUM_RESOURCES
 } asdf_physical_dev_t;
 
-// PROCEDURE: asdf_physical_set
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set or clear
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If the physical resource is valid, set to high if value is true, low
-// if false.
+// Changeable state of the physical outputs of one keyboard: the value last
+// written to each output, and the links of the available list and of each
+// virtual output's list of physical outputs.
+typedef struct {
+  uint8_t shadow[ASDF_PHYSICAL_NUM_RESOURCES];
+  asdf_physical_dev_t next[ASDF_PHYSICAL_NUM_RESOURCES];
+} asdf_physical_state_t;
+
+// Instance API: each function operates only on the state passed to it.
+// Invalid devices are ignored. See asdf_physical.c.
+
+void asdf_physical_init_r(asdf_physical_state_t *phys);
+void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+                         uint8_t value);
+void asdf_physical_on_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+void asdf_physical_off_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+void asdf_physical_assert_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+void asdf_physical_toggle_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phys,
+                                                asdf_physical_dev_t device);
+uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+                                 asdf_physical_dev_t tail, uint8_t initial_value);
+
+// Single-keyboard API, operating on the default physical output state
+// (asdf_compat.c).
+
+void asdf_physical_init(void);
 void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value);
-
-// PROCEDURE: asdf_physical_on
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set to ON
-// OUTPUTS: none
-// DESCRIPTION: If the physical resource is valid, set to high
 void asdf_physical_on(asdf_physical_dev_t physical_out);
-
-// PROCEDURE: asdf_physical_off
-// INPUTS: (asdf_physical_dev_t) physical_out: which real output to set to OFF
-// OUTPUTS: none
-// DESCRIPTION: If the physical resource is valid, set to low
 void asdf_physical_off(asdf_physical_dev_t physical_out);
-
-// PROCEDURE: asdf_physical_assert
-// INPUTS: (asdf_physical_dev_t) physical_out: which physical resource to set or clear
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Assert the value of the physical resource shadow register on the output.
 void asdf_physical_assert(asdf_physical_dev_t physical_out);
-
-// PROCEDURE: asdf_physical_toggle
-// INPUTS: (asdf_physical_dev_t) physical_out: which physical resource to toggle
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Toggle the value of the physical resource.
 void asdf_physical_toggle(asdf_physical_dev_t physical_out);
-
-// PROCEDURE: physical_device_is_available
-// INPUTS: asdf_physical_dev_t requiested_device
-// OUTPUTS: returns PHYSICAL_NO_OUT if device is alreay allocated. If not yet allocated,
-// returns the index of the device in the available list before the requested
-// device.
-// DESCRIPTION: iterates through the linked list of available devices. If the
-// requested_device is encountered, return the element before the requested
-// device in the list.  If the end of the list is reached, return PHYSICAL_NO_OUT.
-uint8_t physical_device_is_available(asdf_physical_dev_t device);
-
-// PROCEDURE: asdf_physical_next_device
-// INPUTS: (asdf_physical_dev_t) device - the current physical resource attached
-// to the virtual output being operated on
-// OUTPUTS: (asdf_physical_dev_t) returns the next physical resource assigned to
-// the virtual output.
 asdf_physical_dev_t asdf_physical_next_device(asdf_physical_dev_t device);
-
-// PROCEDURE: asdf_physical_allocate
-// INPUTS: (asdf_physical_out_t) physical_out - the desired physical resource to allocate.
-//         (asdf_physical_out_t) tail - the list of physical resources to tack on
-//         to the requested resource, if available.
-// OUTPUTS: (asdf_physical_out_t) returns TRUE if the allocation is succesful,
-//          FALSE (0) otherwise.
-// DESCRIPTION: Check that the requested physical resource is valid and
-// available. If so, then remove the resource from the physical resource table
-// and assign an initial value, then return a TRUE (1). Return FALSE (0) if
-// allocation was not successful.
 uint8_t asdf_physical_allocate(asdf_physical_dev_t physical_out, asdf_physical_dev_t tail,
                                uint8_t initial_value);
-
-// PROCEDURE: asdf_physical_init
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Initialize physical resource table
-void asdf_physical_init(void);
-
 
 #endif /* !defined (ASDF_PHYSICAL_H) */
 
