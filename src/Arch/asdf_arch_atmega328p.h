@@ -373,21 +373,10 @@ asdf_cols_t asdf_arch_read_row(uint8_t row);
 void asdf_arch_pulse_delay_short(void);
 
 
-// PROCEDURE: asdf_arch_pulse_delay_long
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Delays a fixed amount of time for keyboard output pulses specified by ASDF_PULSE_DELAY_LONG_MS
-void asdf_arch_pulse_delay_long(void);
-
-// PROCEDURE: asdf_arch_delay_ms
-// INPUTS: (uint16) delay_ms - the delay in msec.
-// OUTPUTS: none
-// DESCRIPTION: Delays a specified number of milliseconds
-void asdf_arch_delay_ms(uint16_t delay_ms);
-
 // PROCEDURE: asdf_arch_tick
 // INPUTS: none
-// OUTPUTS: returns a 1 if the 1ms timer timed out, 0 otherwise
+// OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at
+//          255)
 uint8_t asdf_arch_tick(void);
 
 // PROCEDURE: asdf_arch_send_code

@@ -82,8 +82,6 @@ void asdf_arch_out3_open_hi_set(uint8_t value);
 void asdf_arch_out3_open_lo_set(uint8_t value);
 asdf_cols_t asdf_arch_read_row(uint8_t row);
 void asdf_arch_pulse_delay_short(void);
-void asdf_arch_pulse_delay_long(void);
-void asdf_arch_delay_ms(uint16_t delay_ms);
 uint8_t asdf_arch_tick(void);
 void asdf_arch_send_code(asdf_keycode_t code);
 void asdf_arch_init(void);

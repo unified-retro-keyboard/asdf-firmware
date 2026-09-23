@@ -37,12 +37,21 @@
 #define SIM_SETTLE_MS 50
 
 /* Latency mode: presses sampled across one scan tick; the longest accepted
- * press-to-output time (the worst case measured at v1.7.1 is 19.9 ms, sol on
- * atmega1280, against 10 ms of debounce); and how long to wait for any output
- * before the sample fails. */
+ * press-to-output time (the worst case measured with elapsed-time scanning is
+ * 13.2 ms, sol on atmega328p, against 10 ms of debounce); and how long to wait
+ * for any output before the sample fails. */
 #define SIM_LATENCY_SAMPLES 20
-#define SIM_LATENCY_MAX_MS 25
+#define SIM_LATENCY_MAX_MS 15
 #define SIM_LATENCY_LIMIT_MS 50
+
+/* Accepted output strobe width (nominally 10 us, ASDF_STROBE_LENGTH_US) and
+ * long pulse width (nominally 50 ms, ASDF_PULSE_DELAY_LONG_MS). The long pulse
+ * is counted in ticks from the scan that starts it, so it can end up to one
+ * scan period early (about 1.2 ms on the 8 MHz atmega328p) or one tick late. */
+#define SIM_STROBE_MIN_US 10
+#define SIM_STROBE_MAX_US 20
+#define SIM_LONG_PULSE_MIN_MS 47
+#define SIM_LONG_PULSE_MAX_MS 52
 
 static int pred_capture_nonempty(void *ctx) { (void)ctx; return cap_count() > 0; }
 static int pred_capture_even(void *ctx) { (void)ctx; return !(cap_count() & 1u); }
@@ -481,6 +490,17 @@ int main(int argc, char **argv)
                     o2->trigger_key.row, o2->trigger_key.col);
             failed = 1;
         }
+        if (out2_edges == 2) {
+            double width_ms = (double)(io_watch_edge_cycle(0, 1) - io_watch_edge_cycle(0, 0))
+                              / (io->cpu_frequency_hz / 1000);
+            if (width_ms < SIM_LONG_PULSE_MIN_MS || width_ms > SIM_LONG_PULSE_MAX_MS) {
+                fprintf(stderr,
+                        "FAIL: %s/%s OUT2 pulse width %.2f ms, expected %d-%d ms\n",
+                        a.target, a.keymap, width_ms, SIM_LONG_PULSE_MIN_MS,
+                        SIM_LONG_PULSE_MAX_MS);
+                failed = 1;
+            }
+        }
         if (led2_edges != 0) {
             fprintf(stderr,
                     "FAIL: %s/%s LED2 (P%c%d) changed %u time(s) on an OUT2 action; "
@@ -526,6 +546,7 @@ int main(int argc, char **argv)
 
         const uint64_t cycles_per_ms = io->cpu_frequency_hz / 1000;
         uint64_t min_cycles = UINT64_MAX, max_cycles = 0;
+        double min_strobe_us = 1e9, max_strobe_us = 0;
 
         for (int i = 0; i < SIM_LATENCY_SAMPLES; i++) {
             cap_clear();
@@ -554,6 +575,22 @@ int main(int argc, char **argv)
                 return 1;
             }
 
+            /* strobe width: from this edge to the next */
+            if (sim_run_until(cpu, pred_capture_nonempty, 0, cycles_per_ms) == 1) {
+                asdf_cap_record_t r2;
+                cap_pop(&r2);
+                double width_us = (double)(r2.cycle - r.cycle) * 1000.0 / cycles_per_ms;
+                if (width_us < SIM_STROBE_MIN_US || width_us > SIM_STROBE_MAX_US) {
+                    fprintf(stderr, "FAIL: %s/%s strobe width %.1f us, expected %d-%d us\n",
+                            a.target, a.keymap, width_us, SIM_STROBE_MIN_US,
+                            SIM_STROBE_MAX_US);
+                    vcd_end();
+                    return 1;
+                }
+                if (width_us < min_strobe_us) min_strobe_us = width_us;
+                if (width_us > max_strobe_us) max_strobe_us = width_us;
+            }
+
             uint64_t latency = r.cycle - pressed_at;
             if (latency < min_cycles) min_cycles = latency;
             if (latency > max_cycles) max_cycles = latency;
@@ -569,10 +606,11 @@ int main(int argc, char **argv)
                     SIM_LATENCY_MAX_MS);
             return 1;
         }
-        printf("OK: %s/%s key latency min %.2f ms, max %.2f ms over %d presses\n",
+        printf("OK: %s/%s key latency min %.2f ms, max %.2f ms over %d presses; "
+               "strobe %.1f-%.1f us\n",
                a.target, a.keymap,
                (double)min_cycles / cycles_per_ms, (double)max_cycles / cycles_per_ms,
-               SIM_LATENCY_SAMPLES);
+               SIM_LATENCY_SAMPLES, min_strobe_us, max_strobe_us);
         return 0;
     }
 

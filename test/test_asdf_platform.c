@@ -85,11 +85,47 @@ void switching_platform_switches_hardware(void)
   TEST_ASSERT_EQUAL_INT('a', fake_b.sent[0]);
 }
 
+// asdf_process() catches up elapsed ticks in one call: a key held for the
+// debounce time registers within a single call, and is sent through the
+// platform.
+void process_catches_up_elapsed_ticks(void)
+{
+  asdf_install_platform(&fake_a.platform);
+  fake_platform_press(&fake_a, KEY_A_ROW, KEY_A_COL);
+
+  asdf_process(ASDF_DEBOUNCE_TIME_MS);
+  asdf_process(1); // send the code queued by the last scan
+  TEST_ASSERT_EQUAL_INT(1, fake_a.num_sent);
+  TEST_ASSERT_EQUAL_INT('a', fake_a.sent[0]);
+}
+
+// Message pacing does not block scanning: a key pressed while output is
+// paused registers on time, and is sent when the pause ends.
+void scanning_continues_during_message_pacing(void)
+{
+  const uint8_t delay = 40;
+
+  asdf_install_platform(&fake_a.platform);
+  asdf_set_print_delay(delay);
+  asdf_putc('m', NULL);
+  fake_platform_press(&fake_a, KEY_A_ROW, KEY_A_COL);
+
+  asdf_process(ASDF_DEBOUNCE_TIME_MS + 1);
+  TEST_ASSERT_EQUAL_INT(1, fake_a.num_sent); // only 'm'; output paused
+  TEST_ASSERT_EQUAL_INT('m', fake_a.sent[0]);
+
+  asdf_process(delay);
+  TEST_ASSERT_EQUAL_INT(2, fake_a.num_sent);
+  TEST_ASSERT_EQUAL_INT('a', fake_a.sent[1]);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
   RUN_TEST(installing_null_selects_arch_platform);
   RUN_TEST(scan_and_output_use_only_installed_platform);
   RUN_TEST(switching_platform_switches_hardware);
+  RUN_TEST(process_catches_up_elapsed_ticks);
+  RUN_TEST(scanning_continues_during_message_pacing);
   return UNITY_END();
 }

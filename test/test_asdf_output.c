@@ -21,7 +21,6 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_arch_delay_ms_reset_count();
   asdf_init();
 }
 
@@ -51,22 +50,40 @@ void test_putc_translates_newline_to_crlf(void)
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
 }
 
-// Confirm that only message bytes trigger the configured print delay.
-void test_print_delay_applies_only_to_messages(void)
+// After a message byte, output pauses for the print delay, counted in ticks;
+// typed keycodes do not start a pause.
+void test_print_delay_paces_output_after_messages(void)
 {
   const uint8_t delay = 77;
 
   asdf_set_print_delay(delay);
   asdf_putc('x', NULL);
   asdf_put_code('y');
-  asdf_arch_delay_ms_reset_count();
+  asdf_put_code('z');
 
   TEST_ASSERT_EQUAL_INT('x', asdf_next_code());
-  TEST_ASSERT_EQUAL_UINT32(1, asdf_arch_delay_ms_call_count());
-  TEST_ASSERT_EQUAL_UINT16(delay, asdf_arch_delay_ms_last_value());
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
 
+  asdf_tick(delay - 1);
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+
+  asdf_tick(1);
   TEST_ASSERT_EQUAL_INT('y', asdf_next_code());
-  TEST_ASSERT_EQUAL_UINT32(1, asdf_arch_delay_ms_call_count());
+  TEST_ASSERT_EQUAL_INT('z', asdf_next_code());
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+}
+
+// Ticks elapsed beyond the pause are not carried over.
+void test_print_delay_does_not_underflow(void)
+{
+  asdf_set_print_delay(5);
+  asdf_putc('x', NULL);
+  asdf_putc('y', NULL);
+
+  TEST_ASSERT_EQUAL_INT('x', asdf_next_code());
+  asdf_tick(200);
+  TEST_ASSERT_EQUAL_INT('y', asdf_next_code());
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
 }
 
 int main(void)
@@ -74,6 +91,7 @@ int main(void)
   UNITY_BEGIN();
   RUN_TEST(test_message_buffer_has_priority_over_keycodes);
   RUN_TEST(test_putc_translates_newline_to_crlf);
-  RUN_TEST(test_print_delay_applies_only_to_messages);
+  RUN_TEST(test_print_delay_paces_output_after_messages);
+  RUN_TEST(test_print_delay_does_not_underflow);
   return UNITY_END();
 }

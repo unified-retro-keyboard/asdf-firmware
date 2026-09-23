@@ -37,6 +37,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/atomic.h>
 #include <util/delay.h>
 #include <stdint.h>
 
@@ -66,7 +67,10 @@ static uint8_t data_polarity = ASDF_DEFAULT_DATA_POLARITY;
 //
 ISR(TIMER0_COMPA_vect)
 {
-  tick = 1;
+  // count elapsed ticks, saturating so a long stall cannot wrap the count
+  if (tick < UINT8_MAX) {
+    tick++;
+  }
 }
 
 // PROCEDURE: set_bit
@@ -169,11 +173,12 @@ static void asdf_arch_tick_timer_init(void)
 
 // PROCEDURE: asdf_arch_tick
 // INPUTS: none
-// OUTPUTS: returns a 1 if the 1ms timer timed out, 0 otherwise
+// OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at
+//          255)
 //
 // DESCRIPTION: See Outputs.
 //
-// SIDE EFFECTS: Zeroes out the 1 ms timer flag.
+// SIDE EFFECTS: Resets the tick count, with interrupts masked.
 //
 // NOTES:
 //
@@ -183,8 +188,14 @@ static void asdf_arch_tick_timer_init(void)
 //
 uint8_t asdf_arch_tick(void)
 {
-  uint8_t retval = tick;
-  tick = 0;
+  uint8_t retval;
+
+  // read and clear as one step, so a tick counted between them is not lost
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  {
+    retval = tick;
+    tick = 0;
+  }
   return retval;
 }
 
@@ -663,45 +674,6 @@ void asdf_arch_pulse_delay_short(void)
   _delay_us(ASDF_PULSE_DELAY_SHORT_US);
 }
 
-// PROCEDURE: asdf_arch_pulse_delay_long
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Delays a fixed amount of time for keyboard output pulses specified by
-// ASDF_PULSE_DELAY_LONG_MS
-//
-// SIDE EFFECTS: see above.
-//
-// NOTES: Set ASDF_PULSE_DELAY_US in asdf_config.h
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_pulse_delay_long(void)
-{
-  _delay_ms(ASDF_PULSE_DELAY_LONG_MS);
-}
-
-// PROCEDURE: asdf_arch_delay_ms
-// INPUTS: (uint16) delay_ms - the delay in msec.
-// OUTPUTS: none
-//
-// DESCRIPTION: Delays a specified number of milliseconds
-//
-// SIDE EFFECTS: see above.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_delay_ms(uint16_t delay_ms)
-{
-  for (uint16_t i=0; i < delay_ms; i++) {
-    _delay_ms(1);
-  }
-}
-
 // PROCEDURE: asdf_arch_init
 // INPUTS: none
 // OUTPUTS: none
@@ -719,7 +691,7 @@ void asdf_arch_init(void)
   // disable interrupts:
   cli();
 
-  // clear the 1ms timer flag;
+  // clear the tick count;
   tick = 0;
 
   // set up timers for 1 msec intervals

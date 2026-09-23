@@ -54,6 +54,7 @@ struct asdf_keyboard {
   asdf_keycode_t keycode_storage[ASDF_KEYCODE_BUFFER_SIZE];
   asdf_keycode_t message_storage[ASDF_MESSAGE_BUFFER_SIZE];
   uint8_t print_delay_ms; // delay after each system message character
+  uint8_t output_wait_ms; // ticks before the next code may be output
 
   asdf_keymap_state_t keymap;
   asdf_hook_state_t hooks;
@@ -79,9 +80,23 @@ void asdf_init_r(asdf_t *kb, const asdf_platform_t *platform);
 // and applies any keymap change requested during the scan.
 void asdf_keyscan_r(asdf_t *kb);
 
+// PROCEDURE: asdf_process_r
+// INPUTS: (asdf_t *) kb, (uint16_t) elapsed_ms - ticks elapsed since the last
+//         call
+// DESCRIPTION: Runs the keyboard for the elapsed ticks: advance the timers,
+// send up to one code per tick, and scan the key matrix once with debounce and
+// repeat advanced by the elapsed ticks. Never blocks.
+void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms);
+
+// PROCEDURE: asdf_tick_r
+// INPUTS: (asdf_t *) kb, (uint8_t) elapsed_ms - ticks elapsed
+// DESCRIPTION: Advances the keyboard's timers (message pacing and long output
+// pulses) without scanning or sending.
+void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms);
+
 // PROCEDURE: asdf_next_code_r
 // OUTPUTS: the next code to send (system messages first), or ASDF_INVALID_CODE
-// if none.
+// if none is queued or output is paused after a system message character.
 asdf_keycode_t asdf_next_code_r(asdf_t *kb);
 
 // PROCEDURE: asdf_send_code_r

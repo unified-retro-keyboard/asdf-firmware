@@ -131,9 +131,12 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
   switch (function) {
 
     case V_PULSE_LONG: {
-      virtual_map(phys, device_list, MAP_TOGGLE);
-      asdf_arch_pulse_delay_long();
-      virtual_map(phys, device_list, MAP_TOGGLE);
+      // Start the pulse; asdf_virtual_tick_r() ends it. A pulse already in
+      // progress is not restarted.
+      if (!virt->pulse_ticks[virtual_out]) {
+        virtual_map(phys, device_list, MAP_TOGGLE);
+        virt->pulse_ticks[virtual_out] = ASDF_PULSE_DELAY_LONG_MS;
+      }
       break;
     }
     case V_PULSE_SHORT: {
@@ -236,6 +239,7 @@ void asdf_virtual_init_r(asdf_virtual_state_t *virt)
   for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
     virt->function[i] = V_NOFUNC;
     virt->physical_device[i] = PHYSICAL_NO_OUT;
+    virt->pulse_ticks[i] = 0;
   }
 }
 
@@ -258,6 +262,34 @@ void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
   }
 }
 
+
+// PROCEDURE: asdf_virtual_tick_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+//         (uint8_t) elapsed - ticks (ms) elapsed since the last call
+// OUTPUTS: none
+//
+// DESCRIPTION: Advances each long pulse in progress. When a pulse's time has
+// expired, its physical resources are toggled back.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 4
+//
+void asdf_virtual_tick_r(asdf_virtual_state_t *virt, uint8_t elapsed)
+{
+  for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
+    if (virt->pulse_ticks[i]) {
+      if (elapsed >= virt->pulse_ticks[i]) {
+        virt->pulse_ticks[i] = 0;
+        virtual_map(&virt->physical, virt->physical_device[i], MAP_TOGGLE);
+      } else {
+        virt->pulse_ticks[i] -= elapsed;
+      }
+    }
+  }
+}
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

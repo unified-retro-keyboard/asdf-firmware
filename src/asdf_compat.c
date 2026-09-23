@@ -49,6 +49,8 @@ static asdf_t default_keyboard;
 
 void asdf_init(void) { asdf_init_r(kb, &asdf_arch_platform); }
 void asdf_keyscan(void) { asdf_keyscan_r(kb); }
+void asdf_process(uint16_t elapsed_ms) { asdf_process_r(kb, elapsed_ms); }
+void asdf_tick(uint8_t elapsed_ms) { asdf_tick_r(kb, elapsed_ms); }
 void asdf_apply_configuration(void) { asdf_apply_configuration_r(kb); }
 void asdf_send_code(asdf_keycode_t code) { asdf_send_code_r(kb, code); }
 uint8_t asdf_put_code(asdf_keycode_t code) { return asdf_put_code_r(kb, code); }

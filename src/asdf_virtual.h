@@ -70,6 +70,7 @@ typedef struct {
 typedef struct {
   asdf_physical_dev_t physical_device[ASDF_VIRTUAL_NUM_RESOURCES]; // head of each output's list
   asdf_virtual_function_t function[ASDF_VIRTUAL_NUM_RESOURCES];    // applied on activation
+  uint8_t pulse_ticks[ASDF_VIRTUAL_NUM_RESOURCES]; // ticks left in a long pulse (0 = none)
   asdf_physical_state_t physical;
 } asdf_virtual_state_t;
 
@@ -84,6 +85,11 @@ void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
                            asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
                            uint8_t initial_value);
 void asdf_virtual_sync_r(asdf_virtual_state_t *virt);
+
+// PROCEDURE: asdf_virtual_tick_r
+// INPUTS: (asdf_virtual_state_t *) virt, (uint8_t) elapsed - ticks elapsed
+// DESCRIPTION: Advances long pulses, ending those whose time has expired.
+void asdf_virtual_tick_r(asdf_virtual_state_t *virt, uint8_t elapsed);
 
 // Single-keyboard API, operating on the default virtual output state
 // (asdf_compat.c). The single-keyboard physical output functions operate on

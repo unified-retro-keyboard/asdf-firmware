@@ -25,6 +25,8 @@ static int     g_familyA_last_clock  = 0;   /* for rising-edge detection */
 static unsigned g_watch_count[IO_WATCH_SLOTS];
 static int      g_watch_last[IO_WATCH_SLOTS];
 static int      g_watch_primed[IO_WATCH_SLOTS];
+static uint64_t g_watch_edge_cycle[IO_WATCH_SLOTS][2]; /* first two edges */
+static avr_t   *g_watch_cpu;
 
 static void on_watch_pin(struct avr_irq_t *irq, uint32_t value, void *param)
 {
@@ -41,6 +43,8 @@ static void on_watch_pin(struct avr_irq_t *irq, uint32_t value, void *param)
     }
     if (level != g_watch_last[slot]) {
         g_watch_last[slot] = level;
+        if (g_watch_count[slot] < 2 && g_watch_cpu)
+            g_watch_edge_cycle[slot][g_watch_count[slot]] = g_watch_cpu->cycle;
         g_watch_count[slot]++;
     }
 }
@@ -54,6 +58,7 @@ int io_watch_pin(avr_t *cpu, int slot, char port, int bit)
     avr_irq_t *irq = avr_io_getirq(cpu, AVR_IOCTL_IOPORT_GETIRQ(port), bit);
     if (!irq) return -1;
 
+    g_watch_cpu          = cpu;
     g_watch_count[slot]  = 0;
     g_watch_last[slot]   = (int)(irq->value & 1);
     g_watch_primed[slot] = 1;
@@ -71,6 +76,12 @@ unsigned io_watch_count(int slot)
 {
     if (slot < 0 || slot >= IO_WATCH_SLOTS) return 0;
     return g_watch_count[slot];
+}
+
+uint64_t io_watch_edge_cycle(int slot, int edge)
+{
+    if (slot < 0 || slot >= IO_WATCH_SLOTS || edge < 0 || edge > 1) return 0;
+    return g_watch_edge_cycle[slot][edge];
 }
 
 static void on_data_port(struct avr_irq_t *irq, uint32_t value, void *param)

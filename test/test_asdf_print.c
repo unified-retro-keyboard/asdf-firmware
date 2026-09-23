@@ -16,7 +16,6 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_arch_delay_ms_reset_count();
   asdf_init();
 }
 
