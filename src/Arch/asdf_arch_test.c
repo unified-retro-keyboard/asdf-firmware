@@ -614,10 +614,10 @@ __attribute__((weak)) asdf_cols_t asdf_arch_read_row(uint8_t row)
   return 0;
 }
 
-// PROCEDURE: arch_platform_read_row, arch_platform_send_code
-// DESCRIPTION: adapt the architecture's row scanner and code output to the
-// typed platform interface. This architecture has one set of hardware, so the
-// platform context pointer is unused.
+// PROCEDURE: arch_platform_*
+// DESCRIPTION: adapt the emulated hardware to the typed platform interface.
+// This test architecture has one set of hardware, so the platform context
+// pointer is unused.
 static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
 {
   (void) user;
@@ -630,10 +630,40 @@ static void arch_platform_send_code(void *user, asdf_keycode_t code)
   asdf_arch_send_code(code);
 }
 
+static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uint8_t value)
+{
+  (void) user;
+  if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
+    set_output(output, value);
+  }
+}
+
+static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
+{
+  (void) user;
+  strobe_is_positive = positive ? 1 : 0;
+}
+
+static void arch_platform_pulse_delay_short(void *user)
+{
+  (void) user;
+  asdf_arch_pulse_delay_short();
+}
+
+static void arch_platform_reset(void *user)
+{
+  (void) user;
+  asdf_arch_init();
+}
+
 const asdf_platform_t asdf_arch_platform = {
   .user = NULL,
   .read_row = arch_platform_read_row,
   .send_code = arch_platform_send_code,
+  .set_output = arch_platform_set_output,
+  .set_strobe_polarity = arch_platform_set_strobe_polarity,
+  .pulse_delay_short = arch_platform_pulse_delay_short,
+  .reset = arch_platform_reset,
 };
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

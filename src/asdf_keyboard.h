@@ -119,6 +119,11 @@ int asdf_putc_r(asdf_t *kb, char c);
 // NULL restores the keyboard's base platform.
 void asdf_install_platform_r(asdf_t *kb, const asdf_platform_t *platform);
 
+// PROCEDURE: asdf_set_strobe_polarity_r
+// DESCRIPTION: sets the output strobe polarity through the keyboard's
+// platform: positive (idle low) if positive is nonzero, else negative.
+void asdf_set_strobe_polarity_r(asdf_t *kb, uint8_t positive);
+
 // PROCEDURE: asdf_apply_configuration_r
 // DESCRIPTION: after a keymap switch, re-applies the configuration actions of
 // held switches (see asdf_apply_configuration in asdf.h).

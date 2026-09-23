@@ -8,6 +8,7 @@
 #include "asdf_arch.h"
 #include "asdf_config.h"
 #include "asdf_physical.h"
+#include "fake_platform.h"
 
 asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
@@ -25,7 +26,7 @@ void tearDown(void) {}
 void init_puts_every_device_on_available_list(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   for (int dev = PHYSICAL_OUT1; dev < ASDF_PHYSICAL_NUM_RESOURCES; dev++) {
     TEST_ASSERT_TRUE(asdf_physical_allocate_r(&phys, (asdf_physical_dev_t) dev, PHYSICAL_NO_OUT, 0));
@@ -35,7 +36,7 @@ void init_puts_every_device_on_available_list(void)
 void device_cannot_be_allocated_twice(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   TEST_ASSERT_TRUE(asdf_physical_allocate_r(&phys, PHYSICAL_LED1, PHYSICAL_NO_OUT, 0));
   TEST_ASSERT_FALSE(asdf_physical_allocate_r(&phys, PHYSICAL_LED1, PHYSICAL_NO_OUT, 0));
@@ -44,7 +45,7 @@ void device_cannot_be_allocated_twice(void)
 void no_out_cannot_be_allocated(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   TEST_ASSERT_FALSE(asdf_physical_allocate_r(&phys, PHYSICAL_NO_OUT, PHYSICAL_NO_OUT, 0));
 }
@@ -52,7 +53,7 @@ void no_out_cannot_be_allocated(void)
 void allocate_links_tail(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   asdf_physical_allocate_r(&phys, PHYSICAL_LED2, PHYSICAL_NO_OUT, 0);
   asdf_physical_allocate_r(&phys, PHYSICAL_LED1, PHYSICAL_LED2, 0);
@@ -63,7 +64,7 @@ void allocate_links_tail(void)
 void set_toggle_and_assert_drive_output(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   asdf_physical_set_r(&phys, PHYSICAL_LED1, 1);
   TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
@@ -78,7 +79,7 @@ void set_toggle_and_assert_drive_output(void)
 void invalid_devices_are_ignored(void)
 {
   asdf_physical_state_t phys;
-  asdf_physical_init_r(&phys);
+  asdf_physical_init_r(&phys, &asdf_arch_platform);
 
   asdf_physical_set_r(&phys, ASDF_PHYSICAL_NUM_RESOURCES, 1);
   asdf_physical_on_r(&phys, ASDF_PHYSICAL_NUM_RESOURCES);
@@ -91,13 +92,16 @@ void invalid_devices_are_ignored(void)
     asdf_physical_allocate_r(&phys, ASDF_PHYSICAL_NUM_RESOURCES, PHYSICAL_NO_OUT, 0));
 }
 
-// Two physical states track allocation and shadow values independently. (The
-// fake hardware outputs behind them are shared.)
+// Two physical states track allocation and shadow values independently, and
+// drive their own hardware.
 void independent_physical_states(void)
 {
+  fake_platform_t hw_a, hw_b;
   asdf_physical_state_t a, b;
-  asdf_physical_init_r(&a);
-  asdf_physical_init_r(&b);
+  fake_platform_init(&hw_a);
+  fake_platform_init(&hw_b);
+  asdf_physical_init_r(&a, &hw_a.platform);
+  asdf_physical_init_r(&b, &hw_b.platform);
 
   TEST_ASSERT_TRUE(asdf_physical_allocate_r(&a, PHYSICAL_LED1, PHYSICAL_NO_OUT, 1));
   TEST_ASSERT_TRUE(asdf_physical_allocate_r(&b, PHYSICAL_LED1, PHYSICAL_LED2, 0));
@@ -105,10 +109,24 @@ void independent_physical_states(void)
   TEST_ASSERT_EQUAL_INT(PHYSICAL_NO_OUT, asdf_physical_next_device_r(&a, PHYSICAL_LED1));
   TEST_ASSERT_EQUAL_INT(PHYSICAL_LED2, asdf_physical_next_device_r(&b, PHYSICAL_LED1));
 
+  hw_b.outputs[PHYSICAL_LED1] = 1;
   asdf_physical_assert_r(&a, PHYSICAL_LED1);
-  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
   asdf_physical_assert_r(&b, PHYSICAL_LED1);
+  TEST_ASSERT_EQUAL_INT(1, hw_a.outputs[PHYSICAL_LED1]);
+  TEST_ASSERT_EQUAL_INT(0, hw_b.outputs[PHYSICAL_LED1]);
+}
+
+// With no platform, a physical state tracks shadow values without driving
+// hardware.
+void no_platform_tracks_shadow_only(void)
+{
+  asdf_physical_state_t phys;
+  asdf_physical_init_r(&phys, NULL);
+
+  asdf_physical_set_r(&phys, PHYSICAL_LED1, 1);
+  asdf_physical_pulse_delay_short_r(&phys);
   TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED1));
+  TEST_ASSERT_EQUAL_INT(1, phys.shadow[PHYSICAL_LED1]);
 }
 
 int main(void)
@@ -121,5 +139,6 @@ int main(void)
   RUN_TEST(set_toggle_and_assert_drive_output);
   RUN_TEST(invalid_devices_are_ignored);
   RUN_TEST(independent_physical_states);
+  RUN_TEST(no_platform_tracks_shadow_only);
   return UNITY_END();
 }

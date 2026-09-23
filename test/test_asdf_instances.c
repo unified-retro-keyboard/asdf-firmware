@@ -12,6 +12,7 @@
 #include "asdf.h"
 #include "asdf_config.h"
 #include "asdf_keyboard.h"
+#include "asdf_keymaps.h"
 #include "fake_platform.h"
 #include "test_asdf_keymap_defs.h"
 
@@ -159,6 +160,37 @@ void reinit_of_one_instance_leaves_other_alone(void)
   TEST_ASSERT_EQUAL_INT(MOD_PLAIN_MAP, asdf_modifier_index_r(&pair_b.kb.modifiers));
 }
 
+static void scan_r(runner_t *r)
+{
+  for (int t = 0; t < ASDF_DEBOUNCE_TIME_MS; t++) {
+    asdf_keyscan_r(&r->kb);
+  }
+}
+
+// Each keyboard drives outputs and strobe polarity, and resets its hardware on
+// a keymap switch, only through its own platform.
+void each_instance_drives_only_its_own_hardware(void)
+{
+  runner_init(&pair_a, 1);
+  runner_init(&pair_b, 2);
+  asdf_keymaps_select_r(&pair_a.kb, VCAPS_TEST_KEYMAP);
+  TEST_ASSERT_EQUAL_INT(2, pair_a.hw.resets); // at init, and at the switch
+  TEST_ASSERT_EQUAL_INT(1, pair_b.hw.resets);
+  asdf_keymaps_select_r(&pair_b.kb, VCAPS_TEST_KEYMAP);
+
+  fake_platform_press(&pair_a.hw, 0, 4); // CAPS on A: CAPS LED on LED1
+  scan_r(&pair_a);
+  scan_r(&pair_b);
+  TEST_ASSERT_EQUAL_INT(1, pair_a.hw.outputs[PHYSICAL_LED1]);
+  TEST_ASSERT_EQUAL_INT(0, pair_b.hw.outputs[PHYSICAL_LED1]);
+
+  fake_platform_press(&pair_b.hw, TEST_NUM_ROWS - 1, 6); // strobe polarity DIP on B
+  scan_r(&pair_a);
+  scan_r(&pair_b);
+  TEST_ASSERT_TRUE(pair_b.hw.strobe_positive);
+  TEST_ASSERT_FALSE(pair_a.hw.strobe_positive);
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -166,5 +198,6 @@ int main(void)
   RUN_TEST(interleaved_instances_match_solo_runs_other_seeds);
   RUN_TEST(scripts_produce_different_output);
   RUN_TEST(reinit_of_one_instance_leaves_other_alone);
+  RUN_TEST(each_instance_drives_only_its_own_hardware);
   return UNITY_END();
 }

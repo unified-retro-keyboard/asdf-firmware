@@ -108,11 +108,14 @@ typedef enum {
 } action_t;
 
 
+struct asdf_platform; // asdf_platform.h
+
 // PROCEDURE: asdf_init
-// INPUTS: none
+// INPUTS: (const struct asdf_platform *) platform - the keyboard's hardware,
+//         such as the platform embedded in the architecture adapter's state
 // OUTPUTS: none
 // DESCRIPTION: initialize the keyboard state and debounce counters
-void asdf_init(void);
+void asdf_init(const struct asdf_platform *platform);
 
 // PROCEDURE: asdf_process
 // INPUTS: (uint16_t) elapsed_ms - ticks elapsed since the last call

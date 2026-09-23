@@ -27,9 +27,12 @@
 #define ASDF_ARCH_H
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <avr/pgmspace.h>
+#include <stdint.h>
 
 #include "asdf.h"
+#include "asdf_platform.h"
 
 // ASDF keyboard definitions:
 
@@ -361,135 +364,42 @@
 #define ASDF_ARCH_DIPSWITCH_ROW 8
 
 
-// PROCEDURE: asdf_arch_pos_strobe
-// INPUTS: none
+// State of one keyboard's hardware. The embedded platform passes this state to
+// each of its operations. The board layer (main.c) owns the state and the tick
+// interrupt vector (ASDF_ARCH_TICK_ISR), which calls asdf_arch_count_tick().
+typedef struct {
+  asdf_platform_t platform; // the keyboard's platform; its user pointer is this state
+  volatile uint8_t ticks;   // ticks counted by the interrupt, not yet collected
+  uint8_t data_polarity;    // XORed with each code sent
+} asdf_arch_t;
+
+// The tick interrupt: Timer 0 compare match, every 1 ms.
+#define ASDF_ARCH_TICK_ISR ISR(TIMER0_COMPA_vect)
+
+// PROCEDURE: asdf_arch_count_tick
+// INPUTS: (asdf_arch_t *) arch
 // OUTPUTS: none
-// DESCRIPTION: Initialize strobe output to positive polarity. Initial state is
-// LOW
-void asdf_arch_set_pos_strobe(void);
-
-// PROCEDURE: asdf_arch_neg_strobe
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Initialize strobe output
-void asdf_arch_set_neg_strobe(void);
-
-
-// PROCEDURE: asdf_arch_null_output
-// INPUTS: (uint8_t) value - ignored
-// OUTPUTS: none
-// DESCRIPTION: null/dummy output function
-// NOTES: Not supported for the ATMega-328 ASCII interface.
-void asdf_arch_null_output(uint8_t value);
-
-// PROCEDURE: asdf_arch_led1_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED1.  If value is false, turn off LED1
-void asdf_arch_led1_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_led2_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED2.  If value is false, turn off LED2
-void asdf_arch_led2_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_led3_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED3.  If value is false, turn off LED3
-void asdf_arch_led3_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out1_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT1 bit if value is true, and clear OUT1 if value is false.
-void asdf_arch_out1_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out1_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT1 bit to hi-z if value is true, and low if value is false.
-void asdf_arch_out1_open_hi_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out1_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT1 bit to hi-z if value is true, and low if value is false.
-void asdf_arch_out1_open_lo_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out2_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT2 bit if value is true, and clear OUT2 if value is false.
-void asdf_arch_out2_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out2_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT2 bit to hi-z if value is true, and low if value is false.
-// NOTES: Not supported for the ATMega-328 ASCII interface.
-void asdf_arch_out2_open_hi_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out2_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT2 bit to high if value is true, and hi-z if value is false.
-void asdf_arch_out2_open_lo_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out3_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT3 bit if value is true, and clear OUT3 if value is false.
-void asdf_arch_out3_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out3_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT3 bit to hi-z if value is true, and low if value is false.
-void asdf_arch_out3_open_hi_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_out3_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT3 bit to hi-z if value is true, and low if value is false.
-void asdf_arch_out3_open_lo_set(uint8_t value);
-
-// PROCEDURE: asdf_arch_read_row
-// INPUTS: (uint8_t) row: the row number to be scanned
-// OUTPUTS: returns a word containing the active (pressed) columns
-// DESCRIPTION: Outputs the argument to the ROW port, then reads the column port
-// and returns the value. The value is a binary representation of the keys
-// pressed within the row, with 1=pressed, 0=released.
-asdf_cols_t asdf_arch_read_row(uint8_t row);
-
-// PROCEDURE: asdf_arch_pulse_delay_short
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Delays a fixed amount of time for keyboard output pulses specified by
-// ASDF_PULSE_DELAY_SHORT_US
-void asdf_arch_pulse_delay_short(void);
-
+// DESCRIPTION: Counts one elapsed tick, saturating so a long stall cannot wrap
+// the count. Called only from the tick interrupt.
+static inline void asdf_arch_count_tick(asdf_arch_t *arch)
+{
+  if (arch->ticks < UINT8_MAX) {
+    arch->ticks++;
+  }
+}
 
 // PROCEDURE: asdf_arch_tick
-// INPUTS: none
+// INPUTS: (asdf_arch_t *) arch
 // OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at
 //          255)
-uint8_t asdf_arch_tick(void);
-
-// PROCEDURE: asdf_arch_send_code
-// INPUTS: (keycode_t) code - the code to be output by the keyboard
-// OUTPUTS: none
-// DESCRIPTION: Takes a character code and outputs the code on a parallel ASCII
-// port, with a strobe. This routine could be replaced with UART, I2C, USB, or
-// other output mechanism, of course.
-void asdf_arch_send_code(asdf_keycode_t code);
+uint8_t asdf_arch_tick(asdf_arch_t *arch);
 
 // PROCEDURE: asdf_arch_init
-// INPUTS: none
+// INPUTS: (asdf_arch_t *) arch - hardware state to initialize
 // OUTPUTS: none
-// DESCRIPTION: sets up all the hardware for the keyboard
-void asdf_arch_init(void);
+// DESCRIPTION: sets up all the hardware for the keyboard and the platform
+// embedded in arch, and starts the tick interrupt.
+void asdf_arch_init(asdf_arch_t *arch);
 
 #endif /* !defined (ASDF_ARCH_H) */
 

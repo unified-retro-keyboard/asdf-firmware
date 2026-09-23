@@ -77,7 +77,7 @@ typedef struct {
 // Instance API: each function operates only on the state passed to it.
 // Invalid virtual outputs are ignored. See asdf_virtual.c.
 
-void asdf_virtual_init_r(asdf_virtual_state_t *virt);
+void asdf_virtual_init_r(asdf_virtual_state_t *virt, const struct asdf_platform *platform);
 void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                            asdf_virtual_function_t function);
 void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out);

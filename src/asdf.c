@@ -100,8 +100,9 @@ int asdf_putc_r(asdf_t *kb, char c) {
 //         keyboard's base platform
 // OUTPUTS: none
 //
-// DESCRIPTION: Selects the platform through which the key matrix is read and
-// codes are sent. Keymaps with special hardware needs install their own.
+// DESCRIPTION: Selects the platform through which the key matrix is read,
+// codes are sent, and outputs are driven. Keymaps with special hardware needs
+// install their own.
 //
 // SCOPE: public
 //
@@ -109,6 +110,23 @@ int asdf_putc_r(asdf_t *kb, char c) {
 //
 void asdf_install_platform_r(asdf_t *kb, const asdf_platform_t *platform) {
     kb->platform = platform ? platform : kb->base_platform;
+    kb->outputs.physical.platform = kb->platform;
+}
+
+// PROCEDURE: asdf_set_strobe_polarity_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint8_t) positive - nonzero for a positive (idle low) strobe
+// OUTPUTS: none
+//
+// DESCRIPTION: Sets the output strobe polarity through the keyboard's
+// platform.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_set_strobe_polarity_r(asdf_t *kb, uint8_t positive) {
+    kb->platform->set_strobe_polarity(kb->platform->user, positive);
 }
 
 // PROCEDURE: asdf_send_code_r
@@ -187,7 +205,7 @@ void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms) {
 // longer than a tick.
 //
 // NOTES: Never blocks. Callers on a 1 ms tick call this with the ticks counted
-// since the last call (see asdf_arch_tick()). Elapsed times above 255 ticks are
+// since the last call (see the platform adapter's asdf_arch_tick()). Elapsed times above 255 ticks are
 // treated as 255.
 //
 // SCOPE: public
@@ -310,7 +328,7 @@ static void asdf_activate_action(asdf_t *kb, action_t keycode) {
         asdf_repeat_activate_r(&kb->repeat);
         return;
     case ACTION_STROBE_POLARITY_SELECT:
-        asdf_arch_set_pos_strobe();
+        asdf_set_strobe_polarity_r(kb, 1);
         return;
     case ACTION_AUTOREPEAT_SELECT:
         asdf_repeat_auto_on_r(&kb->repeat);
@@ -360,7 +378,7 @@ static void asdf_deactivate_action(asdf_t *kb, action_t keycode) {
         asdf_repeat_deactivate_r(&kb->repeat);
         break;
     case ACTION_STROBE_POLARITY_SELECT:
-        asdf_arch_set_neg_strobe();
+        asdf_set_strobe_polarity_r(kb, 0);
         break;
     case ACTION_AUTOREPEAT_SELECT:
         asdf_repeat_auto_off_r(&kb->repeat);
@@ -656,7 +674,7 @@ void asdf_init_r(asdf_t *kb, const asdf_platform_t *platform) {
     }
 
     kb->base_platform = platform;
-    kb->platform = platform;
+    asdf_install_platform_r(kb, NULL);
 
     asdf_keymaps_init_r(kb);
 }

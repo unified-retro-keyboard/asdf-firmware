@@ -27,8 +27,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 void setUp(void)
 {
   test_hook_clear();
-  asdf_keymaps_init();
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
 
   asdf_keymaps_select(ASDF_TEST_DEFAULT_SCANNER_MAP);
 }

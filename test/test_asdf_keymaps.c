@@ -122,7 +122,7 @@ void setUp(void)
 {
   coord_t *temp;
 
-  asdf_keymaps_init();
+  asdf_init(&asdf_arch_platform);
   asdf_keymaps_select(ASDF_TEST_PLAIN_MAP_INDEX);
 
   temp = find_code(TESTALPHA);

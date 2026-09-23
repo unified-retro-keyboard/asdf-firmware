@@ -47,7 +47,7 @@ static asdf_t default_keyboard;
 // Keyboard
 //
 
-void asdf_init(void) { asdf_init_r(kb, &asdf_arch_platform); }
+void asdf_init(const asdf_platform_t *platform) { asdf_init_r(kb, platform); }
 void asdf_keyscan(void) { asdf_keyscan_r(kb); }
 void asdf_process(uint16_t elapsed_ms) { asdf_process_r(kb, elapsed_ms); }
 void asdf_tick(uint8_t elapsed_ms) { asdf_tick_r(kb, elapsed_ms); }
@@ -168,7 +168,7 @@ uint8_t asdf_repeat(void) { return asdf_repeat_r(&kb->repeat); }
 // virtual output state.
 //
 
-void asdf_virtual_init(void) { asdf_virtual_init_r(&kb->outputs); }
+void asdf_virtual_init(void) { asdf_virtual_init_r(&kb->outputs, kb->platform); }
 void asdf_virtual_action(asdf_virtual_dev_t virtual_out, asdf_virtual_function_t function)
 {
   asdf_virtual_action_r(&kb->outputs, virtual_out, function);
@@ -184,7 +184,7 @@ void asdf_virtual_assign(asdf_virtual_dev_t virtual_out, asdf_physical_dev_t phy
 }
 void asdf_virtual_sync(void) { asdf_virtual_sync_r(&kb->outputs); }
 
-void asdf_physical_init(void) { asdf_physical_init_r(&kb->outputs.physical); }
+void asdf_physical_init(void) { asdf_physical_init_r(&kb->outputs.physical, kb->platform); }
 void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value)
 {
   asdf_physical_set_r(&kb->outputs.physical, physical_out, value);

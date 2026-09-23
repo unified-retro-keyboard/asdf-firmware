@@ -31,7 +31,7 @@
 #include "asdf_physical.h"
 #include "asdf_virtual.h"
 #include "asdf_config.h"
-#include "asdf_arch.h"
+#include "asdf_platform.h"
 
 // A virtual output identifies one element of the tables in
 // asdf_virtual_state_t. Each element holds the first in the list of physical
@@ -141,7 +141,7 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
     }
     case V_PULSE_SHORT: {
       virtual_map(phys, device_list, MAP_TOGGLE);
-      asdf_arch_pulse_delay_short();
+      asdf_physical_pulse_delay_short_r(phys);
       virtual_map(phys, device_list, MAP_TOGGLE);
       break;
     }
@@ -221,6 +221,8 @@ void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
 
 // PROCEDURE: asdf_virtual_init_r
 // INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+//         (const asdf_platform_t *) platform - drives the physical outputs, or
+//         NULL
 // OUTPUTS: none
 //
 // DESCRIPTION: Initialize the virtual outputs, with no physical resources
@@ -232,9 +234,9 @@ void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
 //
 // COMPLEXITY: 2
 //
-void asdf_virtual_init_r(asdf_virtual_state_t *virt)
+void asdf_virtual_init_r(asdf_virtual_state_t *virt, const asdf_platform_t *platform)
 {
-  asdf_physical_init_r(&virt->physical);
+  asdf_physical_init_r(&virt->physical, platform);
 
   for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
     virt->function[i] = V_NOFUNC;

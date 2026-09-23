@@ -88,7 +88,7 @@ static int32_t scans_until_code(void)
 
 void setUp(void)
 {
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
   asdf_modifiers_init();
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
@@ -174,7 +174,7 @@ void reinit_forgets_keys_held_before_init(void)
   hold(KEY_REPEAT_ROW, KEY_REPEAT_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
 
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
   lift(KEY_REPEAT_ROW, KEY_REPEAT_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
 

@@ -7,6 +7,7 @@
 #include "unity.h"
 #include "asdf.h"
 #include "asdf_config.h"
+#include "asdf_arch.h"
 #include "asdf_platform.h"
 #include "fake_platform.h"
 
@@ -33,7 +34,7 @@ static void send_pending_codes(void)
 
 void setUp(void)
 {
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
   fake_platform_init(&fake_a);
   fake_platform_init(&fake_b);
 }
