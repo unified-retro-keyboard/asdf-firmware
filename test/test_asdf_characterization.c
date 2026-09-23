@@ -302,14 +302,14 @@ void newline_with_two_slots_queues_crlf(void)
   TEST_ASSERT_EQUAL_INT('\n', tail[(ASDF_MESSAGE_BUFFER_SIZE - 1) % 2]);
 }
 
-// With one slot left, the CR is queued and the LF is silently dropped.
-void currently_newline_with_one_slot_queues_cr_only(void)
+// With one slot left, CR LF does not fit as a unit, so neither is queued.
+void newline_with_one_slot_queues_nothing(void)
 {
   char tail[1] = { 0 };
   fill_message_buffer_leaving(1);
-  asdf_putc('\n', NULL);
-  TEST_ASSERT_EQUAL_INT(ASDF_MESSAGE_BUFFER_SIZE, drain_message_buffer_tail(tail, 1));
-  TEST_ASSERT_EQUAL_INT('\r', tail[0]);
+  TEST_ASSERT_EQUAL_INT(EOF, asdf_putc('\n', NULL));
+  TEST_ASSERT_EQUAL_INT(ASDF_MESSAGE_BUFFER_SIZE - 1, drain_message_buffer_tail(tail, 1));
+  TEST_ASSERT_EQUAL_INT('x', tail[0]);
 }
 
 void newline_with_no_slots_queues_nothing(void)
@@ -384,7 +384,7 @@ int main(void)
   RUN_TEST(currently_here_is_runs_user1_hook);
   RUN_TEST(currently_nothing_key_queues_invalid_code);
   RUN_TEST(newline_with_two_slots_queues_crlf);
-  RUN_TEST(currently_newline_with_one_slot_queues_cr_only);
+  RUN_TEST(newline_with_one_slot_queues_nothing);
   RUN_TEST(newline_with_no_slots_queues_nothing);
   RUN_TEST(invalid_keymap_select_is_ignored);
   RUN_TEST(invalid_hook_ids_are_ignored);

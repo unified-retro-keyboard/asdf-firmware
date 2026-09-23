@@ -55,7 +55,7 @@ list (APPEND SOURCES
   asdf.c
   ${CMAKE_CURRENT_BINARY_DIR}/asdf_arch.c
   ${CMAKE_CURRENT_BINARY_DIR}/asdf_keymap_setup.c
-  asdf_buffer.c
+  asdf_ring.c
   asdf_hook.c
   asdf_keymap_setup.c
   asdf_keymaps.c

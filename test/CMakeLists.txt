@@ -33,7 +33,7 @@ add_library(asdf_core
   STATIC
   asdf_keymap_table.c
   ${PROJECT_SRC_DIR}/asdf.c
-  ${PROJECT_SRC_DIR}/asdf_buffer.c
+  ${PROJECT_SRC_DIR}/asdf_ring.c
   ${PROJECT_SRC_DIR}/asdf_hook.c
   ${PROJECT_SRC_DIR}/asdf_keymaps.c
   ${PROJECT_SRC_DIR}/asdf_modifiers.c
@@ -106,7 +106,7 @@ enable_testing()
 setup_test(test_asdf_repeat)
 setup_test(test_asdf_modifiers)
 setup_test(test_asdf_keymaps)
-setup_test(test_asdf_buffer)
+setup_test(test_asdf_ring)
 setup_test(test_asdf_output)
 setup_test(test_asdf_actions)
 setup_test(test_asdf_print)
