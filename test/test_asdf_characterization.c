@@ -7,10 +7,6 @@
 // from a regression. A test named "currently_..." pins behavior that is
 // expected to change; when a refactor phase changes it on purpose, update the
 // test in the same commit.
-//
-// Tests for out-of-bounds indices that are not validated today are registered
-// as ignored: running them would be undefined behavior. Enable each one when
-// its function gains validation.
 
 #include <stdint.h>
 #include <stdio.h>
@@ -38,6 +34,12 @@
 #define KEY_REPEAT_COL 0
 #define KEY_HERE_IS_ROW 5
 #define KEY_HERE_IS_COL 1
+#define KEY_CTRL_ROW 0
+#define KEY_CTRL_COL 6
+#define KEY_ESC1_ROW 0 // ASCII_ESC in the test CTRL map
+#define KEY_ESC1_COL 5
+#define KEY_ESC2_ROW 6 // ASCII_ESC in the test CTRL map
+#define KEY_ESC2_COL 2
 #define DIP_ROW (TEST_NUM_ROWS - 1)
 #define DIP_MAPSEL_1_COL 1
 #define DIP_STROBE_COL 6
@@ -113,10 +115,9 @@ void press_registers_after_debounce_time(void)
   TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
 }
 
-// The debounce counter is not reset when a key returns to its stable state
-// before debouncing. A 3-scan glitch leaves the counter part-way down, so the
-// next real press registers after only ASDF_DEBOUNCE_TIME_MS - 3 scans.
-void currently_debounce_glitch_shortens_next_press(void)
+// A key that returns to its stable state before debouncing restarts the
+// debounce count, so a 3-scan glitch does not shorten the next press.
+void debounce_glitch_does_not_shorten_next_press(void)
 {
   hold(KEY_A_ROW, KEY_A_COL);
   scan(3);
@@ -125,7 +126,7 @@ void currently_debounce_glitch_shortens_next_press(void)
   TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, asdf_next_code());
 
   hold(KEY_A_ROW, KEY_A_COL);
-  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS - 3, scans_until_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
 }
 
 //
@@ -141,6 +142,24 @@ void autorepeat_timing_after_registration(void)
   TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS, scans_until_code());
   TEST_ASSERT_EQUAL_INT32(ASDF_REPEAT_TIME_MS, scans_until_code());
   TEST_ASSERT_EQUAL_INT32(ASDF_REPEAT_TIME_MS, scans_until_code());
+}
+
+// The repeating key is tracked by position. ESC is on two keys of the test
+// CTRL map; with both held, releasing the first does not stop the second
+// from repeating.
+void repeat_follows_key_position_not_code(void)
+{
+  hold(KEY_CTRL_ROW, KEY_CTRL_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+
+  hold(KEY_ESC1_ROW, KEY_ESC1_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+  hold(KEY_ESC2_ROW, KEY_ESC2_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+
+  lift(KEY_ESC1_ROW, KEY_ESC1_COL);
+  // the autorepeat timer restarted when the second key registered
+  TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS, scans_until_code());
 }
 
 //
@@ -351,14 +370,18 @@ void invalid_virtual_assign_is_ignored(void)
   TEST_PASS();
 }
 
-void unchecked_keymaps_get_code_row_and_col(void)
+void invalid_keymap_row_and_col_return_nothing(void)
 {
-  TEST_IGNORE_MESSAGE("asdf_keymaps_get_code: row and col are not validated (out-of-bounds read)");
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(200, 0, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 200, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(TEST_NUM_ROWS, 0, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, TEST_NUM_COLS, MOD_PLAIN_MAP));
 }
 
-void unchecked_keymaps_get_code_modifier(void)
+void invalid_keymap_modifier_returns_nothing(void)
 {
-  TEST_IGNORE_MESSAGE("asdf_keymaps_get_code: modifier index is not validated (out-of-bounds read)");
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 0, ASDF_MOD_NUM_MODIFIERS));
+  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 0, 200));
 }
 
 void invalid_virtual_devices_are_ignored(void)
@@ -382,8 +405,9 @@ int main(void)
 {
   UNITY_BEGIN();
   RUN_TEST(press_registers_after_debounce_time);
-  RUN_TEST(currently_debounce_glitch_shortens_next_press);
+  RUN_TEST(debounce_glitch_does_not_shorten_next_press);
   RUN_TEST(autorepeat_timing_after_registration);
+  RUN_TEST(repeat_follows_key_position_not_code);
   RUN_TEST(reinit_forgets_keys_held_before_init);
   RUN_TEST(keymap_switch_resets_caps);
   RUN_TEST(keymap_switch_does_not_reactivate_held_keys);
@@ -398,8 +422,8 @@ int main(void)
   RUN_TEST(invalid_keymap_select_is_ignored);
   RUN_TEST(invalid_hook_ids_are_ignored);
   RUN_TEST(invalid_virtual_assign_is_ignored);
-  RUN_TEST(unchecked_keymaps_get_code_row_and_col);
-  RUN_TEST(unchecked_keymaps_get_code_modifier);
+  RUN_TEST(invalid_keymap_row_and_col_return_nothing);
+  RUN_TEST(invalid_keymap_modifier_returns_nothing);
   RUN_TEST(invalid_virtual_devices_are_ignored);
   RUN_TEST(invalid_physical_devices_are_ignored);
   return UNITY_END();

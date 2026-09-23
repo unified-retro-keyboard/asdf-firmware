@@ -48,6 +48,19 @@ typedef enum {
 
 typedef void (*asdf_hook_function_t)(void);
 
+// The functions bound to each hook, for one keyboard.
+typedef struct {
+  asdf_hook_function_t map[ASDF_NUM_HOOKS];
+} asdf_hook_state_t;
+
+// Instance API: each function operates only on the hook state passed to it.
+void asdf_hook_init_r(asdf_hook_state_t *hooks);
+void asdf_hook_assign_r(asdf_hook_state_t *hooks, asdf_hook_id_t hook_id,
+                        asdf_hook_function_t func);
+void asdf_hook_execute_r(const asdf_hook_state_t *hooks, asdf_hook_id_t hook_id);
+
+// Single-keyboard API, operating on the default keyboard (asdf_compat.c).
+
 
 // PROCEDURE: asdf_hook_execute
 // INPUTS: (asdf_hook_id_t) hook_id: The hook for which to execute attache functions.

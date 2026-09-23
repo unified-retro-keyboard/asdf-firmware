@@ -36,10 +36,7 @@
 #include "asdf_hook.h"
 
 
-// hooks_table[] contains all the function hooks. The entry for each ID contains
-// a pointer to the first in the list of functions (if any) assigned to the hook
-// ID.
-static asdf_hook_function_t hook_map[ASDF_NUM_HOOKS];
+// The functions bound to each hook are held in the caller's asdf_hook_state_t.
 
 // PROCEDURE: asdf_hook_null_func
 // INPUTS: none
@@ -77,8 +74,9 @@ static uint8_t asdf_hook_valid_id(asdf_hook_id_t id)
   return (id > ASDF_HOOK_NULL && id < ASDF_NUM_HOOKS);
 }
 
-// PROCEDURE: asdf_hook_execute
-// INPUTS: (asdf_hook_id_t) hook_id: The hook for which to execute the attached
+// PROCEDURE: asdf_hook_execute_r
+// INPUTS: (const asdf_hook_state_t *) hooks - hook state
+//         (asdf_hook_id_t) hook_id: The hook for which to execute the attached
 // function.
 //
 // OUTPUTS: none
@@ -93,15 +91,16 @@ static uint8_t asdf_hook_valid_id(asdf_hook_id_t id)
 //
 // COMPLEXITY: 2
 //
-void asdf_hook_execute(asdf_hook_id_t hook_id)
+void asdf_hook_execute_r(const asdf_hook_state_t *hooks, asdf_hook_id_t hook_id)
 {
   if (asdf_hook_valid_id(hook_id)) {
-    hook_map[hook_id]();
+    hooks->map[hook_id]();
   }
 }
 
-// PROCEDURE: asdf_hook_assign
-// INPUTS: (asdf_hook_id_t) hook_id: The hook for which to execute attache functions.
+// PROCEDURE: asdf_hook_assign_r
+// INPUTS: (asdf_hook_state_t *) hooks - hook state
+//         (asdf_hook_id_t) hook_id: The hook for which to execute attache functions.
 //         (asdf_hook_function_t) func: function to be attached to the hook.
 //
 // OUTPUTS: none
@@ -117,15 +116,16 @@ void asdf_hook_execute(asdf_hook_id_t hook_id)
 //
 // COMPLEXITY: 2
 //
-void asdf_hook_assign(asdf_hook_id_t hook_id, asdf_hook_function_t func)
+void asdf_hook_assign_r(asdf_hook_state_t *hooks, asdf_hook_id_t hook_id,
+                        asdf_hook_function_t func)
 {
   if (asdf_hook_valid_id(hook_id)) {
-    hook_map[hook_id] = func;
+    hooks->map[hook_id] = func;
   }
 }
 
-// PROCEDURE: asdf_hook_init
-// INPUTS: none
+// PROCEDURE: asdf_hook_init_r
+// INPUTS: (asdf_hook_state_t *) hooks - hook state to initialize
 // OUTPUTS: none
 //
 // DESCRIPTION: Resets every hook to the null function.
@@ -138,11 +138,11 @@ void asdf_hook_assign(asdf_hook_id_t hook_id, asdf_hook_function_t func)
 //
 // COMPLEXITY: 2
 //
-void asdf_hook_init(void)
+void asdf_hook_init_r(asdf_hook_state_t *hooks)
 {
   // initialize hooks to null function
   for (uint8_t i = 0; i < ASDF_NUM_HOOKS; i++) {
-    hook_map[i] = &asdf_hook_null_func;
+    hooks->map[i] = &asdf_hook_null_func;
   }
 
 }

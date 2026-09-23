@@ -29,14 +29,16 @@
 //
 #include "asdf.h"
 #include "asdf_arch.h"
+#include "asdf_keyboard.h"
 #include "asdf_print.h"
 
 //
 // Regular functions
 //
 
-// PROCEDURE: asdf_print_flash
-// INPUTS: (const char *) str - NUL-terminated string stored in flash (see
+// PROCEDURE: asdf_print_flash_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (const char *) str - NUL-terminated string stored in flash (see
 //         FLASH_STRING)
 // OUTPUTS: none
 //
@@ -52,12 +54,12 @@
 //
 // COMPLEXITY: 2
 //
-void asdf_print_flash(const char *str)
+void asdf_print_flash_r(asdf_t *kb, const char *str)
 {
   char c;
 
   while ((c = (char) FLASH_READ(str++))) {
-    asdf_putc(c, NULL);
+    asdf_putc_r(kb, c);
   }
 }
 
