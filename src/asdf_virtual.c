@@ -33,125 +33,34 @@
 #include "asdf_config.h"
 #include "asdf_arch.h"
 
-// virtual_device_table[] contains all the virtual outputs. An
-// asdf_virtual_output_t value is used to identify each element. Each element is
-// a virtual output, containing an asdf_virtual_physical_dev_t value indicating
-// the first in the list of physical resources (if any) assigned to the virtual
-// device. Each element also contains a function that can be applied to the
-// physical resources when the virtual output is activated by a keypress.
-static struct {
-  asdf_physical_dev_t physical_device; // Each virtual output points to a linked
-                                       // list of any number of physical resources.
-  asdf_virtual_function_t function;
-} virtual_device_table[ASDF_VIRTUAL_NUM_RESOURCES];
+// A virtual output identifies one element of the tables in
+// asdf_virtual_state_t. Each element holds the first in the list of physical
+// resources (if any) assigned to the virtual output, and the function applied
+// to those resources when the virtual output is activated by a keypress. The
+// physical resources are held in the physical state embedded in the virtual
+// state.
 
-// PROCEDURE: asdf_virtual_map_function
+// Operations applied along a virtual output's list of physical resources.
+typedef enum { MAP_TOGGLE, MAP_ON, MAP_OFF } virtual_map_op_t;
 
-// INPUTS:
-//   (asdf_virtual_function_t) function - function to apply to devices.
-//   (asdf_physical_device_t) device - first physical device in linked list
-//
-// OUTPUTS: none
-//
-// DESCRIPTION: Iterates through a linked list of physical devices, applying the
-// specified function to each device.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// NOTES:
+// PROCEDURE: virtual_index_valid
+// INPUTS: (asdf_virtual_dev_t) device - virtual output to check
+// OUTPUTS: returns TRUE (nonzero) if device indexes the virtual tables,
+//          including V_NULL.
 //
 // SCOPE: private
 //
-// COMPLEXITY: 2
-//
-void asdf_virtual_map_function(void (*function)(asdf_physical_dev_t), asdf_physical_dev_t device)
-{
-  while (PHYSICAL_NO_OUT != device) {
-    (*function)(device);
-    device = asdf_physical_next_device(device);
-  }
-}
-
-// PROCEDURE: asdf_virtual_action
-// INPUTS: (asdf_virtual_output_t) virtual_out: which virtual output to modify
-// INPUTS: (asdf_virtual_function_t) function: what function to apply to the virtual output
-// OUTPUTS: none
-//
-// DESCRIPTION: for each physical resource mapped to the virtual output, apply the
-// specified function.
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: The virtual output points to a linked list of physical resources.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 6
-//
-
-void asdf_virtual_action(asdf_virtual_dev_t virtual_out, asdf_virtual_function_t function)
-{
-  asdf_physical_dev_t device_list = virtual_device_table[virtual_out].physical_device;
-
-  switch (function) {
-
-    case V_PULSE_LONG: {
-      asdf_virtual_map_function(&asdf_physical_toggle, device_list);
-      asdf_arch_pulse_delay_long();
-      asdf_virtual_map_function(&asdf_physical_toggle, device_list);
-      break;
-    }
-    case V_PULSE_SHORT: {
-      asdf_virtual_map_function(&asdf_physical_toggle, device_list);
-      asdf_arch_pulse_delay_short();
-      asdf_virtual_map_function(&asdf_physical_toggle, device_list);
-      break;
-    }
-    case V_TOGGLE: {
-      asdf_virtual_map_function(&asdf_physical_toggle, device_list);
-      break;
-    }
-    case V_SET_HI: {
-      asdf_virtual_map_function(&asdf_physical_on, device_list);
-      break;
-    }
-    case V_SET_LO: {
-      asdf_virtual_map_function(&asdf_physical_off, device_list);
-    }
-    case V_NOFUNC:
-    default: break;
-  }
-}
-
-// PROCEDURE: asdf_virtual_activate
-// INPUTS: asdf_virtual_dev_t: The virtual output to be activated
-// OUTPUTS: none
-//
-// DESCRIPTION: for each physical resource mapped to the virtual output, apply the
-// function assigned to the virtual output at initialization.
-//
-// SIDE EFFECTS: see above
-//
-// NOTES: The virtual output points to a linked list of physical resources.
-//
-// SCOPE: public
-//
 // COMPLEXITY: 1
 //
-void asdf_virtual_activate(asdf_virtual_dev_t virtual_out)
+static uint8_t virtual_index_valid(asdf_virtual_dev_t device)
 {
-  asdf_virtual_action(virtual_out, virtual_device_table[virtual_out].function);
+  return device < ASDF_VIRTUAL_NUM_RESOURCES;
 }
 
 // PROCEDURE: valid_virtual_device
-// INPUTS: (asdf_virtual_dev_t) device
-// OUTPUTS: returns true (1) if the device is valid, false (0) if not valid.
-//
-// DESCRIPTION: test to see if device is a valid device value.
-//
-// SIDE EFFECTS:
-//
-// NOTES:
+// INPUTS: (asdf_virtual_dev_t) device - virtual output to check
+// OUTPUTS: returns TRUE (nonzero) if device is an assignable virtual output
+//          (not V_NULL).
 //
 // SCOPE: private
 //
@@ -162,8 +71,119 @@ static uint8_t valid_virtual_device(asdf_virtual_dev_t device)
   return (device > V_NULL && device < ASDF_VIRTUAL_NUM_RESOURCES);
 }
 
-// PROCEDURE: asdf_virtual_assign
-// INPUTS: (asdf_virtual_dev_t) virtual_out - virtual output to be paired with the physical resource
+// PROCEDURE: virtual_map
+// INPUTS: (asdf_physical_state_t *) phys - physical output state
+//         (asdf_physical_dev_t) device - first physical resource in the list
+//         (virtual_map_op_t) op - operation to apply to each resource
+// OUTPUTS: none
+//
+// DESCRIPTION: Applies op to each physical resource in the list starting at
+// device.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: private
+//
+// COMPLEXITY: 4
+//
+static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
+                        virtual_map_op_t op)
+{
+  while (PHYSICAL_NO_OUT != device) {
+    switch (op) {
+      case MAP_ON: asdf_physical_on_r(phys, device); break;
+      case MAP_OFF: asdf_physical_off_r(phys, device); break;
+      case MAP_TOGGLE:
+      default: asdf_physical_toggle_r(phys, device); break;
+    }
+    device = asdf_physical_next_device_r(phys, device);
+  }
+}
+
+// PROCEDURE: asdf_virtual_action_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+//         (asdf_virtual_dev_t) virtual_out - which virtual output to modify
+//         (asdf_virtual_function_t) function - what function to apply to the
+//         virtual output
+// OUTPUTS: none
+//
+// DESCRIPTION: for each physical resource assigned to the virtual output,
+// apply the specified function. Invalid virtual outputs are ignored.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// NOTES: The virtual output points to a linked list of physical resources.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 7
+//
+void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                           asdf_virtual_function_t function)
+{
+  if (!virtual_index_valid(virtual_out)) {
+    return;
+  }
+
+  asdf_physical_state_t *phys = &virt->physical;
+  asdf_physical_dev_t device_list = virt->physical_device[virtual_out];
+
+  switch (function) {
+
+    case V_PULSE_LONG: {
+      virtual_map(phys, device_list, MAP_TOGGLE);
+      asdf_arch_pulse_delay_long();
+      virtual_map(phys, device_list, MAP_TOGGLE);
+      break;
+    }
+    case V_PULSE_SHORT: {
+      virtual_map(phys, device_list, MAP_TOGGLE);
+      asdf_arch_pulse_delay_short();
+      virtual_map(phys, device_list, MAP_TOGGLE);
+      break;
+    }
+    case V_TOGGLE: {
+      virtual_map(phys, device_list, MAP_TOGGLE);
+      break;
+    }
+    case V_SET_HI: {
+      virtual_map(phys, device_list, MAP_ON);
+      break;
+    }
+    case V_SET_LO: {
+      virtual_map(phys, device_list, MAP_OFF);
+      break;
+    }
+    case V_NOFUNC:
+    default: break;
+  }
+}
+
+// PROCEDURE: asdf_virtual_activate_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+//         (asdf_virtual_dev_t) virtual_out - which virtual output to activate
+// OUTPUTS: none
+//
+// DESCRIPTION: apply the virtual output's assigned function to its physical
+// resources. Invalid virtual outputs are ignored.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out)
+{
+  if (virtual_index_valid(virtual_out)) {
+    asdf_virtual_action_r(virt, virtual_out, virt->function[virtual_out]);
+  }
+}
+
+// PROCEDURE: asdf_virtual_assign_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+//         (asdf_virtual_dev_t) virtual_out - virtual output to be paired with
+//         the physical resource
 //         (asdf_physical_dev_t) physical_out to be assigned to the virtual output.
 //         (asdf_virtual_function_t) - the function to be applied to the virtual
 //              device when activated by a keypress.
@@ -171,78 +191,73 @@ static uint8_t valid_virtual_device(asdf_virtual_dev_t device)
 //
 // OUTPUTS: none
 //
-// DESCRIPTION: map the virtual output specified by new_vout to physical_out, if
-// both arguments are valid. Ignore if not valid.
+// DESCRIPTION: map the virtual output specified by virtual_out to
+// physical_out, if both arguments are valid. Ignore if not valid.
 //
 // SIDE EFFECTS: see above.
 //
-// NOTES:
-//   if the virtual output is invalid, or the physical resource is invalid, or
-//   the physical resource is already assigned, then nothing happens.
+// NOTES: if the virtual output is invalid, or the physical resource is
+// invalid, or the physical resource is already assigned, then nothing happens.
 //
-// SCOPE: private
+// SCOPE: public
 //
 // COMPLEXITY: 3
 //
-void asdf_virtual_assign(asdf_virtual_dev_t virtual_out, asdf_physical_dev_t physical_out,
-                                asdf_virtual_function_t function, uint8_t initial_value)
+void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                           asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
+                           uint8_t initial_value)
 {
   if (valid_virtual_device(virtual_out)) {
-    asdf_physical_dev_t tail = virtual_device_table[virtual_out].physical_device;
-
-    if (asdf_physical_allocate(physical_out, tail, initial_value)) {
-
-      virtual_device_table[virtual_out].physical_device = physical_out;
-      virtual_device_table[virtual_out].function = function;
+    asdf_physical_dev_t tail = virt->physical_device[virtual_out];
+    if (asdf_physical_allocate_r(&virt->physical, physical_out, tail, initial_value)) {
+      virt->physical_device[virtual_out] = physical_out;
+      virt->function[virtual_out] = function;
     }
   }
 }
 
-// PROCEDURE: asdf_virtual_init
-// INPUTS: none
+// PROCEDURE: asdf_virtual_init_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
 // OUTPUTS: none
 //
-// DESCRIPTION: Initializes the LED and output mapping
+// DESCRIPTION: Initialize the virtual outputs, with no physical resources
+// assigned and no function, and initialize the embedded physical state.
 //
-// SIDE EFFECTS: see above
-//
-// NOTES:  ASDF_VIRTUAL_OUT_DEFAULT_VALUE is defined in asdf_config.h
-//
-// SCOPE: public
-//
-// COMPLEXITY: 4
-//
-void asdf_virtual_init(void)
-{
-  // initialize the physical resource table every time virtual output table is
-  // initialized.
-  asdf_physical_init();
-
-  // initialize list of virtual outputs
-  for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
-    virtual_device_table[i].function = V_NOFUNC;
-    virtual_device_table[i].physical_device = PHYSICAL_NO_OUT;
-  }
-}
-
-// PROCEDURE: asdf_virtual_sync
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Synchronize the physical outputs with their controlling virtual devices.
-//
-// SIDE EFFECTS: see above
+// SIDE EFFECTS: see above.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 2
 //
-void asdf_virtual_sync(void)
+void asdf_virtual_init_r(asdf_virtual_state_t *virt)
 {
-  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
-    asdf_physical_assert((asdf_physical_dev_t) i);
+  asdf_physical_init_r(&virt->physical);
+
+  for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
+    virt->function[i] = V_NOFUNC;
+    virt->physical_device[i] = PHYSICAL_NO_OUT;
   }
 }
+
+// PROCEDURE: asdf_virtual_sync_r
+// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
+// OUTPUTS: none
+//
+// DESCRIPTION: Drive every physical output to its shadow value.
+//
+// SIDE EFFECTS: see above.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
+{
+  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
+    asdf_physical_assert_r(&virt->physical, (asdf_physical_dev_t) i);
+  }
+}
+
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

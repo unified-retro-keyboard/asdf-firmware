@@ -65,45 +65,50 @@ typedef struct {
   uint8_t initial_value;
 } asdf_virtual_initializer_t;
 
+// Changeable state of the virtual outputs of one keyboard, including the
+// physical outputs they drive.
+typedef struct {
+  asdf_physical_dev_t physical_device[ASDF_VIRTUAL_NUM_RESOURCES]; // head of each output's list
+  asdf_virtual_function_t function[ASDF_VIRTUAL_NUM_RESOURCES];    // applied on activation
+  asdf_physical_state_t physical;
+} asdf_virtual_state_t;
+
+// Instance API: each function operates only on the state passed to it.
+// Invalid virtual outputs are ignored. See asdf_virtual.c.
+
+void asdf_virtual_init_r(asdf_virtual_state_t *virt);
+void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                           asdf_virtual_function_t function);
+void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out);
+void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                           asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
+                           uint8_t initial_value);
+void asdf_virtual_sync_r(asdf_virtual_state_t *virt);
+
+// Single-keyboard API, operating on the default virtual output state
+// (asdf_compat.c). The single-keyboard physical output functions operate on
+// the physical state embedded in it.
+
 // PROCEDURE: asdf_virtual_action
-// INPUTS: (asdf_virtual_dev_t) virtual_out: which virtual output to modify
-// INPUTS: (asdf_virtual_function_t) function: what function to apply to the virtual output
-// OUTPUTS: none
-// DESCRIPTION: for each real output mapped to the virtual output, apply the
-// specified function.
+// DESCRIPTION: apply function to the physical resources of virtual_out.
 void asdf_virtual_action(asdf_virtual_dev_t virtual_out, asdf_virtual_function_t function);
 
 // PROCEDURE: asdf_virtual_activate
-// INPUTS: asdf_virtual_dev_t: The virtual device to be activated
-// OUTPUTS: none
-// DESCRIPTION: for each real output mapped to the virtual output, apply the
-// function assigned to the virtual output at initialization.
+// DESCRIPTION: apply virtual_out's assigned function to its physical resources.
 void asdf_virtual_activate(asdf_virtual_dev_t virtual_out);
 
 // PROCEDURE: asdf_virtual_assign
-// INPUTS: (asdf_virtual_dev_t) virtual_out - virtual output to be paired with the physical resource
-//         (asdf_physical_dev_t) physical_out to be assigned to the virtual output.
-//         (asdf_virtual_function_t) - the function to be applied to the virtual
-//              device when activated by a keypress.
-//         (uint8_t) initial_value - the initial state of the physical resource.
-// OUTPUTS: none
-// DESCRIPTION: map the virtual output specified by new_vout to physical_out, if
-// both arguments are valid. Ignore if not valid.
-// NOTES: if the virtual output is invalid, or the physical resource is invalid,
-// or the physical resource is already assigned, then nothing happens.
+// DESCRIPTION: assign physical_out to virtual_out, with a function and an
+// initial value.
 void asdf_virtual_assign(asdf_virtual_dev_t virtual_out, asdf_physical_dev_t physical_out,
                          asdf_virtual_function_t function, uint8_t initial_value);
 
 // PROCEDURE: asdf_virtual_init
-// INPUTS: initializers
-// OUTPUTS: none
-// DESCRIPTION: Initializes the LED and output mapping
+// DESCRIPTION: initialize the virtual and physical outputs.
 void asdf_virtual_init(void);
 
 // PROCEDURE: asdf_virtual_sync
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Synchronize the physical outputs with their controlling virtual devices.
+// DESCRIPTION: drive every physical output to its shadow value.
 void asdf_virtual_sync(void);
 
 #endif /* !defined (ASDF_VIRTUAL_H) */
