@@ -25,57 +25,61 @@
 #if !defined(ASDF_REPEAT_H)
 #define ASDF_REPEAT_H
 
+#include <stdint.h>
 #include "asdf_config.h"
 
-// PROCEDURE: asdf_repeat_init
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Initialize the repeat state state machine
+// The repeat "mode" is the current repeat rate: the value loaded into the
+// repeat timer when in repeat mode (autorepeat or repeat key) and a key is
+// pressed.
+//
+// If the base mode is REPEAT_OFF, then key repetition only occurs when the
+// REPEAT key is pressed along with a "code" key.
+//
+// If the base mode is REPEAT_AUTO, then key repetition occurs when the REPEAT
+// key is pressed with a "code" key, or when a "code" key is held for the
+// autorepeat delay.
+//
+// The base mode is never REPEAT_ON, which would instantly repeat any key when
+// pressed.
+typedef enum {
+  REPEAT_OFF = 0,                        // no repeat
+  REPEAT_ON = ASDF_REPEAT_TIME_MS,       // currently repeating
+  REPEAT_AUTO = ASDF_AUTOREPEAT_TIME_MS, // wait for autorepeat delay, then start repeating
+} asdf_repeat_mode_t;
+
+// State of one repeat state machine.
+typedef struct {
+  asdf_repeat_mode_t mode;      // current repeat mode
+  asdf_repeat_mode_t base_mode; // mode restored when a key or REPEAT is released
+  uint16_t timer;               // counts down to the next repeat event
+} asdf_repeat_state_t;
+
+// Instance API: each function operates only on the state passed to it.
+
+void asdf_repeat_init_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat);
+uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat);
+void asdf_repeat_activate_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat);
+
+// PROCEDURE: asdf_repeat_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
+// OUTPUTS: returns TRUE (nonzero) when the current key should repeat
+// DESCRIPTION: Advances the repeat timer by one tick.
+uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat);
+
+// Single-keyboard API, operating on the default repeat state (asdf_compat.c).
+// See the corresponding _r functions in asdf_repeat.c.
+
 void asdf_repeat_init(void);
-
-// PROCEDURE: asdf_repeast_reset_count
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: resets the repeat counter for the current key, to begin a new
-// repeat cycle.  Resest is based on repeat state (no repeat, autorepeat, normal repeat).
 void asdf_repeat_reset_count(void);
-
-// PROCEDURE: asdf_repeat_auto_off
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Turns Autorepeat mode off
 void asdf_repeat_auto_off(void);
-
-// PROCEDURE: asdf_repeat_auto_on
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Turns Autorepeat mode on
 void asdf_repeat_auto_on(void);
-
-// PROCEDURE: asdf_repeat_is_autorepeat_enabled
-// OUTPUTS: returns non-zero if autorepeat mode is enabled
 uint8_t asdf_repeat_is_autorepeat_enabled(void);
-
-// PROCEDURE: asdf_repeat_activate
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: set repeat state machine to repeat mode. Called when REPEAT key
-// is pressed.
 void asdf_repeat_activate(void);
-
-// PROCEDURE: asdf_repeat_deactivate
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Reset repeat state machine to default state. Called when REPEAT
-// key is released.
 void asdf_repeat_deactivate(void);
-
-// PROCEDURE: asdf_repeat
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: counts down the repeat timer (if activated) and returns a TRUE
-// value when the counter times out. A true values indicates that the last value
-// should be repeated to the output.
 uint8_t asdf_repeat(void);
 
 #endif // !defined (ASDF_REPEAT_H)

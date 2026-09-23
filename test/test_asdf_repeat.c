@@ -423,11 +423,36 @@ void test_asdf_repeat_new_key_while_autorepeating_starts_new_autorepeat(void)
 
   TEST_ASSERT_EQUAL_INT(ASDF_AUTOREPEAT_TIME_MS, delay);
 }
+// Two repeat states driven alternately do not affect each other, nor the
+// default state behind the single-keyboard API.
+void test_asdf_repeat_independent_states(void)
+{
+  asdf_repeat_state_t a, b;
+  int a_repeats = 0, b_repeats = 0;
+
+  asdf_repeat_init_r(&a);
+  asdf_repeat_init_r(&b);
+  asdf_repeat_auto_off_r(&b);
+  asdf_repeat_activate_r(&a); // a repeats at REPEAT_ON; b does not repeat
+
+  for (int tick = 0; tick < ASDF_AUTOREPEAT_TIME_MS * 2; tick++) {
+    a_repeats += asdf_repeat_r(&a);
+    b_repeats += asdf_repeat_r(&b);
+  }
+
+  TEST_ASSERT_EQUAL_INT((ASDF_AUTOREPEAT_TIME_MS * 2) / ASDF_REPEAT_TIME_MS, a_repeats);
+  TEST_ASSERT_EQUAL_INT(0, b_repeats);
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&a));
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&b));
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled());
+}
+
 int main(void)
 {
   UNITY_BEGIN();
   RUN_TEST(test_asdf_repeat_init_resets_to_autorepeat_default);
   RUN_TEST(test_asdf_repeat_no_repeat_if_auto_turned_off);
+  RUN_TEST(test_asdf_repeat_autorepeat_if_auto_turned_on);
   RUN_TEST(test_asdf_repeat_auto_repeat_if_auto_turned_on);
   RUN_TEST(test_asf_repeat_autorepeat_fast_repeat_after_delay);
   RUN_TEST(test_asdf_repeat_reset_count_works_in_autorepeat_mode);
@@ -444,5 +469,6 @@ int main(void)
   RUN_TEST(test_asdf_repeat_deactivate_while_repeating_stops_repeating);
   RUN_TEST(test_asdf_repeat_new_key_while_repeat_active_keeps_repeating);
   RUN_TEST(test_asdf_repeat_new_key_while_autorepeating_starts_new_autorepeat);
+  RUN_TEST(test_asdf_repeat_independent_states);
   return UNITY_END();
 }

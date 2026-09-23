@@ -45,6 +45,7 @@
 #define SIM_LATENCY_LIMIT_MS 50
 
 static int pred_capture_nonempty(void *ctx) { (void)ctx; return cap_count() > 0; }
+static int pred_capture_even(void *ctx) { (void)ctx; return !(cap_count() & 1u); }
 
 static void usage(const char *argv0)
 {
@@ -612,6 +613,12 @@ int main(int argc, char **argv)
                 return 1;
             }
             matrix_release(rp->row, col);
+
+            /* The release can land inside a 10 us output strobe. Let a strobe
+             * in progress complete before counting. */
+            if (cap_count() & 1u) {
+                sim_run_until(cpu, pred_capture_even, 0, io->cpu_frequency_hz / 1000);
+            }
 
             /* Both strobe edges are captured, so the raw record count is
              * twice the number of bytes the firmware actually emitted. */

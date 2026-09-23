@@ -39,6 +39,7 @@ add_library(asdf_core
   ${PROJECT_SRC_DIR}/asdf_modifiers.c
   ${PROJECT_SRC_DIR}/asdf_physical.c
   ${PROJECT_SRC_DIR}/asdf_repeat.c
+  ${PROJECT_SRC_DIR}/asdf_compat.c
   ${PROJECT_SRC_DIR}/asdf_virtual.c
   ${PROJECT_SRC_DIR}/asdf_print.c
   ${PROJECT_SRC_DIR}/Arch/asdf_arch_test.c

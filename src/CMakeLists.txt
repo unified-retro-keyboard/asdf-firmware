@@ -62,6 +62,7 @@ list (APPEND SOURCES
   asdf_modifiers.c
   asdf_physical.c
   asdf_repeat.c
+  asdf_compat.c
   asdf_virtual.c
   asdf_print.c
   Keymaps/asdf_keymap_classic.c
