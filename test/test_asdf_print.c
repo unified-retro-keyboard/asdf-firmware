@@ -1,7 +1,7 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
 //
-// Tests for the formatted print shim. Verify that asdf_print() ultimately feeds
-// the message buffer (via asdf_putc) and preserves newline translation.
+// Tests for the flash string printer. Verify that asdf_print() feeds the
+// message buffer (via asdf_putc) and preserves newline translation.
 
 #include "unity.h"
 #include "asdf.h"
@@ -30,10 +30,23 @@ static void expect_string(const char *expected)
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) asdf_next_code());
 }
 
-void test_asdf_print_formats_strings(void)
+void test_asdf_print_queues_literal(void)
 {
-  asdf_print("Value:%02d-%s", 5, "ok");
-  expect_string("Value:05-ok");
+  asdf_print("[Keymap: test] 100%");
+  expect_string("[Keymap: test] 100%");
+}
+
+void test_asdf_print_flash_reads_given_string(void)
+{
+  static const char FLASH message[] = "stored";
+  asdf_print_flash(message);
+  expect_string("stored");
+}
+
+void test_asdf_print_empty_string_queues_nothing(void)
+{
+  asdf_print("");
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) asdf_next_code());
 }
 
 void test_asdf_print_translates_newlines(void)
@@ -49,7 +62,9 @@ void test_asdf_print_translates_newlines(void)
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_asdf_print_formats_strings);
+  RUN_TEST(test_asdf_print_queues_literal);
+  RUN_TEST(test_asdf_print_flash_reads_given_string);
+  RUN_TEST(test_asdf_print_empty_string_queues_nothing);
   RUN_TEST(test_asdf_print_translates_newlines);
   return UNITY_END();
 }

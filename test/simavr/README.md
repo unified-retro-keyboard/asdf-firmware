@@ -69,7 +69,7 @@ regression cases per target:
 | `simavr_<tgt>_<km>` | `events` (default) | A small set of atomic keypresses with optional shift/ctrl modifier; one expected ASCII byte per press. |
 | `simavr_<tgt>_<km>_identity` | `identity` | Presses the keymap's ID-message trigger key (typically CTRL+0, which fires ACTION_FN_10 / ASDF_HOOK_USER_10) and asserts the exact byte sequence printed in response. |
 | `simavr_<tgt>_<km>_string` | `string` | A typed sentence (`<shift>t</shift>his is a <caps>test<caps> of the <mapname> keymap.<ctrl>m</ctrl>`) that exercises shift held, shift released mid-stream, a sticky caps-toggle, and ctrl held in one capture. |
-| `simavr_<tgt>_<km>_latency` | `latency` | Presses the keymap's first unmodified event key 20 times, each shifted by a fraction of the 1 ms scan tick, and reports the minimum and maximum time from press to the first strobe edge. Fails above 25 ms; the v1.7.1 worst case is 19.9 ms (sol on atmega1280) against 10 ms of debounce. |
+| `simavr_<tgt>_<km>_latency` | `latency` | Presses the keymap's first unmodified event key 20 times, each shifted by a fraction of the 1 ms scan tick, and reports the minimum and maximum time from press to the first strobe edge. Fails above 25 ms; the v1.7.1 worst case is 19.9 ms (sol on atmega1280) against 10 ms of debounce. atmega1280 figures are affected by the simulator model (see Simulator limitations). |
 | `simavr_<tgt>_sol_out2` | `out2` | Presses Sol-20 BREAK (6,0) and asserts OUT2 produced exactly one pulse (two edges) while LED2 did not change. Sol-only: it is the one keymap routing a virtual output to `PHYSICAL_OUT2`. |
 | `simavr_<tgt>_sol_repeat` | `repeat` | Holds each of sol row 6 columns 1-7 in turn, requires actual repeat activity, and asserts the emission count agrees across columns. |
 
@@ -100,6 +100,28 @@ host harness calls `asdf_keyscan()` a fixed number of times, scan cost is
 invisible there and a host test passes with the defect present. Under
 simavr the firmware is tick-driven, and the defect shows up as a >2x
 spread in repeat count across the columns of a single row.
+
+## Simulator limitations
+
+### Timing on the atmega1280 model
+
+simavr's atmega1280 model does not reproduce the firmware's key timing
+faithfully. Some keypresses, especially a key pressed just after a modifier,
+take up to 26 ms to register on it, against 10 ms of debounce. The same
+atmega1280 firmware image run on the atmega2560 model (the two parts share
+registers and pinout) registers the same keypress in 10-11 ms, so the delay
+comes from the simulator model, not the firmware. It also varies with code
+layout, so an unrelated firmware change can move it.
+
+Consequences for the tests:
+
+- The functional modes (`events`, `identity`, `string`) wait generously for
+  each key and modifier (`SIM_KEY_WAIT_MS` and `SIM_SETTLE_MS` in
+  `asdf_simavr_runner.c`, 50 ms each). They check which bytes a key produces,
+  not how quickly.
+- `latency` mode is the only timing measurement. Treat atmega1280 latency
+  figures as a property of the simulator; compare latency changes on the
+  atmega328p, atmega168p, and atmega2560.
 
 ## Add a new keymap test
 

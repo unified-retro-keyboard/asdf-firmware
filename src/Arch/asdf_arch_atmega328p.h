@@ -246,8 +246,11 @@
 // not implemented with do-while(0) because this is a function call that returns
 // a value, and parameters are expanded inside the parameter list, so this will
 // be valid when substituting for function-like syntax.
-#define FLASH_READ (a) pgm_read_byte((a))
+#define FLASH_READ(a) pgm_read_byte((a))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) pgm_read_byte(&((matrix)[(row)][(col)]))
+
+// Places a string literal in flash; read it back with FLASH_READ.
+#define FLASH_STRING(s) PSTR(s)
 
 // For 1 ms tick, (8000000 / 64(prescale)) / 1000(usec) - 1 = 124
 #define TICK_COUNT 124
