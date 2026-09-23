@@ -14,6 +14,8 @@
 
 #include "asdf_arch.h"
 #include "asdf_config.h" // ASDF_DEFAULT_DATA_POLARITY
+#include <stddef.h>
+#include "asdf_platform.h"
 
 static uint8_t data_polarity = ASDF_DEFAULT_DATA_POLARITY;
 
@@ -154,3 +156,25 @@ void asdf_arch_out2_open_lo_set(uint8_t value) { out_open_lo(OUT2_GROUP, OUT2_PI
 void asdf_arch_out3_set(uint8_t value) { out_set(OUT3_GROUP, OUT3_PIN, value); }
 void asdf_arch_out3_open_hi_set(uint8_t value) { out_open_hi(OUT3_GROUP, OUT3_PIN, value); }
 void asdf_arch_out3_open_lo_set(uint8_t value) { out_open_lo(OUT3_GROUP, OUT3_PIN, value); }
+
+// PROCEDURE: arch_platform_read_row, arch_platform_send_code
+// DESCRIPTION: adapt the architecture's row scanner and code output to the
+// typed platform interface. This architecture has one set of hardware, so the
+// platform context pointer is unused.
+static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
+{
+  (void) user;
+  return asdf_arch_read_row(row);
+}
+
+static void arch_platform_send_code(void *user, asdf_keycode_t code)
+{
+  (void) user;
+  asdf_arch_send_code(code);
+}
+
+const asdf_platform_t asdf_arch_platform = {
+  .user = NULL,
+  .read_row = arch_platform_read_row,
+  .send_code = arch_platform_send_code,
+};

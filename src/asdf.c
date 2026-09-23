@@ -34,6 +34,7 @@
 #include "asdf_arch.h"
 #include "asdf_ascii.h"
 #include "asdf_ring.h"
+#include "asdf_platform.h"
 #include "asdf_hook.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
@@ -60,6 +61,10 @@ static uint8_t debounce_counters[ASDF_MAX_ROWS][ASDF_MAX_COLS];
 
 // Stores the last key pressed
 static asdf_keycode_t last_key;
+
+// The platform the keyboard is scanned and sent through. A keymap may install
+// its own; a keymap switch restores the architecture's platform.
+static const asdf_platform_t *platform = &asdf_arch_platform;
 
 // Queue of typed keycodes, and its storage
 static asdf_keycode_t keycode_storage[ASDF_KEYCODE_BUFFER_SIZE];
@@ -120,6 +125,48 @@ int asdf_putc(char c, FILE *stream) {
                          : asdf_ring_put(&message_ring, (asdf_keycode_t)c);
     return queued ? (int)c : EOF;
 }
+
+// PROCEDURE: asdf_install_platform
+// INPUTS: (const asdf_platform_t *) new_platform - platform to use, or NULL for
+//         the architecture's platform (asdf_arch_platform)
+// OUTPUTS: none
+//
+// DESCRIPTION: Selects the platform through which the key matrix is read and
+// codes are sent. Keymaps with special hardware needs install their own.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_install_platform(const asdf_platform_t *new_platform) {
+    platform = new_platform ? new_platform : &asdf_arch_platform;
+}
+
+// PROCEDURE: asdf_current_platform
+// INPUTS: none
+// OUTPUTS: returns the platform currently in use
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+const asdf_platform_t *asdf_current_platform(void) { return platform; }
+
+// PROCEDURE: asdf_send_code
+// INPUTS: (asdf_keycode_t) code - code to send to the host
+// OUTPUTS: none
+//
+// DESCRIPTION: Sends a code to the host through the current platform.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_send_code(asdf_keycode_t code) { platform->send_code(platform->user, code); }
 
 // PROCEDURE: asdf_next_code
 // INPUTS: none
@@ -558,12 +605,13 @@ static void asdf_handle_key_held_pressed(uint8_t row, uint8_t col) {
 // COMPLEXITY: 5
 //
 void asdf_keyscan(void) {
-    asdf_cols_t (*row_reader)(uint8_t) =
-        (asdf_cols_t(*)(uint8_t))asdf_hook_get(ASDF_HOOK_ROW_SCANNER);
+    // The whole scan uses the platform current at its start, even if a key
+    // action switches keymaps partway through.
+    const asdf_platform_t *scan_platform = platform;
 
     asdf_hook_execute(ASDF_HOOK_EACH_SCAN);
     for (uint8_t row = 0; row < asdf_keymaps_num_rows(); row++) {
-        asdf_cols_t row_key_state = (*row_reader)(row);
+        asdf_cols_t row_key_state = scan_platform->read_row(scan_platform->user, row);
 
         asdf_cols_t changed = row_key_state ^ last_stable_key_state[row];
 

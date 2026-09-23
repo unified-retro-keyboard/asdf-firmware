@@ -17,4 +17,5 @@ set(ASDF_WARNING_FLAGS
   -Wstrict-prototypes
   -Wundef
   -Wold-style-definition
+  -Wcast-function-type
   )

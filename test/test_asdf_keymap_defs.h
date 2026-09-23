@@ -234,6 +234,11 @@ void setup_test_vdevs_vcaps(void);
 
 void setup_test_hooks_alt_scanner(void);
 void setup_test_hooks_alt_output(void);
+
+// Platform installed by setup_test_hooks_alt_output(), reading rows with
+// test_hook_read_row() and sending codes with test_hook_output().
+#include "asdf_platform.h"
+extern const asdf_platform_t test_alt_platform;
 void setup_test_hooks_each_scan(void);
 
 

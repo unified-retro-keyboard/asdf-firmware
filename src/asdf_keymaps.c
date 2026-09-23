@@ -27,6 +27,7 @@
 #include "asdf_hook.h"
 #include "asdf_keymap_setup.h"
 #include "asdf_modifiers.h"
+#include "asdf_platform.h"
 #include "asdf_repeat.h"
 #include "asdf_virtual.h"
 #include <stddef.h>
@@ -118,6 +119,7 @@ uint8_t asdf_keymaps_num_cols(void) {
 //              - Clear all virtual devices
 //              - Reset modifier and repeat state.
 //              - Reset all hooks to default state.
+//              - Restore the architecture's platform.
 //
 // SIDE EFFECTS: see DESCRIPTION
 //
@@ -140,8 +142,9 @@ static void asdf_keymaps_reset(void) {
     asdf_modifiers_init();
     asdf_repeat_init();
 
-    // Reset hooks
+    // Reset hooks, and restore the architecture's platform
     asdf_hook_init();
+    asdf_install_platform(NULL);
 }
 
 // PROCEDURE: asdf_keymaps_switch

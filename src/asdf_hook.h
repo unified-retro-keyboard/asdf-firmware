@@ -25,13 +25,12 @@
 #if !defined(ASDF_HOOKS_H)
 #define ASDF_HOOKS_H
 
-// These are "hooks" output identifiers that can be mapped to the real outputs using
-// keymap initializer commands.
+// Hook identifiers. Each hook holds a function with no arguments, called for an
+// event: EACH_SCAN at the start of every matrix scan, USER_n by the ACTION_FN_n
+// key actions. Hardware access (row scanning and code output) is not a hook;
+// see asdf_platform.h.
 typedef enum {
   ASDF_HOOK_NULL,
-  ASDF_HOOK_KEY_SCANNER,
-  ASDF_HOOK_ROW_SCANNER,
-  ASDF_HOOK_OUTPUT,
   ASDF_HOOK_EACH_SCAN,
   ASDF_HOOK_USER_1,
   ASDF_HOOK_USER_2,
@@ -47,17 +46,7 @@ typedef enum {
   ASDF_NUM_HOOKS,
 } asdf_hook_id_t;
 
-#define ASDF_HOOK_KEYMAP_SETUP ASDF_NUM_HOOKS
-
-// Each keymap specifies an array of initializer structs to configure function hooks,
-// specifying the hook ID and mapped function.
-
 typedef void (*asdf_hook_function_t)(void);
-
-typedef struct {
-  asdf_hook_id_t hook_id;
-  asdf_hook_function_t hook_func;
-} asdf_hook_initializer_t;
 
 
 // PROCEDURE: asdf_hook_execute
@@ -67,13 +56,6 @@ typedef struct {
 // SIDE EFFECTS: variable depending on the hooks.
 void asdf_hook_execute(asdf_hook_id_t hook_id);
 
-// PROCEDURE: asdf_hook_get
-// INPUTS: (asdf_hook_id_t) hook_id: The hook for which to retrieve the attached
-// function.
-// OUTPUTS: none
-// DESCRIPTION: if the hook ID is valid, then retrieve the function attached to the hook.
-// SIDE EFFECTS: none
-asdf_hook_function_t asdf_hook_get(asdf_hook_id_t hook_id);
 
 // PROCEDURE: asdf_hook_init
 // INPUTS: none

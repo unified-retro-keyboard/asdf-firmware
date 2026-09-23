@@ -68,10 +68,7 @@ int main(void)
       asdf_keycode_t code = asdf_next_code();
 
       if (code < ASDF_INVALID_CODE) {
-          // This is inside the loop because the output function may change
-          void (*output_function)(asdf_keycode_t) =
-          (void (*)(asdf_keycode_t)) asdf_hook_get(ASDF_HOOK_OUTPUT);
-          (*output_function)(code);
+          asdf_send_code(code);
       }
       asdf_keyscan();
     }

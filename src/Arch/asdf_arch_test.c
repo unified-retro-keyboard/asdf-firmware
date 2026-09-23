@@ -39,6 +39,8 @@
 #include "asdf_config.h"
 #include "asdf_physical.h"
 #include "asdf_arch.h"
+#include <stddef.h>
+#include "asdf_platform.h"
 
 typedef enum {
   PULSE_EVENT_SET_HIGH,
@@ -652,6 +654,46 @@ void asdf_arch_init(void)
   strobe_is_positive = 0;
 }
 
+
+// PROCEDURE: asdf_arch_read_row
+// INPUTS: (uint8_t) row - row to read
+// OUTPUTS: returns 0 (no keys pressed)
+//
+// DESCRIPTION: Default fake key matrix with no keys pressed. Tests that press
+// keys define their own asdf_arch_read_row(), which replaces this weak
+// definition.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+__attribute__((weak)) asdf_cols_t asdf_arch_read_row(uint8_t row)
+{
+  (void) row;
+  return 0;
+}
+
+// PROCEDURE: arch_platform_read_row, arch_platform_send_code
+// DESCRIPTION: adapt the architecture's row scanner and code output to the
+// typed platform interface. This architecture has one set of hardware, so the
+// platform context pointer is unused.
+static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
+{
+  (void) user;
+  return asdf_arch_read_row(row);
+}
+
+static void arch_platform_send_code(void *user, asdf_keycode_t code)
+{
+  (void) user;
+  asdf_arch_send_code(code);
+}
+
+const asdf_platform_t asdf_arch_platform = {
+  .user = NULL,
+  .read_row = arch_platform_read_row,
+  .send_code = arch_platform_send_code,
+};
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

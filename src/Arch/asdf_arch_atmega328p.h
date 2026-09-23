@@ -258,10 +258,8 @@
 
 
 // Default key matrix row scanner
-#define ASDF_ARCH_DEFAULT_ROW_SCANNER asdf_arch_read_row
 
 // Default keyboard output
-#define ASDF_ARCH_DEFAULT_OUTPUT asdf_arch_send_code
 
 // DIP switch is on row 8
 #define ASDF_ARCH_DIPSWITCH_ROW 8

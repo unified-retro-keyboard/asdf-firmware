@@ -61,6 +61,7 @@ target_include_directories(asdf_core
 add_library(test_helpers
   STATIC
   ${CMAKE_CURRENT_SOURCE_DIR}/test_asdf_lib.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/fake_platform.c
   ${CMAKE_CURRENT_SOURCE_DIR}/test_asdf_keymap_defs.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asdf_keymap_table.c
   )
@@ -109,6 +110,7 @@ setup_test(test_asdf_modifiers)
 setup_test(test_asdf_keymaps)
 setup_test(test_asdf_ring)
 setup_test(test_asdf_physical)
+setup_test(test_asdf_platform)
 setup_test(test_asdf_output)
 setup_test(test_asdf_actions)
 setup_test(test_asdf_print)

@@ -129,6 +129,13 @@ void asdf_keyscan(void);
 // changes. Other held keys are not re-activated.
 void asdf_apply_configuration(void);
 
+// PROCEDURE: asdf_send_code
+// INPUTS: (asdf_keycode_t) code: code to send to the host
+// OUTPUTS: none
+// DESCRIPTION: Sends a code to the host through the current platform (see
+// asdf_platform.h).
+void asdf_send_code(asdf_keycode_t code);
+
 // PROCEDURE: asdf_put_code
 // INPUTS: (asdf_keycode_t) code: code to be buffered for output
 // OUTPUTS: returns TRUE (nonzero) if queued, FALSE (0) if the queue was full

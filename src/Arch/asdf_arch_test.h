@@ -58,8 +58,6 @@ typedef enum {
 #define FLASH_READ_PTR(a) (*(a))
 #define FLASH_READ_MATRIX_ELEMENT(mat,row,col) (mat)[(row)][(col)]
 #define FLASH_STRING(s) (s)
-#define ASDF_ARCH_DEFAULT_ROW_SCANNER asdf_arch_read_row
-#define ASDF_ARCH_DEFAULT_OUTPUT asdf_arch_send_code
 
 // PROCEDURE: asdf_arch_pos_strobe
 // INPUTS: none
