@@ -52,7 +52,7 @@ void apple2_id_message(void)
   asdf_print("[Keymap: Apple 2 (u/l case)]");
 }
 
-void setup_apple2_keymap(void)
+static void setup_apple2_keymap(void)
 {
   asdf_set_print_delay(APPLE2_PRINT_DELAY);
 
@@ -82,6 +82,11 @@ void setup_apple2_keymap(void)
 
   asdf_modifier_capslock_activate(); // For Apple 2, start with CAPS active
 }
+
+// Keymap descriptor. The keymap is still configured procedurally by setup_apple2_keymap().
+const asdf_keymap_t FLASH apple2_keymap = {
+  .setup = setup_apple2_keymap,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

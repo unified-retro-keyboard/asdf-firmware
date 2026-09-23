@@ -29,7 +29,7 @@
 #include "asdf_keymaps.h"
 #include "asdf_platform.h"
 #include "test_asdf_lib.h"
-#include "asdf_keymap_table.h"
+#include "asdf_keymap_setup.h"
 
 static const asdf_keycode_t test_PLAIN_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_PLAIN_MAP;
 static const asdf_keycode_t test_SHIFT_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_SHIFT_MAP;
@@ -42,112 +42,72 @@ static const asdf_keycode_t test2_CAPS_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = AS
 static const asdf_keycode_t test2_CTRL_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST2_CTRL_MAP;
 
 
-void test_keymaps_add_map(const asdf_keycode_t (*matrix)[TEST_NUM_COLS],
-                          modifier_index_t modifier_index)
-{
-  asdf_keymaps_add_map(&matrix[0][0], modifier_index, (uint8_t) TEST_NUM_ROWS,
-                       (uint8_t) TEST_NUM_COLS);
-}
+// Modifier maps of the "test" and "test2" keymaps, in modifier_index_t order.
+#define TEST_MAPS(prefix)                                                                          \
+  .maps = { [MOD_PLAIN_MAP] = &prefix##_PLAIN_matrix[0][0],                                        \
+            [MOD_SHIFT_MAP] = &prefix##_SHIFT_matrix[0][0],                                        \
+            [MOD_CAPS_MAP] = &prefix##_CAPS_matrix[0][0],                                          \
+            [MOD_CTRL_MAP] = &prefix##_CTRL_matrix[0][0] },                                        \
+  .rows = TEST_NUM_ROWS, .cols = TEST_NUM_COLS
 
+#define NUM_ELEMENTS(array) ((uint8_t) (sizeof(array) / sizeof((array)[0])))
 
-void setup_test_plain_map(void)
-{
-  test_keymaps_add_map(test_PLAIN_matrix, MOD_PLAIN_MAP);
-  test_keymaps_add_map(test_CAPS_matrix, MOD_CAPS_MAP);
-  test_keymaps_add_map(test_SHIFT_matrix, MOD_SHIFT_MAP);
-  test_keymaps_add_map(test_CTRL_matrix, MOD_CTRL_MAP);
-}
+const asdf_keymap_t test_plain_keymap = { TEST_MAPS(test) };
+const asdf_keymap_t test_caps_keymap = { TEST_MAPS(test) };
+const asdf_keymap_t test2_plain_keymap = { TEST_MAPS(test2) };
+const asdf_keymap_t test2_caps_keymap = { TEST_MAPS(test2) };
 
-void setup_test_caps_map(void)
-{
-  test_keymaps_add_map(test_PLAIN_matrix, MOD_PLAIN_MAP);
-  test_keymaps_add_map(test_CAPS_matrix, MOD_CAPS_MAP);
-  test_keymaps_add_map(test_SHIFT_matrix, MOD_SHIFT_MAP);
-  test_keymaps_add_map(test_CTRL_matrix, MOD_CTRL_MAP);
-}
+// Virtual output tests
 
-void setup_test2_plain_map(void)
-{
-  test_keymaps_add_map(test2_PLAIN_matrix, MOD_PLAIN_MAP);
-  test_keymaps_add_map(test2_CAPS_matrix, MOD_CAPS_MAP);
-  test_keymaps_add_map(test2_SHIFT_matrix, MOD_SHIFT_MAP);
-  test_keymaps_add_map(test2_CTRL_matrix, MOD_CTRL_MAP);
-}
+static const asdf_virtual_initializer_t vdevs_single_outputs[] = {
+  { VOUT1, PHYSICAL_OUT1, V_NOFUNC, 0 },      // single assignment
+  { VOUT2, PHYSICAL_OUT2, V_TOGGLE, 0 },      // single toggle
+  { VOUT3, PHYSICAL_OUT3, V_PULSE_SHORT, 0 }, // single pulse
+};
 
-void setup_test2_caps_map(void)
-{
-  test_keymaps_add_map(test2_PLAIN_matrix, MOD_PLAIN_MAP);
-  test_keymaps_add_map(test2_CAPS_matrix, MOD_CAPS_MAP);
-  test_keymaps_add_map(test2_SHIFT_matrix, MOD_SHIFT_MAP);
-  test_keymaps_add_map(test2_CTRL_matrix, MOD_CTRL_MAP);
-}
+static const asdf_virtual_initializer_t vdevs_double_outputs[] = {
+  { VOUT4, PHYSICAL_LED1, V_NOFUNC, 0 }, // first of double assignment attempt
+  { VOUT5, PHYSICAL_LED1, V_NOFUNC, 1 }, // second of double assignment attempt
+};
 
-void setup_test_vdevs_single(void)
-{
-  setup_test_plain_map();
+static const asdf_virtual_initializer_t vdevs_triple_outputs[] = {
+  { VOUT1, PHYSICAL_OUT1, V_TOGGLE, 0 },
+  { VOUT1, PHYSICAL_OUT2, V_TOGGLE, 1 },
+  { VOUT1, PHYSICAL_OUT3, V_TOGGLE, 0 },
+};
 
-  asdf_virtual_init();
+static const asdf_virtual_initializer_t vdevs_vcaps_outputs[] = {
+  { VCAPS_LED, PHYSICAL_LED1, V_NOFUNC, 0 },
+  { VSHIFT_LED, PHYSICAL_LED2, V_NOFUNC, 0 },
+  { VOUT2, PHYSICAL_OUT3, V_NOFUNC, 0 },
+  { VOUT2, ASDF_PHYSICAL_NUM_RESOURCES, V_NOFUNC, 0 }, // invalid; ignored
+};
 
-  /* single assignment */
-  asdf_virtual_assign(VOUT1, PHYSICAL_OUT1, V_NOFUNC, 0);
+const asdf_keymap_t test_vdevs_single_keymap = {
+  TEST_MAPS(test),
+  .num_outputs = NUM_ELEMENTS(vdevs_single_outputs),
+  .outputs = vdevs_single_outputs,
+};
 
-  /* single toggle */
-  asdf_virtual_assign(VOUT2, PHYSICAL_OUT2, V_TOGGLE, 0);
+const asdf_keymap_t test_vdevs_double_keymap = {
+  TEST_MAPS(test),
+  .num_outputs = NUM_ELEMENTS(vdevs_double_outputs),
+  .outputs = vdevs_double_outputs,
+};
 
-  /* single pulse */
-  asdf_virtual_assign(VOUT3, PHYSICAL_OUT3, V_PULSE_SHORT, 0);
+const asdf_keymap_t test_vdevs_triple_keymap = {
+  TEST_MAPS(test),
+  .num_outputs = NUM_ELEMENTS(vdevs_triple_outputs),
+  .outputs = vdevs_triple_outputs,
+};
 
-  asdf_virtual_sync();
-}
+const asdf_keymap_t test_vdevs_vcaps_keymap = {
+  TEST_MAPS(test2),
+  .num_outputs = NUM_ELEMENTS(vdevs_vcaps_outputs),
+  .outputs = vdevs_vcaps_outputs,
+};
 
-void setup_test_vdevs_double(void)
-{
-  setup_test_plain_map();
-
-  asdf_virtual_init();
-
-  /* first of double assignment attempt */
-  asdf_virtual_assign(VOUT4, PHYSICAL_LED1, V_NOFUNC, 0);
-
-  /* second of double assignment attempt */
-  asdf_virtual_assign(VOUT5, PHYSICAL_LED1, V_NOFUNC, 1);
-
-  asdf_virtual_sync();
-}
-
-void setup_test_vdevs_triple(void)
-{
-  setup_test_caps_map();
-
-  asdf_virtual_init();
-
-  /* Triple assignment */
-  asdf_virtual_assign(VOUT1, PHYSICAL_OUT1, V_TOGGLE, 0);
-  asdf_virtual_assign(VOUT1, PHYSICAL_OUT2, V_TOGGLE, 1);
-  asdf_virtual_assign(VOUT1, PHYSICAL_OUT3, V_TOGGLE, 0);
-
-  asdf_virtual_sync();
-}
-
-void setup_test_vdevs_vcaps(void)
-{
-  setup_test2_plain_map();
-
-  asdf_virtual_init();
-
-  asdf_virtual_assign(VCAPS_LED, PHYSICAL_LED1, V_NOFUNC, 0);
-  asdf_virtual_assign(VSHIFT_LED, PHYSICAL_LED2, V_NOFUNC, 0);
-  asdf_virtual_assign(VOUT2, PHYSICAL_OUT3, V_NOFUNC, 0);
-  asdf_virtual_assign(VOUT2, ASDF_PHYSICAL_NUM_RESOURCES, V_NOFUNC, 0);
-
-  asdf_virtual_sync();
-}
-
-void setup_test_hooks_alt_scanner(void)
-{
-  setup_test2_plain_map();
-  asdf_hook_init();
-}
+// Hook and platform tests
 
 static asdf_cols_t test_platform_read_row(void *user, uint8_t row)
 {
@@ -167,21 +127,22 @@ const asdf_platform_t test_alt_platform = {
   .send_code = test_platform_send_code,
 };
 
-void setup_test_hooks_alt_output(void)
-{
-  setup_test2_plain_map();
+static const asdf_hook_binding_t each_scan_hooks[] = {
+  { ASDF_HOOK_EACH_SCAN, test_hook_each_scan },
+};
 
-  asdf_hook_init();
-  asdf_install_platform(&test_alt_platform);
-}
+const asdf_keymap_t test_hooks_default_keymap = { TEST_MAPS(test2) };
 
-void setup_test_hooks_each_scan(void)
-{
-  setup_test2_caps_map();
+const asdf_keymap_t test_hooks_alt_platform_keymap = {
+  TEST_MAPS(test2),
+  .platform = &test_alt_platform,
+};
 
-  asdf_hook_init();
-  asdf_hook_assign(ASDF_HOOK_EACH_SCAN, &test_hook_each_scan);
-}
+const asdf_keymap_t test_hooks_each_scan_keymap = {
+  TEST_MAPS(test2),
+  .num_hooks = NUM_ELEMENTS(each_scan_hooks),
+  .hooks = each_scan_hooks,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

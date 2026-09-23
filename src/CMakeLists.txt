@@ -1,23 +1,14 @@
 message("C compiler: ${CMAKE_C_COMPILER}")
 
-function(create_keymap_setups keymaps keymap_table)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n    case \\2: setup_\\1_keymap();break" OUTPUT_VARIABLE temp_list)
-  # we can keep the ';' cmake list separators as the C statement separators.
-  # However, we need to append an extra ';' at the end.
-  string(APPEND temp_list ";")
-  set(${keymap_table} "${temp_list}" PARENT_SCOPE)
-endfunction(create_keymap_setups)
-
-function(create_keymap_valid keymaps keymap_valid)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n    case \\2:" OUTPUT_VARIABLE temp_list)
-  # we can keep the ';' cmake list separators as the C statement separators.
-  # However, we need to append an extra ';' at the end.
-  string(APPEND temp_list ";")
-  set(${keymap_valid} "${temp_list}" PARENT_SCOPE)
-endfunction(create_keymap_valid)
+function(create_keymap_table keymaps keymap_table)
+  # one "[number] = &name_keymap" initializer per keymap, comma separated
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n  [\\2] = &\\1_keymap" OUTPUT_VARIABLE temp_list)
+  list(JOIN temp_list "," temp_string)
+  set(${keymap_table} "${temp_string}" PARENT_SCOPE)
+endfunction(create_keymap_table)
 
 function(create_keymap_declarations keymaps keymap_decl)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n void setup_\\1_keymap(void)" OUTPUT_VARIABLE temp_list)
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nextern const asdf_keymap_t \\1_keymap" OUTPUT_VARIABLE temp_list)
   # we can keep the ';' cmake list separators as the C statement separators.
   # However, we need to append an extra ';' at the end.
   string(APPEND temp_list ";")
@@ -32,8 +23,7 @@ endfunction(create_keymap_report)
 
 include(../keymap_list.cmake)
 
-create_keymap_setups("${keymap_list}" keymap_table)
-create_keymap_valid("${keymap_list}" keymap_valid)
+create_keymap_table("${keymap_list}" keymap_table)
 create_keymap_report("${keymap_list}" keymap_report)
 create_keymap_declarations("${keymap_list}" keymap_declarations)
 
@@ -57,7 +47,6 @@ list (APPEND SOURCES
   ${CMAKE_CURRENT_BINARY_DIR}/asdf_keymap_setup.c
   asdf_ring.c
   asdf_hook.c
-  asdf_keymap_setup.c
   asdf_keymaps.c
   asdf_modifiers.c
   asdf_physical.c

@@ -1,4 +1,5 @@
 configure_file(${PROJECT_SRC_DIR}/Arch/asdf_arch_test.h ${CMAKE_CURRENT_BINARY_DIR}/asdf_arch.h COPYONLY)
+configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.h.in ${CMAKE_CURRENT_BINARY_DIR}/asdf_keymap_setup.h COPYONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/asdf_warnings.cmake)
 

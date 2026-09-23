@@ -26,6 +26,7 @@
 //
 
 #include "asdf.h"
+#include "asdf_arch.h"
 #include "asdf_keymaps.h"
 #include "asdf_virtual.h"
 #include "asdf_modifiers.h"
@@ -53,7 +54,7 @@ void ace1000_id_message(void) {
 // COMPLEXITY:
 //
 
-void setup_ace1000_keymap(void)
+static void setup_ace1000_keymap(void)
 {
   asdf_set_print_delay(ASDF_ACE1000_PRINT_SPEED); //msec
 
@@ -83,6 +84,11 @@ void setup_ace1000_keymap(void)
   // turn on caps lock
   asdf_modifier_capslock_activate();
 }
+
+// Keymap descriptor. The keymap is still configured procedurally by setup_ace1000_keymap().
+const asdf_keymap_t FLASH ace1000_keymap = {
+  .setup = setup_ace1000_keymap,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

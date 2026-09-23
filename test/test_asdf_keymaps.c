@@ -5,7 +5,7 @@
 #include "asdf.h"
 #include "asdf_ascii.h"
 #include "asdf_modifiers.h"
-#include "asdf_keymap_table.h"
+#include "asdf_keymap_setup.h"
 #include "test_asdf_keymap_defs.h"
 #include "asdf_keymaps.h"
 #include "test_asdf_lib.h"
