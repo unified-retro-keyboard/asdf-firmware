@@ -23,6 +23,8 @@
 #if !defined(ASDF_MODIFIERS_H)
 #define ASDF_MODIFIERS_H
 
+#include <stdint.h>
+
 // The active modifiers are used to build an index into a map that determinds
 // which modifier map is selected.  The following define the bit position for each modifier.
 // For example, if SHIFT and CTRL are active, the modifier index would be
@@ -73,65 +75,66 @@ typedef enum {
   ASDF_MOD_NUM_MODIFIERS
 } modifier_index_t;
 
+// State of the modifier keys for one keyboard.
+typedef struct {
+  uint8_t shift; // shift_state_t: SHIFT and SHIFTLOCK bits
+  uint8_t caps;  // caps_state_t
+  uint8_t ctrl;  // ctrl_state_t
+} asdf_modifier_state_t;
+
+// Instance API: each function operates only on the state passed to it and
+// does not drive indicator LEDs. See asdf_modifiers.c.
+
+void asdf_modifiers_init_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shift_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shiftlock_on_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shiftlock_toggle_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shift_deactivate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_capslock_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_ctrl_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_ctrl_deactivate_r(asdf_modifier_state_t *mods);
+uint8_t asdf_modifier_shift_locked_r(const asdf_modifier_state_t *mods);
+uint8_t asdf_modifier_caps_locked_r(const asdf_modifier_state_t *mods);
+modifier_index_t asdf_modifier_index_r(const asdf_modifier_state_t *mods);
+
+// Single-keyboard API, operating on the default modifier state (asdf_compat.c).
+// These also drive the SHIFTLOCK (VSHIFT_LED) and CAPSLOCK (VCAPS_LED)
+// indicators when the corresponding state changes.
+
 // PROCEDURE: asdf_modifier_shift_activate
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: sets SHIFT state to ON
-//
 void asdf_modifier_shift_activate(void);
 
 // PROCEDURE: asdf_modifier_shiftlock_on_activate
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: sets SHIFTLOCK state to ON
 void asdf_modifier_shiftlock_on_activate(void);
 
 // PROCEDURE: asdf_modifier_shiftlock_toggle_activate
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: Toggles SHIFTLOCK state.
 void asdf_modifier_shiftlock_toggle_activate(void);
 
 // PROCEDURE: asdf_modifier_capslock_activate
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Turns on Capslock state
-//
+// DESCRIPTION: Toggles CAPSLOCK state
 void asdf_modifier_capslock_activate(void);
 
 // PROCEDURE: asdf_modifier_ctrl_activate
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: Turns on CTRL mode
-//
 void asdf_modifier_ctrl_activate(void);
 
 // PROCEDURE: asdf_modifier_shift_deactivate
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Turns off shift mode.
-//
+// DESCRIPTION: Turns off SHIFT and SHIFTLOCK.
 void asdf_modifier_shift_deactivate(void);
 
 // PROCEDURE: asdf_modifier_ctrl_deactivate
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: Turns off CTRL mode
-//
 void asdf_modifier_ctrl_deactivate(void);
 
 // PROCEDURE: asdf_modifiers_init
-// INPUTS: none
-// OUTPUTS: none
 // DESCRIPTION: Initialize the modifier key state variables to OFF state
-//
 void asdf_modifiers_init(void);
 
 // PROCEDURE: asdf_modifier_index
-// INPUTS: none
 // OUTPUTS: returns uint8_t index into key map, based on modifier key status
-// DESCRIPTION: See OUTPUTS
-//
 modifier_index_t asdf_modifier_index(void);
 
 #endif // !defined (ASDF_MODIFIERS_H)

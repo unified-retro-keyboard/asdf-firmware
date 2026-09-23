@@ -28,7 +28,9 @@
 //
 
 #include <stdint.h>
+#include "asdf_modifiers.h"
 #include "asdf_repeat.h"
+#include "asdf_virtual.h"
 
 //
 // Repeat
@@ -47,6 +49,65 @@ uint8_t asdf_repeat_is_autorepeat_enabled(void)
 void asdf_repeat_activate(void) { asdf_repeat_activate_r(&default_repeat); }
 void asdf_repeat_deactivate(void) { asdf_repeat_deactivate_r(&default_repeat); }
 uint8_t asdf_repeat(void) { return asdf_repeat_r(&default_repeat); }
+
+//
+// Modifiers
+//
+
+static asdf_modifier_state_t default_modifiers;
+
+static void sync_shiftlock_led(void)
+{
+  asdf_virtual_action(VSHIFT_LED,
+                      asdf_modifier_shift_locked_r(&default_modifiers) ? V_SET_HI : V_SET_LO);
+}
+
+static void sync_capslock_led(void)
+{
+  asdf_virtual_action(VCAPS_LED,
+                      asdf_modifier_caps_locked_r(&default_modifiers) ? V_SET_HI : V_SET_LO);
+}
+
+void asdf_modifiers_init(void)
+{
+  asdf_modifiers_init_r(&default_modifiers);
+  sync_shiftlock_led();
+  sync_capslock_led();
+}
+
+void asdf_modifier_shift_activate(void)
+{
+  asdf_modifier_shift_activate_r(&default_modifiers);
+  sync_shiftlock_led();
+}
+
+void asdf_modifier_shiftlock_on_activate(void)
+{
+  asdf_modifier_shiftlock_on_activate_r(&default_modifiers);
+  sync_shiftlock_led();
+}
+
+void asdf_modifier_shiftlock_toggle_activate(void)
+{
+  asdf_modifier_shiftlock_toggle_activate_r(&default_modifiers);
+  sync_shiftlock_led();
+}
+
+void asdf_modifier_shift_deactivate(void)
+{
+  asdf_modifier_shift_deactivate_r(&default_modifiers);
+  sync_shiftlock_led();
+}
+
+void asdf_modifier_capslock_activate(void)
+{
+  asdf_modifier_capslock_activate_r(&default_modifiers);
+  sync_capslock_led();
+}
+
+void asdf_modifier_ctrl_activate(void) { asdf_modifier_ctrl_activate_r(&default_modifiers); }
+void asdf_modifier_ctrl_deactivate(void) { asdf_modifier_ctrl_deactivate_r(&default_modifiers); }
+modifier_index_t asdf_modifier_index(void) { return asdf_modifier_index_r(&default_modifiers); }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
