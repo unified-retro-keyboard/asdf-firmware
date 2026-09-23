@@ -64,7 +64,6 @@
 
 #define ASDF_CLASSIC_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
-typedef asdf_keycode_t classic_keycode_matrix_t[CLASSIC_NUM_ROWS][CLASSIC_NUM_COLS];
 
 
 
@@ -129,26 +128,6 @@ const FLASH classic_keycode_matrix_t classic_ctrl_matrix = {
           ACTION_FN_1 },
   ASDF_CLASSIC_DIP_SWITCHES
 };
-
-
-
-static const classic_keycode_matrix_t *classic_maps[] = {
-  [CLASSIC_CAPS_MAP] = &classic_caps_matrix,
-  [CLASSIC_PLAIN_MAP] = &classic_plain_matrix,
-  [CLASSIC_SHIFT_MAP] = &classic_shift_matrix,
-  [CLASSIC_CTRL_MAP] = &classic_ctrl_matrix,
-};
-
-  void classic_add_map(const classic_map_index_t map_index,
-                       modifier_index_t modifier_index)
-{
-
-  asdf_keycode_t (*matrix)[CLASSIC_NUM_COLS] =
-    (asdf_keycode_t (*)[CLASSIC_NUM_COLS]) classic_maps[map_index];
-
-    asdf_keymaps_add_map(&matrix[0][0], modifier_index, (uint8_t) CLASSIC_NUM_ROWS,
-                       (uint8_t) CLASSIC_NUM_COLS);
-}
 
 
 

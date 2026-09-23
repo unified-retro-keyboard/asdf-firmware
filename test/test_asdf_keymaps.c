@@ -157,6 +157,9 @@ void complicated_set_keymap(uint8_t mapnum)
     }
     mapnum >>= 1;
   }
+
+  // The select actions only request a keymap; the end of a scan applies it.
+  asdf_keymaps_apply_request();
 }
 
 // dummy function, to resolve reference in keymap hook initialization.

@@ -3,9 +3,9 @@
 // Unfified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_classic_add_map.h
+// asdf_keymap_ace1000_add_map.h
 //
-// Keymap matrices and add_map() function for the Franklin ACE 1000 replacement keyboard
+// Keymap matrices for the Franklin ACE 1000 replacement keyboard
 // https://github.com/ryucats/Franklin-ACE-1000-Keyboard
 //
 // Copyright 2023 Chris RYU
@@ -28,18 +28,21 @@
 #define ASDF_KEYMAP_ACE1000_ADD_MAP_H
 
 #include "asdf_keymap_defs_dipswitch.h"
+#include "asdf_arch.h"
+#include "asdf_keymap_ace1000.h"
 #include "asdf_modifiers.h"
 
-typedef enum {
-  ACE1000_PLAIN_MAP,
-  ACE1000_CAPS_MAP,
-  ACE1000_SHIFT_MAP,
-  ACE1000_CTRL_MAP,
-} ace1000_map_index_t;
+// Keycode matrices, one per modifier state, used by the ACE 1000 keymap
+// descriptors.
+typedef asdf_keycode_t ace1000_keycode_matrix_t[ACE1000_NUM_ROWS][ACE1000_NUM_COLS];
+
+extern const FLASH ace1000_keycode_matrix_t ace1000_plain_matrix;
+extern const FLASH ace1000_keycode_matrix_t ace1000_shift_matrix;
+extern const FLASH ace1000_keycode_matrix_t ace1000_caps_matrix;
+extern const FLASH ace1000_keycode_matrix_t ace1000_ctrl_matrix;
 
 
 // function prototypes
-void ace1000_add_map(const ace1000_map_index_t map_index, modifier_index_t modifier_index);
 void ace1000_keyboard_test(void);
 
 #define ASDF_ACE_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES

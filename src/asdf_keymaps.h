@@ -51,6 +51,9 @@ typedef struct {
   uint8_t cols;
 } asdf_keycode_map_t;
 
+// Number of elements in an array, for the descriptor table counts.
+#define ASDF_NUM_ELEMENTS(array) ((uint8_t)(sizeof(array) / sizeof((array)[0])))
+
 // Binds a function to a hook for the duration of a keymap.
 typedef struct {
   asdf_hook_id_t hook;
@@ -79,7 +82,6 @@ typedef struct {
   const asdf_hook_binding_t *hooks;           // num_hooks entries, in flash
   const asdf_virtual_initializer_t *outputs;  // num_outputs entries, in flash
   const asdf_platform_t *platform;            // NULL for the architecture's platform
-  void (*setup)(void); // transitional: procedural setup, run last if not NULL
 } asdf_keymap_t;
 
 // PROCEDURE: asdf_keymaps_add_map
@@ -88,13 +90,20 @@ typedef struct {
 //         (uint8_t) rows - number of rows in the keymap
 //         (uint8_t) cols - number of columns in the keymap
 // OUTPUTS: none
-// DESCRIPTION: Called by keymap building modules. This routine adds a keymap to the current
-// setup function into the keymap setup array.
+// DESCRIPTION: Called when a keymap descriptor is applied. Sets the keycode
+// matrix used for one modifier state.
 // NOTES: If the keymap modifier index, num_rows, or num_cols are not valid then no
 // action is performed.
 void asdf_keymaps_add_map(const asdf_keycode_t *matrix,
                           modifier_index_t modifier_index,
                           uint8_t num_rows, uint8_t num_cols);
+
+// PROCEDURE: asdf_keymaps_apply_request
+// INPUTS: none
+// OUTPUTS: none
+// DESCRIPTION: Switch to the keymap requested by the keymap select actions, if
+// it differs from the current keymap and exists. Called at the end of each scan.
+void asdf_keymaps_apply_request(void);
 
 // PROCEDURE: asdf_keymaps_num_rows
 // INPUTS: none

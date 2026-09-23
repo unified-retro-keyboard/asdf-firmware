@@ -40,52 +40,42 @@ void classic_caps_id_message(void) {
 }
 
 
-// PROCEDURE:
-// INPUTS:
-// OUTPUTS:
-//
-// DESCRIPTION:
-//
-// SIDE EFFECTS:
-//
-// NOTES:
-//
-// SCOPE:
-//
-// COMPLEXITY:
-//
+static const asdf_hook_binding_t FLASH classic_caps_hooks[] = {
+  { CLASSIC_ID_MESSAGE_HOOK, classic_caps_id_message },
+  { APPLESOFT_KEYBOARD_TEST_HOOK, applesoft_keyboard_test },
+};
 
-static void setup_classic_caps_keymap(void)
-{
-  asdf_set_print_delay(ASDF_CLASSIC_PRINT_SPEED);
-
-  // for the ALL CAPS keymap, the "plain" mode is the same as "all caps" mode:
-  classic_add_map(CLASSIC_CAPS_MAP, MOD_PLAIN_MAP);
-  classic_add_map(CLASSIC_CAPS_MAP, MOD_CAPS_MAP);
-  classic_add_map(CLASSIC_SHIFT_MAP, MOD_SHIFT_MAP);
-  classic_add_map(CLASSIC_CTRL_MAP, MOD_CTRL_MAP);
-
-  asdf_hook_assign(CLASSIC_ID_MESSAGE_HOOK, classic_caps_id_message);
-  asdf_hook_assign(APPLESOFT_KEYBOARD_TEST_HOOK, applesoft_keyboard_test);
-
+static const asdf_virtual_initializer_t FLASH classic_caps_outputs[] = {
   // Assign power LED to virtual power LED, and initialize to ON
-  asdf_virtual_assign(CLASSIC_VIRTUAL_POWER_LED, CLASSIC_POWER_LED, V_NOFUNC, CLASSIC_POWER_LED_INIT_VALUE);
+  { CLASSIC_VIRTUAL_POWER_LED, CLASSIC_POWER_LED, V_NOFUNC, CLASSIC_POWER_LED_INIT_VALUE },
 
   // Because the virtual power LED never changes, also assign the CAPSLOCK
   // physical LED to the virtual Power LED, and intialize to OFF (or can change
   // to ON depending on preference)
-  asdf_virtual_assign(CLASSIC_VIRTUAL_POWER_LED, CLASSIC_CAPS_LED, V_NOFUNC, CLASSIC_CAPS_LED_INIT_VALUE);
+  { CLASSIC_VIRTUAL_POWER_LED, CLASSIC_CAPS_LED, V_NOFUNC, CLASSIC_CAPS_LED_INIT_VALUE },
 
-  // assign RESET output to the virtual RESET output, configure to produce a short pulse when activated
-  asdf_virtual_assign(CLASSIC_VIRTUAL_RESET, CLASSIC_RESET_OUTPUT, V_PULSE_SHORT, !CLASSIC_RESET_ACTIVE_VALUE);
+  // assign RESET output to the virtual RESET output, configure to produce a
+  // short pulse when activated
+  { CLASSIC_VIRTUAL_RESET, CLASSIC_RESET_OUTPUT, V_PULSE_SHORT, !CLASSIC_RESET_ACTIVE_VALUE },
 
-  // assign the CLRSCR output to the virtual CLRSCR output, configure to produce a long pulse when activated
-  asdf_virtual_assign(CLASSIC_VIRTUAL_CLR_SCR, CLASSIC_CLR_SCR_OUT, V_PULSE_LONG, !CLASSIC_CLR_SCR_ACTIVE_VALUE);
-}
+  // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
+  // a long pulse when activated
+  { CLASSIC_VIRTUAL_CLR_SCR, CLASSIC_CLR_SCR_OUT, V_PULSE_LONG, !CLASSIC_CLR_SCR_ACTIVE_VALUE },
+};
 
-// Keymap descriptor. The keymap is still configured procedurally by setup_classic_caps_keymap().
+// For the ALL CAPS keymap, the "plain" mode is the same as "all caps" mode.
 const asdf_keymap_t FLASH classic_caps_keymap = {
-  .setup = setup_classic_caps_keymap,
+  .maps = { [MOD_PLAIN_MAP] = &classic_caps_matrix[0][0],
+            [MOD_SHIFT_MAP] = &classic_shift_matrix[0][0],
+            [MOD_CAPS_MAP] = &classic_caps_matrix[0][0],
+            [MOD_CTRL_MAP] = &classic_ctrl_matrix[0][0] },
+  .rows = CLASSIC_NUM_ROWS,
+  .cols = CLASSIC_NUM_COLS,
+  .print_delay_ms = ASDF_CLASSIC_PRINT_SPEED,
+  .num_hooks = ASDF_NUM_ELEMENTS(classic_caps_hooks),
+  .hooks = classic_caps_hooks,
+  .num_outputs = ASDF_NUM_ELEMENTS(classic_caps_outputs),
+  .outputs = classic_caps_outputs,
 };
 
 

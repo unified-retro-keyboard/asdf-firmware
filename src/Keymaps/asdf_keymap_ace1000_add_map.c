@@ -38,7 +38,6 @@
 
 #define ASDF_ACE1000_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
-typedef asdf_keycode_t ace1000_keycode_matrix_t[ACE1000_NUM_ROWS][ACE1000_NUM_COLS];
 
 const FLASH ace1000_keycode_matrix_t ace1000_plain_matrix = {
     [0] = { ACE_KEY_ESC, ACE_KEY_BREAK, ACE_KEY_PAUSE, ACTION_CTRL, ACE_KEY_TAB, ACTION_CAPS, ACTION_SHIFT, ACE_KEY_SPACE,  },
@@ -93,24 +92,6 @@ const FLASH ace1000_keycode_matrix_t ace1000_ctrl_matrix = {
     [9] = { ACE_KEY_CTRL_SLASH, ACE_KEY_CTRL_SQUARE, ACE_KEY_RETURN, ACE_KEY_CTRL_LEFT, ACE_KEY_CTRL_9, ACE_KEY_CTRL_6, ACE_KEY_CTRL_3, ACE_KEY_CTRL_PERIOD,  },
     ASDF_ACE_DIP_SWITCHES,
 };
-
-static const ace1000_keycode_matrix_t *ace1000_maps[] = {
-  [ACE1000_CAPS_MAP] = &ace1000_caps_matrix,
-  [ACE1000_PLAIN_MAP] = &ace1000_plain_matrix,
-  [ACE1000_SHIFT_MAP] = &ace1000_shift_matrix,
-  [ACE1000_CTRL_MAP] = &ace1000_ctrl_matrix,
-};
-
-void ace1000_add_map(const ace1000_map_index_t map_index,
-                     modifier_index_t modifier_index)
-{
-
-  asdf_keycode_t (*matrix)[ACE1000_NUM_COLS] =
-    (asdf_keycode_t (*)[ACE1000_NUM_COLS]) ace1000_maps[map_index];
-
-    asdf_keymaps_add_map(&matrix[0][0], modifier_index, (uint8_t) ACE1000_NUM_ROWS,
-                       (uint8_t) ACE1000_NUM_COLS);
-}
 
 void ace1000_keyboard_test(void)
 {
