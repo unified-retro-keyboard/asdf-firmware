@@ -27,6 +27,7 @@
 #include "asdf_ascii.h"
 #include "asdf_modifiers.h"
 #include "asdf_keymaps.h"
+#include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "asdf_keymap_table.h"
 
@@ -148,13 +149,30 @@ void setup_test_hooks_alt_scanner(void)
   asdf_hook_init();
 }
 
+static asdf_cols_t test_platform_read_row(void *user, uint8_t row)
+{
+  (void) user;
+  return test_hook_read_row(row);
+}
+
+static void test_platform_send_code(void *user, asdf_keycode_t code)
+{
+  (void) user;
+  test_hook_output(code);
+}
+
+const asdf_platform_t test_alt_platform = {
+  .user = NULL,
+  .read_row = test_platform_read_row,
+  .send_code = test_platform_send_code,
+};
+
 void setup_test_hooks_alt_output(void)
 {
   setup_test2_plain_map();
 
   asdf_hook_init();
-  asdf_hook_assign(ASDF_HOOK_OUTPUT, (void (*)(void)) &test_hook_output);
-  asdf_hook_assign(ASDF_HOOK_ROW_SCANNER, (void (*)(void)) &test_hook_read_row);
+  asdf_install_platform(&test_alt_platform);
 }
 
 void setup_test_hooks_each_scan(void)

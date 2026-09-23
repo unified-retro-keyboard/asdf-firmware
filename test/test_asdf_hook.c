@@ -10,6 +10,7 @@
 #include "asdf_keymaps.h"
 #include "asdf_repeat.h"
 #include "asdf_hook.h"
+#include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "test_asdf_keymap_defs.h"
 
@@ -35,34 +36,31 @@ void setUp(void)
 void tearDown(void) {}
 
 
-typedef asdf_cols_t (*scanner_func_t)(uint8_t);
-
-void test_default_scan_hook_is_default_scanner(void)
+void test_default_platform_is_arch_platform(void)
 {
-  scanner_func_t testfunc = (scanner_func_t) asdf_hook_get(ASDF_HOOK_ROW_SCANNER);
-  asdf_cols_t testval = 0;
+  const asdf_platform_t *p = asdf_current_platform();
 
-  // make sure the pointer points to the correct function
-  TEST_ASSERT_EQUAL_PTR(testfunc, &asdf_arch_read_row);
-
-  // Now try calling the function
-  testval = (*testfunc)(100);
-  TEST_ASSERT_EQUAL_INT((int) asdf_arch_read_row(100), (int) testval);
+  TEST_ASSERT_EQUAL_PTR(&asdf_arch_platform, p);
+  TEST_ASSERT_EQUAL_INT((int) asdf_arch_read_row(100), (int) p->read_row(p->user, 100));
 }
 
- // test_alternate_scan_hook
-void test_alternate_scan_hook(void)
+void test_keymap_can_install_platform(void)
 {
   asdf_keymaps_select(ASDF_TEST_ALTERNATE_SCANNER_MAP);
-  scanner_func_t testfunc = (scanner_func_t) asdf_hook_get(ASDF_HOOK_ROW_SCANNER);
-  asdf_cols_t testval = 0;
+  const asdf_platform_t *p = asdf_current_platform();
 
-  // make sure the pointer points to the correct function
-  TEST_ASSERT_EQUAL_PTR(testfunc, &test_hook_read_row);
+  TEST_ASSERT_EQUAL_PTR(&test_alt_platform, p);
+  TEST_ASSERT_EQUAL_INT((int) test_hook_read_row(100), (int) p->read_row(p->user, 100));
 
-  // Now try calling the function
-  testval = (*testfunc)(100);
-  TEST_ASSERT_EQUAL_INT((int) test_hook_read_row(100), (int) testval);
+  asdf_send_code(0x42);
+  TEST_ASSERT_EQUAL_INT(0x42, (int) test_hook_readback());
+}
+
+void test_keymap_switch_restores_arch_platform(void)
+{
+  asdf_keymaps_select(ASDF_TEST_ALTERNATE_SCANNER_MAP);
+  asdf_keymaps_select(ASDF_TEST_DEFAULT_SCANNER_MAP);
+  TEST_ASSERT_EQUAL_PTR(&asdf_arch_platform, asdf_current_platform());
 }
 
 #define NUM_SCAN_TEST_REPS 101
@@ -84,8 +82,9 @@ void test_each_scan_hook_is_executed_each_scan(void)
 int main(void)
 {
   UNITY_BEGIN();
-  RUN_TEST(test_default_scan_hook_is_default_scanner);
-  RUN_TEST(test_alternate_scan_hook);
+  RUN_TEST(test_default_platform_is_arch_platform);
+  RUN_TEST(test_keymap_can_install_platform);
+  RUN_TEST(test_keymap_switch_restores_arch_platform);
   RUN_TEST(test_each_scan_hook_is_executed_each_scan);
   return UNITY_END();
 }

@@ -160,12 +160,6 @@ void asdf_keymap_add_virtual_device(asdf_virtual_dev_t virtual_dev,
                                     asdf_physical_dev_t physical_dev,
                                     asdf_virtual_function_t function, uint8_t initial_value);
 
-// PROCEDURE: asdf_keymap_add_hook
-// INPUTS: (asdf_hook_id_t) hook_id: type ID for the provided hook function
-//         (asdf_hook_function_t) function: the function associated with the hook.
-// OUTPUTS: none
-// DESCRIPTION: Builds the hook initializer table for the current keymap
-void asdf_keymap_add_hook(asdf_hook_id_t hook_id, asdf_hook_function_t function);
 
 
 // PROCEDURE: asdf_keymaps_get_code

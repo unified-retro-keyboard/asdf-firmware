@@ -41,6 +41,8 @@
 #include <stdint.h>
 
 #include "asdf_config.h"
+#include <stddef.h>
+#include "asdf_platform.h"
 
 // Tick is true every 1 ms.
 static volatile uint8_t tick = 0;
@@ -863,6 +865,28 @@ void asdf_arch_send_code(asdf_keycode_t code)
 
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 }
+
+// PROCEDURE: arch_platform_read_row, arch_platform_send_code
+// DESCRIPTION: adapt the architecture's row scanner and code output to the
+// typed platform interface. This architecture has one set of hardware, so the
+// platform context pointer is unused.
+static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
+{
+  (void) user;
+  return asdf_arch_read_row(row);
+}
+
+static void arch_platform_send_code(void *user, asdf_keycode_t code)
+{
+  (void) user;
+  asdf_arch_send_code(code);
+}
+
+const asdf_platform_t asdf_arch_platform = {
+  .user = NULL,
+  .read_row = arch_platform_read_row,
+  .send_code = arch_platform_send_code,
+};
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

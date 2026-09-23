@@ -39,7 +39,7 @@
 // hooks_table[] contains all the function hooks. The entry for each ID contains
 // a pointer to the first in the list of functions (if any) assigned to the hook
 // ID.
-asdf_hook_function_t hook_map[ASDF_NUM_HOOKS];
+static asdf_hook_function_t hook_map[ASDF_NUM_HOOKS];
 
 // PROCEDURE: asdf_hook_null_func
 // INPUTS: none
@@ -100,26 +100,6 @@ void asdf_hook_execute(asdf_hook_id_t hook_id)
   }
 }
 
-// PROCEDURE: asdf_hook_get
-// INPUTS: (asdf_hook_id_t) hook_id: The hook for which to retrieve the attached
-// function.
-// OUTPUTS: none
-
-// DESCRIPTION: if the hook ID is valid, then retrieve the function attached to the hook.
-//
-// SIDE EFFECTS: variable depending on the hooks.
-//
-// NOTES:
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
-asdf_hook_function_t asdf_hook_get(asdf_hook_id_t hook_id)
-{
-  return asdf_hook_valid_id(hook_id) ? hook_map[hook_id] : asdf_hook_null_func;
-}
-
 // PROCEDURE: asdf_hook_assign
 // INPUTS: (asdf_hook_id_t) hook_id: The hook for which to execute attache functions.
 //         (asdf_hook_function_t) func: function to be attached to the hook.
@@ -148,9 +128,7 @@ void asdf_hook_assign(asdf_hook_id_t hook_id, asdf_hook_function_t func)
 // INPUTS: none
 // OUTPUTS: none
 //
-// DESCRIPTION: Initializes function hooks for the selected keymap. If a
-// function is assigned to the "KEYMAP_SETUP" hook, then execute the function.
-// There is no actual slot where KEYMAP_SETUP functions are stored.
+// DESCRIPTION: Resets every hook to the null function.
 //
 // SIDE EFFECTS: see above
 //
@@ -158,7 +136,7 @@ void asdf_hook_assign(asdf_hook_id_t hook_id, asdf_hook_function_t func)
 //
 // SCOPE: public
 //
-// COMPLEXITY: 4
+// COMPLEXITY: 2
 //
 void asdf_hook_init(void)
 {
@@ -167,9 +145,6 @@ void asdf_hook_init(void)
     hook_map[i] = &asdf_hook_null_func;
   }
 
-  hook_map[ASDF_HOOK_ROW_SCANNER] = (asdf_hook_function_t) ASDF_ARCH_DEFAULT_ROW_SCANNER;
-  hook_map[ASDF_HOOK_OUTPUT] = (asdf_hook_function_t) ASDF_ARCH_DEFAULT_OUTPUT;
-  hook_map[ASDF_HOOK_KEY_SCANNER] = (asdf_hook_function_t) ASDF_DEFAULT_KEY_SCANNER;
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
