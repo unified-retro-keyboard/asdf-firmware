@@ -25,48 +25,13 @@
 #include <stdint.h>
 #include "asdf_repeat.h"
 
-// This module keeps track of a single repeat event. It is non-reentrant. This
-// makes sense for a single keyboard, since only one key can repeat at any given
-// time.
-//
+// This module keeps track of a single repeat event per repeat state object,
+// which makes sense for a single keyboard, since only one key can repeat at any
+// given time. All state is held in the caller's asdf_repeat_state_t; see
+// asdf_repeat.h for the meaning of each repeat mode.
 
-
-// counters for key repeat timing are 16-bit unsigned
-typedef uint16_t key_timer_t;
-
-// The "State" of the repeat logic is the current repeat rate. This is the value
-// loaded into the repeat timer when in repeat mode (autorepeat or repeat key)
-// and a key is pressed.
-//
-// If the base state is REPEAT_OFF, then key repetition only occurs when the
-// REPEAT key is pressed along with a "code" key.
-//
-// If the base state is REPEAT_AUTO, then key repetition occurs when the REPEAT
-// key is pressed with a "code" key , or when a "code" key is held for the
-// autorepeat delay.
-//
-// Obviously, the base state is never REPEAT_ON, which would instantly repeat
-// any key when pressed.
-typedef enum {
-  REPEAT_OFF = 0,                        // no repeat
-  REPEAT_ON = ASDF_REPEAT_TIME_MS,       // currently repeating
-  REPEAT_AUTO = ASDF_AUTOREPEAT_TIME_MS, // wait for autorepeat delay, then start repeating
-} repeat_state_t;
-
-// Contains the current repeat state
-static repeat_state_t repeat_state;
-
-// Contains the baseline repeat state (either no repeat or autorepeat). When a
-// key is released, or when the repeat key is released, the repeat state is
-// reset to this value.
-static repeat_state_t base_repeat_state;
-
-// The repeat timer counts down to the next repeat event
-static key_timer_t key_repeat_timer;
-
-
-// PROCEDURE: asdf_repeat_init
-// INPUTS: none
+// PROCEDURE: asdf_repeat_init_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: Initialize the repeat state state machine
@@ -75,14 +40,14 @@ static key_timer_t key_repeat_timer;
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_init(void)
+void asdf_repeat_init_r(asdf_repeat_state_t *repeat)
 {
-  repeat_state = base_repeat_state = ASDF_DEFAULT_REPEAT_STATE;
-  key_repeat_timer = (key_timer_t) repeat_state;
+  repeat->mode = repeat->base_mode = ASDF_DEFAULT_REPEAT_STATE;
+  repeat->timer = (uint16_t) repeat->mode;
 }
 
-// PROCEDURE: asdf_repeast_reset_count
-// INPUTS: none
+// PROCEDURE: asdf_repeat_reset_count_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: resets the repeat counter for the current key, to begin a new
@@ -95,13 +60,13 @@ void asdf_repeat_init(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_reset_count(void)
+void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat)
 {
-  key_repeat_timer = (key_timer_t) repeat_state;
+  repeat->timer = (uint16_t) repeat->mode;
 }
 
-// PROCEDURE: asdf_repeat_auto_off
-// INPUTS: none
+// PROCEDURE: asdf_repeat_auto_off_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: Turns Autorepeat mode off by setting the base state to
@@ -115,16 +80,16 @@ void asdf_repeat_reset_count(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_auto_off(void)
+void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat)
 {
-  base_repeat_state = REPEAT_OFF;
-  if (REPEAT_ON != repeat_state) {
-    key_repeat_timer = repeat_state = base_repeat_state;
+  repeat->base_mode = REPEAT_OFF;
+  if (REPEAT_ON != repeat->mode) {
+    repeat->timer = repeat->mode = repeat->base_mode;
   }
 }
 
-// PROCEDURE: asdf_repeat_auto_on
-// INPUTS: none
+// PROCEDURE: asdf_repeat_auto_on_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: Turns Autorepeat mode on by setting the base state to
@@ -138,16 +103,16 @@ void asdf_repeat_auto_off(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_auto_on(void)
+void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat)
 {
-  base_repeat_state = REPEAT_AUTO;
-  if (REPEAT_ON != repeat_state) {
-    key_repeat_timer = repeat_state = base_repeat_state;
+  repeat->base_mode = REPEAT_AUTO;
+  if (REPEAT_ON != repeat->mode) {
+    repeat->timer = repeat->mode = repeat->base_mode;
   }
 }
 
-// PROCEDURE: asdf_repeat_activate
-// INPUTS: none
+// PROCEDURE: asdf_repeat_activate_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: set repeat state machine to repeat mode. Called when REPEAT key
@@ -161,15 +126,15 @@ void asdf_repeat_auto_on(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_activate(void)
+void asdf_repeat_activate_r(asdf_repeat_state_t *repeat)
 {
-  if (key_repeat_timer > REPEAT_ON || REPEAT_OFF == repeat_state) {
-    key_repeat_timer = repeat_state = REPEAT_ON;
+  if (repeat->timer > REPEAT_ON || REPEAT_OFF == repeat->mode) {
+    repeat->timer = repeat->mode = REPEAT_ON;
   }
 }
 
-// PROCEDURE: asdf_repeat_deactivate
-// INPUTS: none
+// PROCEDURE: asdf_repeat_deactivate_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: Reset repeat state to default state. Called when REPEAT
@@ -185,18 +150,26 @@ void asdf_repeat_activate(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_repeat_deactivate(void)
+void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat)
 {
-  key_repeat_timer = repeat_state = base_repeat_state;
+  repeat->timer = repeat->mode = repeat->base_mode;
 }
 
-uint8_t asdf_repeat_is_autorepeat_enabled(void)
+// PROCEDURE: asdf_repeat_is_autorepeat_enabled_r
+// INPUTS: (const asdf_repeat_state_t *) repeat - repeat state to query
+// OUTPUTS: returns TRUE (nonzero) if the base mode is autorepeat
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat)
 {
-  return (base_repeat_state == REPEAT_AUTO);
+  return (repeat->base_mode == REPEAT_AUTO);
 }
 
-// PROCEDURE: asdf_repeat
-// INPUTS: none
+// PROCEDURE: asdf_repeat_r
+// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
 // OUTPUTS: none
 //
 // DESCRIPTION: counts down the repeat timer (if activated) and returns a TRUE
@@ -205,18 +178,18 @@ uint8_t asdf_repeat_is_autorepeat_enabled(void)
 //
 // SIDE EFFECTS: none
 //
-// NOTES: The key_repeat_timer is only decremented if it is nonzero.
+// NOTES: The repeat->timer is only decremented if it is nonzero.
 //
 // SCOPE: Public
 //
 // COMPLEXITY: 2
 //
-uint8_t asdf_repeat(void)
+uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat)
 {
-  uint8_t timeout = (key_repeat_timer && !(--key_repeat_timer));
+  uint8_t timeout = (repeat->timer && !(--repeat->timer));
 
   if (timeout) {
-    key_repeat_timer = REPEAT_ON;
+    repeat->timer = REPEAT_ON;
   }
 
   return timeout;
