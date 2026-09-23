@@ -26,12 +26,19 @@
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
 
-// PROCEDURE: asdf_print
-// INPUTS: (*char) fmt - format string
-//         va_arglist - list of args for fmt string
+#include "asdf_arch.h"
+
+// PROCEDURE: asdf_print_flash
+// INPUTS: (const char *) str - NUL-terminated string stored in flash (see
+//         FLASH_STRING)
 // OUTPUTS: none
-// DESCRIPTION: output to ascii output port using vfprintf()
-// COMPLEXITY: 1
-void asdf_print(const char *fmt, ...);
+// DESCRIPTION: Queues the string on the system message output, sending each
+// newline as CR LF.
+// COMPLEXITY: 2
+void asdf_print_flash(const char *str);
+
+// Queues a string literal on the system message output. The literal is stored
+// in flash, not copied to RAM, so the argument must be a string literal.
+#define asdf_print(literal) asdf_print_flash(FLASH_STRING(literal))
 
 #endif /* !defined (ASDF_PRINT_H) */

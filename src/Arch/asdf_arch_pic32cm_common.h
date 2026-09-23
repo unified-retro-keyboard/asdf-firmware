@@ -32,7 +32,9 @@
 // Cortex-M flash is directly addressable: neutralize the AVR PROGMEM macros so
 // keymap tables are read as plain arrays.
 #define FLASH
+#define FLASH_READ(a) (*(a))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) ((matrix)[(row)][(col)])
+#define FLASH_STRING(s) (s)
 
 // (group, bit) pin helpers over the PIC32CM PORT peripheral, using the
 // Harmony-style register names (PORT_REGS->GROUP[g].PORT_*). GROUP[0]=PA,

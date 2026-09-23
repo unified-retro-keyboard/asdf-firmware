@@ -3,7 +3,9 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// <asdf_print-filename>.c
+// asdf_print.c
+//
+// Writes strings stored in flash to the system message output.
 //
 // Copyright 2019 David Fenyes
 //
@@ -25,46 +27,39 @@
 //
 // Headers
 //
-#include <stdarg.h>
 #include "asdf.h"
-#define NANOPRINTF_IMPLEMENTATION
-#include "third_party/nanoprintf.h"
+#include "asdf_arch.h"
+#include "asdf_print.h"
 
 //
 // Regular functions
 //
 
-// PROCEDURE: asdf_print
-// INPUTS: (*char) fmt - format string
-//         va_arglist - list of args for fmt string
+// PROCEDURE: asdf_print_flash
+// INPUTS: (const char *) str - NUL-terminated string stored in flash (see
+//         FLASH_STRING)
 // OUTPUTS: none
 //
-// DESCRIPTION: output to ascii output port using vfprintf()
+// DESCRIPTION: Queues the string on the system message output, sending each
+// newline as CR LF.
 //
 // SIDE EFFECTS: see DESCRIPTION
 //
-// NOTES:
+// NOTES: Characters that do not fit in the message queue are dropped (see
+// asdf_putc).
 //
 // SCOPE: public
 //
-// COMPLEXITY: 1
+// COMPLEXITY: 2
 //
-static void asdf_print_putchar(int c, void *ctx)
+void asdf_print_flash(const char *str)
 {
-  (void) ctx;
-  asdf_putc((char) c, NULL);
+  char c;
+
+  while ((c = (char) FLASH_READ(str++))) {
+    asdf_putc(c, NULL);
+  }
 }
-
-void asdf_print(const char *fmt, ...)
-{
-  va_list arg_ptr;
-
-  va_start(arg_ptr, fmt);
-  npf_vpprintf(asdf_print_putchar, NULL, fmt, arg_ptr);
-  va_end(arg_ptr);
-}
-
-
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

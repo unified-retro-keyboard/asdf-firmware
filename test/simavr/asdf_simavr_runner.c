@@ -21,6 +21,21 @@
 #include "keymap_data/asdf_simavr_test_sol.h"
 #include "keymap_data/asdf_simavr_test_ace1000.h"
 
+/* Harness timing for the functional modes (events, identity, string).
+ *
+ * These modes check which bytes a key produces, not how fast. Their waits are
+ * deliberately generous because registration time under simulation varies
+ * well beyond the 10 ms debounce: simavr's atmega1280 model in particular
+ * delays some keypresses to 26 ms, while the same firmware image run on the
+ * atmega2560 model registers them in 10-11 ms. Latency is measured only by
+ * latency mode.
+ *
+ *   SIM_KEY_WAIT_MS   longest wait for a pressed key's byte
+ *   SIM_SETTLE_MS     wait after pressing or releasing a modifier or trigger
+ *                     key, for it to take effect */
+#define SIM_KEY_WAIT_MS 50
+#define SIM_SETTLE_MS 50
+
 /* Latency mode: presses sampled across one scan tick; the longest accepted
  * press-to-output time (the worst case measured at v1.7.1 is 19.9 ms, sol on
  * atmega1280, against 10 ms of debounce); and how long to wait for any output
@@ -207,19 +222,20 @@ int main(int argc, char **argv)
 
             if (e->with_modifier == SIM_MOD_SHIFT) {
                 matrix_press(km->modifier_shift.row, km->modifier_shift.col);
-                /* Let the modifier key debounce fully before pressing the main key.
-                 * 15 ms = 1.5× the 10 ms debounce period covers worst-case scan
-                 * alignment.  SHIFT must be stable before the key lookup runs. */
-                sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                /* SHIFT must be stable before the key lookup runs. */
+                sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                 cap_clear();
             } else if (e->with_modifier == SIM_MOD_CTRL) {
                 matrix_press(km->modifier_ctrl.row, km->modifier_ctrl.col);
-                sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                 cap_clear();
             }
 
+            uint64_t key_wait = (io->cpu_frequency_hz / 1000) * SIM_KEY_WAIT_MS;
+            if (e->hold_cycles > key_wait) key_wait = e->hold_cycles;
+
             matrix_press(e->row, e->col);
-            if (sim_expect_byte_within(cpu, e->expected, e->hold_cycles, what) != 0) {
+            if (sim_expect_byte_within(cpu, e->expected, key_wait, what) != 0) {
                 vcd_end();
                 return 1;
             }
@@ -271,19 +287,17 @@ int main(int argc, char **argv)
         if (id->trigger_modifier != SIM_MOD_NONE) {
             sim_coord_t mc = identity_mod_coord(id, id->trigger_modifier);
             matrix_press(mc.row, mc.col);
-            sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+            sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
             cap_clear();
         }
-        /* Hold 25 ms, as in events mode.  Registration was measured at
-         * 10-16 ms depending on chip and keymap, so 15 ms was marginal. */
         matrix_press(id->trigger_key.row, id->trigger_key.col);
-        sim_wait_ms(cpu, 25, io->cpu_frequency_hz);
+        sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
         matrix_release(id->trigger_key.row, id->trigger_key.col);
-        sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+        sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
         if (id->trigger_modifier != SIM_MOD_NONE) {
             sim_coord_t mc = identity_mod_coord(id, id->trigger_modifier);
             matrix_release(mc.row, mc.col);
-            sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+            sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
         }
         sim_wait_ms(cpu, id->capture_ticks, io->cpu_frequency_hz);
 
@@ -363,7 +377,9 @@ int main(int argc, char **argv)
                     snprintf(what, sizeof what, "%s/step[%d]@(%d,%d)",
                              a.keymap, i, step->row, step->col);
                     matrix_press(step->row, step->col);
-                    if (sim_expect_byte_within(cpu, step->expected, 400000, what) != 0) {
+                    if (sim_expect_byte_within(cpu, step->expected,
+                                               (io->cpu_frequency_hz / 1000) * SIM_KEY_WAIT_MS,
+                                               what) != 0) {
                         vcd_end();
                         return 1;
                     }
@@ -375,23 +391,23 @@ int main(int argc, char **argv)
                 case SIM_STEP_MOD_DOWN: {
                     sim_coord_t c = string_mod_coord(st, step->modifier);
                     matrix_press(c.row, c.col);
-                    sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                    sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                     cap_clear();
                     break;
                 }
                 case SIM_STEP_MOD_UP: {
                     sim_coord_t c = string_mod_coord(st, step->modifier);
                     matrix_release(c.row, c.col);
-                    sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                    sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                     cap_clear();
                     break;
                 }
                 case SIM_STEP_MOD_TAP: {
                     sim_coord_t c = string_mod_coord(st, step->modifier);
                     matrix_press(c.row, c.col);
-                    sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                    sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                     matrix_release(c.row, c.col);
-                    sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+                    sim_wait_ms(cpu, SIM_SETTLE_MS, io->cpu_frequency_hz);
                     cap_clear();
                     break;
                 }
