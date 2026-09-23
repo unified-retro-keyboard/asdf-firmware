@@ -158,7 +158,6 @@ void test_fill_buffer_then_retrieve_string(void)
 void test_overfilling_buffer_and_retrieve_drops_overflow(void)
 {
   const asdf_keycode_t seed = 0x3b;
-  asdf_keycode_t next_random_code;
 
   // send the entire test string to overflow the buffer.
   for (int i = 0, next_rand_code = seed; i < MAX_BUFFER * 2; i++) {

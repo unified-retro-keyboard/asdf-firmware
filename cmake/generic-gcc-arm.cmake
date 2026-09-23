@@ -26,12 +26,14 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "-Os -g -DNDEBUG")
 
 set(ARM_MCU_FLAGS "-mcpu=cortex-m0plus" "-mthumb")
 
+include(${CMAKE_CURRENT_LIST_DIR}/asdf_warnings.cmake)
+
 # Contract: src/CMakeLists.txt calls c_toolchain_flags() to populate CFLAGS.
 function(c_toolchain_flags)
   set(CFLAGS
     ${ARM_MCU_FLAGS}
     -std=gnu99
     -ffunction-sections -fdata-sections
-    -Wall -Wextra
+    ${ASDF_WARNING_FLAGS}
     PARENT_SCOPE)
 endfunction(c_toolchain_flags)

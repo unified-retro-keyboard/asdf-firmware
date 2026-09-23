@@ -1,20 +1,13 @@
 configure_file(${PROJECT_SRC_DIR}/Arch/asdf_arch_test.h ${CMAKE_CURRENT_BINARY_DIR}/asdf_arch.h COPYONLY)
 
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_warnings.cmake)
+
+# Match the firmware's unsigned char (set by -funsigned-char on AVR, the default
+# on ARM) so host tests see the same char semantics.
 list(APPEND C_FLAGS
   "-std=c99"
-  "-Wall"
-  "-Wextra"
-  "-Wpointer-arith"
-  "-Wcast-align"
-  "-Wwrite-strings"
-  "-Wswitch-default"
-  "-Wunreachable-code"
-  "-Winit-self"
-  "-Wmissing-field-initializers"
-  "-Wno-unknown-pragmas"
-  "-Wstrict-prototypes"
-  "-Wundef"
-  "-Wold-style-definition"
+  "-funsigned-char"
+  ${ASDF_WARNING_FLAGS}
   "-g"
   )
 
@@ -51,6 +44,11 @@ add_library(asdf_core
   ${PROJECT_SRC_DIR}/Arch/asdf_arch_test.c
   )
 
+target_compile_options(asdf_core
+  PRIVATE
+  ${C_FLAGS}
+  )
+
 target_include_directories(asdf_core
   PRIVATE
   ${PROJECT_SRC_DIR}
@@ -76,7 +74,7 @@ target_include_directories(test_helpers
 
 target_compile_options(test_helpers
   PRIVATE
-  ${CFLAGS}
+  ${C_FLAGS}
   )
 
 function(setup_test testname)
@@ -87,7 +85,7 @@ function(setup_test testname)
 
   target_compile_options(${testname}
     PRIVATE
-    ${CFLAGS}
+    ${C_FLAGS}
     )
 
   target_include_directories(${testname}

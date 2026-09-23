@@ -64,32 +64,21 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O1 -g -DNDEBUG")
 # - Adds a list of compiler-specific flags to the CFLAGS variable in the
 #   parent scope.
 ##########################################################################
+include(${CMAKE_CURRENT_LIST_DIR}/asdf_warnings.cmake)
+
 function(c_toolchain_flags)
     # fix array base indexing beginning in AVR-GCC 12:
 
     list(APPEND TOOLCHAIN_FLAGS
         -std=c99
     #  -Wa,-adhln
-        -Wall
         -funsigned-char
         -funsigned-bitfields
         -ffunction-sections
         -fdata-sections
         -fpack-struct
         -fshort-enums
-        -Wall
-        -Wextra
-        -Wpointer-arith
-        -Wcast-align
-        -Wwrite-strings
-        -Wswitch-default
-        -Wunreachable-code
-        -Winit-self
-        -Wmissing-field-initializers
-        -Wno-unknown-pragmas
-        -Wstrict-prototypes
-        -Wundef
-        -Wold-style-definition
+        ${ASDF_WARNING_FLAGS}
     )
 
     if(CMAKE_C_COMPILER_VERSION GREATER_EQUAL "11.3")
