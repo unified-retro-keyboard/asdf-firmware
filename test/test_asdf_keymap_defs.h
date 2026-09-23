@@ -222,22 +222,27 @@
 #define ASDF_TEST_ALTERNATE_OUTPUT_MAP 9
 #define ASDF_TEST_EACH_SCAN_MAP 10
 
-void setup_test_plain_map(void);
-void setup_test_caps_map(void);
-void setup_test2_plain_map(void);
-void setup_test2_caps_map(void);
+// number of test keymap slots (0 through ASDF_TEST_EACH_SCAN_MAP)
+#define ASDF_NUM_KEYMAPS 11
 
-void setup_test_vdevs_single(void);
-void setup_test_vdevs_double(void);
-void setup_test_vdevs_triple(void);
-void setup_test_vdevs_vcaps(void);
-
-void setup_test_hooks_alt_scanner(void);
-void setup_test_hooks_alt_output(void);
-
-// Platform installed by setup_test_hooks_alt_output(), reading rows with
-// test_hook_read_row() and sending codes with test_hook_output().
+#include "asdf_keymaps.h"
 #include "asdf_platform.h"
+
+// Test keymap descriptors, registered in asdf_keymap_table.c.
+extern const asdf_keymap_t test_plain_keymap;
+extern const asdf_keymap_t test_caps_keymap;
+extern const asdf_keymap_t test2_plain_keymap;
+extern const asdf_keymap_t test2_caps_keymap;
+extern const asdf_keymap_t test_vdevs_single_keymap;
+extern const asdf_keymap_t test_vdevs_double_keymap;
+extern const asdf_keymap_t test_vdevs_triple_keymap;
+extern const asdf_keymap_t test_vdevs_vcaps_keymap;
+extern const asdf_keymap_t test_hooks_default_keymap;
+extern const asdf_keymap_t test_hooks_alt_platform_keymap;
+extern const asdf_keymap_t test_hooks_each_scan_keymap;
+
+// Platform of test_hooks_alt_platform_keymap, reading rows with
+// test_hook_read_row() and sending codes with test_hook_output().
 extern const asdf_platform_t test_alt_platform;
 void setup_test_hooks_each_scan(void);
 

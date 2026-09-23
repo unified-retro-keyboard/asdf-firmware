@@ -3,12 +3,12 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_table.c
+// asdf_keymap_setup.c
 //
-// initialize keymap setup function table
+// keymap registry: the table of keymap descriptors
 //
 // *** AUTO-generated file.  DO NOT EDIT. ***
-// *** To modify template, edit $ROOT/src/Keymaps/asdf_keymap_table.c.in ***
+// *** To modify template, edit $ROOT/src/asdf_keymap_setup.c.in ***
 // *** To modify keymap list, edit $ROOT/keymap_list.cmake
 //
 // Copyright 2019 David Fenyes
@@ -27,66 +27,44 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <stddef.h>
 #include <stdint.h>
+#include "asdf_arch.h"
+#include "asdf_keymaps.h"
+#include "asdf_keymap_setup.h"
 
+// keymap descriptors, defined by the keymap modules
 @keymap_declarations@
 
-// PROCEDURE: asdf_keymap_setup
-//
-// INPUTS: (uint8_t) index - index of the keymap setup function to call
-// OUTPUTS: none
-////
-// DESCRIPTION: This function calls the keymap setup function specified
-//              by the index.
-//
-// SIDE EFFECTS: See Description
-//
-// NOTES: This function is necessary because functions defined in external
-// modules are not considered compile-time constants by the C99 standard, so the
-// array cannot be initialized with a compile-time declaration.
+// Keymap registry, indexed by keymap number. Unlisted numbers are NULL.
+static const asdf_keymap_t *const FLASH keymap_table[] = {@keymap_table@
+};
+
+#define NUM_KEYMAP_SLOTS (sizeof(keymap_table) / sizeof(keymap_table[0]))
+
+// PROCEDURE: asdf_keymap_descriptor
+// INPUTS: (uint8_t) index - keymap number
+// OUTPUTS: returns the keymap's descriptor (in flash), or NULL if there is no
+// keymap with that number.
 //
 // SCOPE: public
 //
-// COMPLEXITY: 1
+// COMPLEXITY: 2
 //
-void asdf_keymap_setup(uint8_t index) {
-  switch(index) {
-    default: @keymap_table@
-  }
+const asdf_keymap_t *asdf_keymap_descriptor(uint8_t index) {
+  return (index < NUM_KEYMAP_SLOTS)
+           ? (const asdf_keymap_t *) FLASH_READ_PTR(&keymap_table[index])
+           : NULL;
 }
 
 // PROCEDURE: asdf_keymap_valid
-//
-// INPUTS: (uint8_t) index - index of the keymap setup function to check
-// OUTPUTS: (uintu_t) returns TRUE (nonzero) if valid, FALSE (0) otherwise
-//
-// DESCRIPTION: This function returns TRUE if the index corresponds to
-//              a valid keymap.
-//
-// SIDE EFFECTS: none
-//
-// NOTES:
+// INPUTS: (uint8_t) index - keymap number
+// OUTPUTS: returns TRUE (nonzero) if there is a keymap with that number.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 1
 //
 uint8_t asdf_keymap_valid(uint8_t index) {
-  uint8_t valid = 0;
-
-  switch(index) { @keymap_valid@
-      valid = 1;
-    break;
-
-    default:
-      valid = 0;
-    break;
-  }
-
-  return valid;
+  return NULL != asdf_keymap_descriptor(index);
 }
-
-
-//-------|---------|---------+---------+---------+---------+---------+---------+
-// Above line is 80 columns, and should display completely in the editor.
-

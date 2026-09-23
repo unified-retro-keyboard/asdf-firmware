@@ -26,6 +26,8 @@
 #if !defined (ASDF_ARCH_H)
 #define ASDF_ARCH_H
 
+#include <string.h>
+
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
@@ -56,6 +58,7 @@ typedef enum {
 #define FLASH
 #define FLASH_READ(a) (*(a))
 #define FLASH_READ_PTR(a) (*(a))
+#define FLASH_MEMCPY(dst, src, n) memcpy((dst), (src), (n))
 #define FLASH_READ_MATRIX_ELEMENT(mat,row,col) (mat)[(row)][(col)]
 #define FLASH_STRING(s) (s)
 

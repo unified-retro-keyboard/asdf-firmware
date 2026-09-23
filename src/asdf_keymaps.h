@@ -32,6 +32,7 @@
 #include "asdf_virtual.h"
 #include "asdf_physical.h"
 #include "asdf_modifiers.h"
+#include "asdf_platform.h"
 
 // Define the bit position of each keymap DIP switch. The DIP switch values at
 // each bit position can be used to select the current keymap. This requires the
@@ -49,6 +50,37 @@ typedef struct {
   uint8_t rows;
   uint8_t cols;
 } asdf_keycode_map_t;
+
+// Binds a function to a hook for the duration of a keymap.
+typedef struct {
+  asdf_hook_id_t hook;
+  asdf_hook_function_t function;
+} asdf_hook_binding_t;
+
+// Flags in asdf_keymap_t.flags
+#define ASDF_KEYMAP_CAPS_ON 0x01         // start with CAPSLOCK on
+#define ASDF_KEYMAP_NEGATIVE_STROBE 0x02 // start with negative output strobe
+
+// A keymap descriptor. Each keymap is described by one immutable descriptor,
+// stored in flash, which the keymap registry (asdf_keymap_setup.h) lists by
+// index. Selecting a keymap applies its descriptor, in field order: the
+// modifier maps, the message print delay, the hook bindings, the virtual
+// output assignments, the flags, and the platform.
+typedef struct {
+  // keycode matrix for each modifier state (indexed by modifier_index_t), each
+  // rows x cols, stored in flash
+  const asdf_keycode_t *maps[ASDF_MOD_NUM_MODIFIERS];
+  uint8_t rows;
+  uint8_t cols;
+  uint8_t print_delay_ms; // delay between system message characters
+  uint8_t flags;          // ASDF_KEYMAP_* flags
+  uint8_t num_hooks;
+  uint8_t num_outputs;
+  const asdf_hook_binding_t *hooks;           // num_hooks entries, in flash
+  const asdf_virtual_initializer_t *outputs;  // num_outputs entries, in flash
+  const asdf_platform_t *platform;            // NULL for the architecture's platform
+  void (*setup)(void); // transitional: procedural setup, run last if not NULL
+} asdf_keymap_t;
 
 // PROCEDURE: asdf_keymaps_add_map
 // INPUTS: (asdf_keycode_t *) matrix - pointer to the keycode matrix to add in to map

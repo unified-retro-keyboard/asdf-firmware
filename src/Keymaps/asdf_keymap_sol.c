@@ -148,7 +148,7 @@ static void sol_id_message(void)
   asdf_print("[Keybd: Sol-20]");
 }
 
-void setup_sol_keymap(void)
+static void setup_sol_keymap(void)
 {
   sol_add_map(sol_plain_map, MOD_PLAIN_MAP);
   sol_add_map(sol_caps_map, MOD_CAPS_MAP);
@@ -182,6 +182,11 @@ void setup_sol_keymap(void)
 
   asdf_hook_assign(SOL_ID_MESSAGE_HOOK, sol_id_message);
 }
+
+// Keymap descriptor. The keymap is still configured procedurally by setup_sol_keymap().
+const asdf_keymap_t FLASH sol_keymap = {
+  .setup = setup_sol_keymap,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

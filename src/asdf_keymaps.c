@@ -147,6 +147,63 @@ static void asdf_keymaps_reset(void) {
     asdf_install_platform(NULL);
 }
 
+// PROCEDURE: asdf_keymaps_apply
+// INPUTS: (const asdf_keymap_t *) keymap - keymap descriptor, in flash
+// OUTPUTS: none
+//
+// DESCRIPTION: Configures the keyboard from a keymap descriptor, in the order
+// documented for asdf_keymap_t: modifier maps, print delay, hook bindings,
+// virtual output assignments, flags, platform, and finally the transitional
+// setup function.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// NOTES: The descriptor and its tables are copied out of flash one element at
+// a time, so only one element is held in RAM.
+//
+// SCOPE: private
+//
+// COMPLEXITY: 6
+//
+static void asdf_keymaps_apply(const asdf_keymap_t *keymap) {
+    asdf_keymap_t k;
+    FLASH_MEMCPY(&k, keymap, sizeof(k));
+
+    for (uint8_t m = 0; m < ASDF_MOD_NUM_MODIFIERS; m++) {
+        asdf_keymaps_add_map(k.maps[m], (modifier_index_t)m, k.rows, k.cols);
+    }
+
+    asdf_set_print_delay(k.print_delay_ms);
+
+    for (uint8_t i = 0; i < k.num_hooks; i++) {
+        asdf_hook_binding_t binding;
+        FLASH_MEMCPY(&binding, &k.hooks[i], sizeof(binding));
+        asdf_hook_assign(binding.hook, binding.function);
+    }
+
+    for (uint8_t i = 0; i < k.num_outputs; i++) {
+        asdf_virtual_initializer_t out;
+        FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
+        asdf_virtual_assign(out.virtual_device, out.physical_device, out.function,
+                            out.initial_value);
+    }
+
+    if (k.flags & ASDF_KEYMAP_CAPS_ON) {
+        asdf_modifier_capslock_activate();
+    }
+    if (k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) {
+        asdf_arch_set_neg_strobe();
+    }
+
+    if (k.platform) {
+        asdf_install_platform(k.platform);
+    }
+
+    if (k.setup) {
+        k.setup();
+    }
+}
+
 // PROCEDURE: asdf_keymaps_switch
 // INPUTS: (uint8_t) index - index of the keymap number to switch to
 // OUTPUTS: none
@@ -157,7 +214,7 @@ static void asdf_keymaps_reset(void) {
 // 2) execute the architecture-dependent init routine, and reset keymaps,
 // virtual devices, modifiers, repeat state, and hooks, to undo any settings
 // from the previous keymap
-// 3) execute the keymap-specific setup routine.
+// 3) apply the keymap descriptor.
 // 4) Re-apply the configuration actions of held switches (DIP switch keymap
 // select, strobe polarity, autorepeat select). Other held keys, such as a held
 // SHIFT, are not re-activated.
@@ -182,7 +239,7 @@ void asdf_keymaps_switch(uint8_t index) {
         asdf_arch_init();
         asdf_keymaps_reset();
 
-        asdf_keymap_setup(index);
+        asdf_keymaps_apply(asdf_keymap_descriptor(index));
 
         // Re-apply DIP/configuration switches; other held keys are not
         // re-activated.

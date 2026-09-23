@@ -24,6 +24,7 @@
 //
 
 #include "asdf.h"
+#include "asdf_arch.h"
 #include "asdf_keymaps.h"
 #include "asdf_virtual.h"
 #include "asdf_modifiers.h"
@@ -51,7 +52,7 @@ void classic_id_message(void) {
 // COMPLEXITY:
 //
 
-void setup_classic_keymap(void)
+static void setup_classic_keymap(void)
 {
   asdf_set_print_delay(ASDF_CLASSIC_PRINT_SPEED); //msec
 
@@ -78,6 +79,11 @@ void setup_classic_keymap(void)
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce a long pulse when activated
   asdf_virtual_assign(CLASSIC_VIRTUAL_CLR_SCR, CLASSIC_CLR_SCR_OUT, V_PULSE_LONG, !CLASSIC_CLR_SCR_ACTIVE_VALUE);
 }
+
+// Keymap descriptor. The keymap is still configured procedurally by setup_classic_keymap().
+const asdf_keymap_t FLASH classic_keymap = {
+  .setup = setup_classic_keymap,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

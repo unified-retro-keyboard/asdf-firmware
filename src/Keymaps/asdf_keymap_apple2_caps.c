@@ -49,7 +49,7 @@ void apple2_caps_id_message(void) {
 //
 // COMPLEXITY: 1
 //
-void setup_apple2_caps_keymap(void)
+static void setup_apple2_caps_keymap(void)
 {
   asdf_set_print_delay(APPLE2_PRINT_DELAY);
 
@@ -74,6 +74,11 @@ void setup_apple2_caps_keymap(void)
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce a long pulse when activated
   asdf_virtual_assign(APPLE_VIRTUAL_CLR_SCR, APPLE_CLR_SCR_OUTPUT, V_PULSE_LONG, !APPLE_CLR_SCR_ACTIVE_VALUE);
 }
+
+// Keymap descriptor. The keymap is still configured procedurally by setup_apple2_caps_keymap().
+const asdf_keymap_t FLASH apple2_caps_keymap = {
+  .setup = setup_apple2_caps_keymap,
+};
 
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

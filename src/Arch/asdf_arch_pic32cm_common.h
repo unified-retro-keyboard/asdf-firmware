@@ -18,6 +18,7 @@
 #define ASDF_ARCH_PIC32CM_COMMON_H
 
 #include <stdint.h>
+#include <string.h>
 #include "pic32c.h" // selects the part header from -D__PIC32CM6408PL100NN__
 
 // Core clock. asdf_arch_common_clock_init() switches the internal
@@ -34,6 +35,7 @@
 #define FLASH
 #define FLASH_READ(a) (*(a))
 #define FLASH_READ_PTR(a) (*(a))
+#define FLASH_MEMCPY(dst, src, n) memcpy((dst), (src), (n))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) ((matrix)[(row)][(col)])
 #define FLASH_STRING(s) (s)
 
