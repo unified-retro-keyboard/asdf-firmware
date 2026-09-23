@@ -274,8 +274,10 @@ int main(int argc, char **argv)
             sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
             cap_clear();
         }
+        /* Hold 25 ms, as in events mode.  Registration was measured at
+         * 10-16 ms depending on chip and keymap, so 15 ms was marginal. */
         matrix_press(id->trigger_key.row, id->trigger_key.col);
-        sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
+        sim_wait_ms(cpu, 25, io->cpu_frequency_hz);
         matrix_release(id->trigger_key.row, id->trigger_key.col);
         sim_wait_ms(cpu, 15, io->cpu_frequency_hz);
         if (id->trigger_modifier != SIM_MOD_NONE) {

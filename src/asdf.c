@@ -578,34 +578,66 @@ void asdf_keyscan(void) {
     }
 }
 
-// PROCEDURE: asdf_apply_all_actions
-// INPUTS: none
-// OUTPUTS: none
+// PROCEDURE: asdf_is_configuration_action
+// INPUTS: (asdf_keycode_t) code - keycode to check
+// OUTPUTS: returns TRUE (nonzero) if code is a configuration action
 //
-// DESCRIPTION: Scans the key matrix. For each row, read the columns, and for
-// each bit, if an action is specified, then call the activate or deactivate
-// function for that action, based on the key state. This is necessary to ensure
-// that configuration settings, such as DIP switches and jumper settings, are
-// properly handled when a keymap is changed.
-
-// SIDE EFFECTS: See DESCRIPTION
+// DESCRIPTION: Configuration actions set persistent keyboard configuration from
+// a held switch, such as a DIP switch: keymap selection, strobe polarity, and
+// autorepeat selection. They are the only actions re-applied on a keymap
+// switch.
 //
-// COMPLEXITY: 5
+// SIDE EFFECTS: none
+//
+// COMPLEXITY: 2
 //
 // SCOPE: private
 //
-void asdf_apply_all_actions(void) {
+static uint8_t asdf_is_configuration_action(asdf_keycode_t code) {
+    switch (code) {
+    case ACTION_MAPSEL_0:
+    case ACTION_MAPSEL_1:
+    case ACTION_MAPSEL_2:
+    case ACTION_MAPSEL_3:
+    case ACTION_STROBE_POLARITY_SELECT:
+    case ACTION_AUTOREPEAT_SELECT:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+// PROCEDURE: asdf_apply_configuration
+// INPUTS: none
+// OUTPUTS: none
+//
+// DESCRIPTION: Called after a keymap switch has reset the keyboard state.
+// Forgets the last code-producing key, then re-applies the configuration
+// actions (see asdf_is_configuration_action) of all held switches, so that
+// settings such as DIP switches persist across keymap changes. Other held keys
+// are not re-activated; they take effect again only when released and pressed.
+//
+// SIDE EFFECTS: See DESCRIPTION
+//
+// NOTES: Uses the last stable key state rather than rescanning, because the
+// map_select() functions interfere with the keymap change.
+//
+// COMPLEXITY: 4
+//
+// SCOPE: public
+//
+void asdf_apply_configuration(void) {
+    last_key = ACTION_NOTHING;
+
     for (uint8_t row = 0; row < asdf_keymaps_num_rows(); row++) {
-
-        // Here we scan the last stable key state for each row. We don't rescan
-        // because the map_select() functions interfere with the keymap change.
-
         asdf_cols_t row_key_state = last_stable_key_state[row];
 
         for (uint8_t col = 0; col < asdf_keymaps_num_cols(); col++) {
             if (row_key_state & 1) {
                 asdf_keycode_t code = asdf_lookup_keycode(row, col);
-                asdf_activate_action(code);
+                if (asdf_is_configuration_action(code)) {
+                    asdf_activate_action((action_t)code);
+                }
             }
             row_key_state >>= 1;
         }
@@ -630,21 +662,22 @@ void asdf_init(void) {
     last_key = ACTION_NOTHING;
 
     asdf_buffer_init();  // initialize the buffers
-    asdf_repeat_init();  // initialize the repeat counters
-    asdf_keymaps_init(); // initialize keymaps. This also initializes the
-                         // modifier key states.
     // reserve a buffer for the ASCII output:
     asdf_keycode_buffer = asdf_buffer_new(ASDF_KEYCODE_BUFFER_SIZE);
     asdf_message_buffer = asdf_buffer_new(ASDF_MESSAGE_BUFFER_SIZE);
 
     // Initialize all the keys to the unpressed state, and initialze the
-    // debounce counters.
+    // debounce counters. This must precede keymap selection, so that keys held
+    // before a re-initialization are not treated as held configuration.
     for (uint8_t row = 0; row < ASDF_MAX_ROWS; row++) {
         last_stable_key_state[row] = 0;
         for (uint8_t col = 0; col < ASDF_MAX_COLS; col++) {
             debounce_counters[row][col] = ASDF_DEBOUNCE_TIME_MS;
         }
     }
+
+    asdf_keymaps_init(); // initialize keymaps. This also resets the modifier
+                         // and repeat states.
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

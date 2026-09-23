@@ -120,13 +120,14 @@ void asdf_init(void);
 // function.
 void asdf_keyscan(void);
 
-// PROCEDURE: asdf_apply_all_actions
+// PROCEDURE: asdf_apply_configuration
 // INPUTS: none
 // OUTPUTS: none
-// DESCRIPTION: Re-applies the action hooks corresponding to the currently
-// pressed keys (e.g., DIP switches) so that configuration state persists across
-// keymap changes.
-void asdf_apply_all_actions(void);
+// DESCRIPTION: After a keymap switch resets the keyboard state, re-applies the
+// configuration actions (keymap select, strobe polarity, autorepeat select) of
+// held switches such as DIP switches, so configuration persists across keymap
+// changes. Other held keys are not re-activated.
+void asdf_apply_configuration(void);
 
 // PROCEDURE: asdf_put_code
 // INPUTS: (asdf_keycode_t) code: code to be buffered for output

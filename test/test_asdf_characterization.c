@@ -38,6 +38,7 @@
 #define KEY_HERE_IS_COL 1
 #define DIP_ROW (TEST_NUM_ROWS - 1)
 #define DIP_MAPSEL_1_COL 1
+#define DIP_STROBE_COL 6
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
 static int user1_hook_calls;
@@ -144,11 +145,10 @@ void autorepeat_timing_after_registration(void)
 // Initialization
 //
 
-// asdf_init() selects keymap 0 before clearing the stable key state, so the
-// keymap switch replays the actions of keys held before the re-init. Here a
-// held REPEAT key leaves repeat mode on even after it is lifted, because the
-// cleared stable state never sees its release.
-void currently_reinit_replays_keys_held_before_init(void)
+// asdf_init() clears the stable key state before selecting keymap 0, so keys
+// held before a re-init are forgotten: a held REPEAT key does not leave repeat
+// mode on.
+void reinit_forgets_keys_held_before_init(void)
 {
   hold(KEY_REPEAT_ROW, KEY_REPEAT_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
@@ -159,76 +159,88 @@ void currently_reinit_replays_keys_held_before_init(void)
 
   hold(KEY_A_ROW, KEY_A_COL);
   TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
-  // repeat mode: next code after ASDF_REPEAT_TIME_MS, not the autorepeat delay
-  TEST_ASSERT_EQUAL_INT32(ASDF_REPEAT_TIME_MS, scans_until_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS, scans_until_code());
 }
 
 //
 // Keymap switching
 //
+// A keymap switch resets runtime state (modifiers, repeat, last key) and then
+// re-applies only the configuration actions of held switches.
 
-// Replay (asdf_apply_all_actions(), run on every keymap switch) re-executes
-// the actions of all held keys, including toggles. CAPS is held and its toggle
-// undone; replay then toggles CAPS back on.
-void currently_replay_reexecutes_held_toggle_actions(void)
+static void switch_keymap_by_dip(void)
 {
-  hold(KEY_CAPS_ROW, KEY_CAPS_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS);
-  asdf_modifiers_init(); // CAPS off, key still held
-
-  asdf_apply_all_actions();
-
-  lift(KEY_CAPS_ROW, KEY_CAPS_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS);
-  hold(KEY_A_ROW, KEY_A_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32('A', asdf_next_code());
-}
-
-// Replay looks up each held key in the map for the current modifier state,
-// not the map in which the key was pressed. With CAPS on, the held CAPS key is
-// looked up in the test caps map, where that position is ACTION_NOTHING, which
-// runs the USER_1 hook instead of toggling CAPS.
-void currently_replay_uses_current_modifier_map(void)
-{
-  asdf_hook_assign(ASDF_HOOK_USER_1, count_user1_hook);
-  hold(KEY_CAPS_ROW, KEY_CAPS_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS); // CAPS on
-
-  asdf_apply_all_actions();
-  TEST_ASSERT_EQUAL_INT(1, user1_hook_calls);
-}
-
-// Modifier state set before a keymap switch survives it: the switch does not
-// reset modifiers.
-void currently_keymap_switch_keeps_caps_state(void)
-{
-  hold(KEY_CAPS_ROW, KEY_CAPS_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS);
-  lift(KEY_CAPS_ROW, KEY_CAPS_COL);
-  scan(ASDF_DEBOUNCE_TIME_MS);
-
   hold(DIP_ROW, DIP_MAPSEL_1_COL); // selects keymap 2 (test2 plain map)
   scan(ASDF_DEBOUNCE_TIME_MS);
+}
+
+// CAPS set before a switch is cleared by it.
+void keymap_switch_resets_caps(void)
+{
+  hold(KEY_CAPS_ROW, KEY_CAPS_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+  lift(KEY_CAPS_ROW, KEY_CAPS_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+
+  switch_keymap_by_dip();
 
   hold(KEY_A_ROW, KEY_A_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32('A', asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32('a', asdf_next_code());
 }
 
-// asdf_apply_all_actions() (run on every keymap switch) sends every held key
-// through the action dispatcher. ACTION_NOTHING falls through to the
-// ACTION_FN_1 case there, so a held key mapped to ACTION_NOTHING runs the
-// USER_1 hook.
-void currently_replay_of_held_nothing_key_runs_user1_hook(void)
+// A key held across a switch is not re-activated, and its later release is
+// not treated as a new event: holding CAPS through a switch leaves CAPS off.
+void keymap_switch_does_not_reactivate_held_keys(void)
+{
+  hold(KEY_CAPS_ROW, KEY_CAPS_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+
+  switch_keymap_by_dip();
+
+  lift(KEY_CAPS_ROW, KEY_CAPS_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+  hold(KEY_A_ROW, KEY_A_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+  TEST_ASSERT_EQUAL_INT32('a', asdf_next_code());
+}
+
+// REPEAT held across a switch is reset: the next key autorepeats normally.
+void keymap_switch_resets_held_repeat(void)
+{
+  hold(KEY_REPEAT_ROW, KEY_REPEAT_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+
+  switch_keymap_by_dip();
+
+  hold(KEY_A_ROW, KEY_A_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS, scans_until_code());
+}
+
+// A held DIP configuration switch survives a keymap switch, even though the
+// switch re-initializes the architecture (which resets strobe polarity).
+void keymap_switch_keeps_dip_configuration(void)
+{
+  hold(DIP_ROW, DIP_STROBE_COL);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+  TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
+
+  switch_keymap_by_dip();
+  TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
+}
+
+// Re-applying configuration runs only configuration actions: a held key mapped
+// to ACTION_NOTHING (which the dispatcher routes to the USER_1 hook) is not
+// dispatched.
+void apply_configuration_ignores_non_configuration_keys(void)
 {
   asdf_hook_assign(ASDF_HOOK_USER_1, count_user1_hook);
   hold(KEY_NOTHING_ROW, KEY_NOTHING_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
-  TEST_ASSERT_EQUAL_INT(0, user1_hook_calls);
 
-  asdf_apply_all_actions();
-  TEST_ASSERT_EQUAL_INT(1, user1_hook_calls);
+  asdf_apply_configuration();
+  TEST_ASSERT_EQUAL_INT(0, user1_hook_calls);
 }
 
 //
@@ -363,11 +375,12 @@ int main(void)
   RUN_TEST(press_registers_after_debounce_time);
   RUN_TEST(currently_debounce_glitch_shortens_next_press);
   RUN_TEST(autorepeat_timing_after_registration);
-  RUN_TEST(currently_reinit_replays_keys_held_before_init);
-  RUN_TEST(currently_replay_reexecutes_held_toggle_actions);
-  RUN_TEST(currently_replay_uses_current_modifier_map);
-  RUN_TEST(currently_keymap_switch_keeps_caps_state);
-  RUN_TEST(currently_replay_of_held_nothing_key_runs_user1_hook);
+  RUN_TEST(reinit_forgets_keys_held_before_init);
+  RUN_TEST(keymap_switch_resets_caps);
+  RUN_TEST(keymap_switch_does_not_reactivate_held_keys);
+  RUN_TEST(keymap_switch_resets_held_repeat);
+  RUN_TEST(keymap_switch_keeps_dip_configuration);
+  RUN_TEST(apply_configuration_ignores_non_configuration_keys);
   RUN_TEST(currently_here_is_runs_user1_hook);
   RUN_TEST(currently_nothing_key_queues_invalid_code);
   RUN_TEST(newline_with_two_slots_queues_crlf);
