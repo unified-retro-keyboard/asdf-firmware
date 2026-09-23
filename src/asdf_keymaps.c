@@ -135,7 +135,7 @@ static void asdf_keymaps_reset_r(asdf_t *kb) {
         asdf_keymaps_add_map_r(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
     }
 
-    asdf_virtual_init_r(&kb->outputs);
+    asdf_virtual_init_r(&kb->outputs, kb->base_platform);
 
     // Reset modifiers and repeat state, so each keymap starts from a known
     // state regardless of the keymap it replaces.
@@ -192,7 +192,7 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
         asdf_sync_lock_leds_r(kb);
     }
     if (k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) {
-        asdf_arch_set_neg_strobe();
+        asdf_set_strobe_polarity_r(kb, 0);
     }
 
     if (k.platform) {
@@ -207,9 +207,9 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
 //
 // DESCRIPTION: If the keymap exists:
 // 1) record it as the current (and requested) keymap
-// 2) execute the architecture-dependent init routine, and reset keymaps,
-// virtual devices, modifiers, repeat state, hooks, and platform, to undo any
-// settings from the previous keymap
+// 2) reset keymaps, virtual devices, modifiers, repeat state, hooks, and
+// platform, and return the platform's output configuration to its defaults, to
+// undo any settings from the previous keymap
 // 3) apply the keymap descriptor.
 // 4) Re-apply the configuration actions of held switches (DIP switch keymap
 // select, strobe polarity, autorepeat select). Other held keys, such as a held
@@ -229,8 +229,8 @@ void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index) {
         kb->keymap.current = index;
         kb->keymap.requested = index;
 
-        asdf_arch_init();
         asdf_keymaps_reset_r(kb);
+        kb->platform->reset(kb->platform->user);
 
         asdf_keymaps_apply_r(kb, asdf_keymap_descriptor(index));
 

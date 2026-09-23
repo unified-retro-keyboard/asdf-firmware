@@ -80,6 +80,10 @@ target_compile_options(test_helpers
   ${C_FLAGS}
   )
 
+# The test keymaps' alternate platform uses the test adapter's platform, and
+# the core uses the test keymaps, so the two libraries depend on each other.
+target_link_libraries(test_helpers asdf_core)
+
 function(setup_test testname)
 
   add_executable(${testname}

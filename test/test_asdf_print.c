@@ -16,7 +16,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
 }
 
 void tearDown(void) {}

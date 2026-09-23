@@ -62,25 +62,9 @@
 #define OSI_RW_PIN 10u
 
 // --- public API (mirrors asdf_arch_atmega2560.h) ---
-void asdf_arch_set_pos_strobe(void);
-void asdf_arch_set_neg_strobe(void);
-void asdf_arch_null_output(uint8_t value);
-void asdf_arch_led1_set(uint8_t value);
-void asdf_arch_led2_set(uint8_t value);
-void asdf_arch_led3_set(uint8_t value);
-void asdf_arch_out1_set(uint8_t value);
-void asdf_arch_out1_open_hi_set(uint8_t value);
-void asdf_arch_out1_open_lo_set(uint8_t value);
-void asdf_arch_out2_set(uint8_t value);
-void asdf_arch_out2_open_hi_set(uint8_t value);
-void asdf_arch_out2_open_lo_set(uint8_t value);
-void asdf_arch_out3_set(uint8_t value);
-void asdf_arch_out3_open_hi_set(uint8_t value);
-void asdf_arch_out3_open_lo_set(uint8_t value);
-asdf_cols_t asdf_arch_read_row(uint8_t row);
-void asdf_arch_pulse_delay_short(void);
-uint8_t asdf_arch_tick(void);
-void asdf_arch_send_code(asdf_keycode_t code);
-void asdf_arch_init(void);
+// PROCEDURE: asdf_arch_init
+// Sets up all the hardware for the keyboard and the platform embedded in arch,
+// and starts the tick interrupt.
+void asdf_arch_init(asdf_arch_t *arch);
 
 #endif /* !defined (ASDF_ARCH_H) */

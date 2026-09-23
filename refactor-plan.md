@@ -245,8 +245,8 @@ Exit criteria:
 - Replace the physical handler table with a typed platform output operation or
   a compact typed driver table.
 - Move data polarity and other per-device configuration into platform-owned
-  state. Deferred: polarity stays in each architecture adapter until Phase 7
-  makes adapters per-instance. The interrupt operations
+  state. Deferred to Phase 7, which makes adapters per-instance. The interrupt
+  operations
   (`irq_disable`/`irq_restore`) turned out not to be needed: only the
   architecture's tick drain shares state with an interrupt, and it masks
   interrupts itself (Phase 6).
@@ -310,8 +310,7 @@ Exit criteria:
   keymaps, output, and repeat events.
 - Hooks remain `void (void)` functions, so a hook cannot tell which keyboard
   fired it; the keymap ID-message hooks print to the default keyboard. The
-  per-key press and release actions of Phase 8 replace them. Physical outputs
-  still drive shared hardware until Phase 7.
+  per-key press and release actions of Phase 8 replace them.
 
 Exit criteria:
 
@@ -363,6 +362,19 @@ Exit criteria:
   on each adapter.
 - Drop any AVR target that no longer fits cleanly, rather than keeping a
   separate static-dispatch build for it.
+
+- Done as: `asdf_platform_t` gained `set_output`, `set_strobe_polarity`,
+  `pulse_delay_short`, and `reset` operations, so the core calls no
+  `asdf_arch_*` function. The physical output state records the platform that
+  drives it. Each firmware adapter defines an `asdf_arch_t` holding its
+  platform, tick count, and data polarity; `main.c` owns that state and
+  defines the tick interrupt (`ASDF_ARCH_TICK_ISR`), which only counts ticks.
+  A keymap switch calls the platform's `reset` (default data and strobe
+  polarity) instead of re-running the whole hardware init. The fake host
+  platform records outputs, strobe polarity, short pulses, and resets per
+  instance. The instance adapters cost about 210-240 bytes of AVR flash and
+  10 bytes of RAM; every AVR target, including the ATmega88P, still fits with
+  over 1 KiB of flash to spare, so none was dropped.
 
 Exit criteria:
 

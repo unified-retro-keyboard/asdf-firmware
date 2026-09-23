@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "pic32c.h" // selects the part header from -D__PIC32CM6408PL100NN__
+#include "asdf_platform.h"
 
 // Core clock. asdf_arch_common_clock_init() switches the internal
 // high-frequency oscillator (OSCHF) from its 4 MHz reset default to its 24 MHz
@@ -56,6 +57,29 @@ static inline void pin_dir_in(uint8_t g, uint8_t b)
   PORT_REGS->GROUP[g].PORT_PINCFG[b] = PORT_PINCFG_INEN_Msk;
 }
 
+// State of one keyboard's hardware. The embedded platform passes this state to
+// each of its operations. The board layer (main.c) owns the state and the tick
+// interrupt vector (ASDF_ARCH_TICK_ISR), which calls asdf_arch_count_tick().
+typedef struct {
+  asdf_platform_t platform; // the keyboard's platform; its user pointer is this state
+  volatile uint8_t ticks;   // ticks counted by the interrupt, not yet collected
+  uint8_t data_polarity;    // XORed with each code sent
+} asdf_arch_t;
+
+// The tick interrupt: SysTick, every 1 ms. Defining it overrides the weak
+// SysTick_Handler in the DFP startup file.
+#define ASDF_ARCH_TICK_ISR void SysTick_Handler(void)
+
+// PROCEDURE: asdf_arch_count_tick
+// Counts one elapsed tick, saturating so a long stall cannot wrap the count.
+// Called only from the tick interrupt.
+static inline void asdf_arch_count_tick(asdf_arch_t *arch)
+{
+  if (arch->ticks < UINT8_MAX) {
+    arch->ticks++;
+  }
+}
+
 // Shared mechanics (asdf_arch_pic32cm_common.c).
 void asdf_arch_common_clock_init(void);
 void asdf_arch_common_tick_init(void);
@@ -63,6 +87,6 @@ void arch_delay_us(uint16_t us);
 
 // Shared public-API functions, identical for both variants (also declared in
 // the variant header, which mirrors the AVR reference header).
-uint8_t asdf_arch_tick(void);
-void asdf_arch_pulse_delay_short(void);
+uint8_t asdf_arch_tick(asdf_arch_t *arch);
+void SysTick_Handler(void);
 #endif /* !defined (ASDF_ARCH_PIC32CM_COMMON_H) */

@@ -32,6 +32,7 @@
 #include "asdf.h"
 #include "asdf_config.h"
 #include "asdf_physical.h"
+#include "asdf_platform.h"
 #include "asdf_virtual.h"
 
 
@@ -212,8 +213,15 @@ uint8_t asdf_arch_was_code_sent(void);
 // PROCEDURE: asdf_arch_init
 // INPUTS: none
 // OUTPUTS: none
-// DESCRIPTION: sets up all the hardware for the keyboard
+// DESCRIPTION: resets the emulated hardware: outputs low, pulse detectors in
+// their initial state, no code sent, and negative strobe polarity. The
+// platform's reset operation does the same.
 void asdf_arch_init(void);
+
+// The platform of the emulated hardware. Its operations act on the emulation
+// above, which is shared by every keyboard that uses this platform; tests that
+// need independent hardware for each keyboard use fake_platform_t instead.
+extern const asdf_platform_t asdf_arch_platform;
 
 
 

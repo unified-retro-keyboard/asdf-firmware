@@ -22,12 +22,47 @@ static void fake_send_code(void *user, asdf_keycode_t code)
   }
 }
 
+static void fake_set_output(void *user, asdf_physical_dev_t output, uint8_t value)
+{
+  fake_platform_t *fake = user;
+
+  if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
+    fake->outputs[output] = value;
+  }
+}
+
+static void fake_set_strobe_polarity(void *user, uint8_t positive)
+{
+  fake_platform_t *fake = user;
+
+  fake->strobe_positive = positive ? 1 : 0;
+}
+
+static void fake_pulse_delay_short(void *user)
+{
+  fake_platform_t *fake = user;
+
+  fake->short_pulses++;
+}
+
+static void fake_reset(void *user)
+{
+  fake_platform_t *fake = user;
+
+  fake->strobe_positive = 0;
+  fake->resets++;
+}
+
 void fake_platform_init(fake_platform_t *fake)
 {
   memset(fake, 0, sizeof(*fake));
   fake->platform.user = fake;
   fake->platform.read_row = fake_read_row;
   fake->platform.send_code = fake_send_code;
+  fake->platform.set_output = fake_set_output;
+  fake->platform.set_strobe_polarity = fake_set_strobe_polarity;
+  fake->platform.pulse_delay_short = fake_pulse_delay_short;
+  fake->platform.reset = fake_reset;
 }
 
 void fake_platform_press(fake_platform_t *fake, uint8_t row, uint8_t col)

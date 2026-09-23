@@ -27,6 +27,7 @@
 #include "asdf_ascii.h"
 #include "asdf_modifiers.h"
 #include "asdf_keymaps.h"
+#include "asdf_arch.h"
 #include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "asdf_keymap_setup.h"
@@ -121,10 +122,40 @@ static void test_platform_send_code(void *user, asdf_keycode_t code)
   test_hook_output(code);
 }
 
+// The alternate platform scans and sends through the test hooks, and drives
+// outputs through the emulated hardware of asdf_arch_platform.
+static void test_platform_set_output(void *user, asdf_physical_dev_t output, uint8_t value)
+{
+  (void) user;
+  asdf_arch_platform.set_output(asdf_arch_platform.user, output, value);
+}
+
+static void test_platform_set_strobe_polarity(void *user, uint8_t positive)
+{
+  (void) user;
+  asdf_arch_platform.set_strobe_polarity(asdf_arch_platform.user, positive);
+}
+
+static void test_platform_pulse_delay_short(void *user)
+{
+  (void) user;
+  asdf_arch_platform.pulse_delay_short(asdf_arch_platform.user);
+}
+
+static void test_platform_reset(void *user)
+{
+  (void) user;
+  asdf_arch_platform.reset(asdf_arch_platform.user);
+}
+
 const asdf_platform_t test_alt_platform = {
   .user = NULL,
   .read_row = test_platform_read_row,
   .send_code = test_platform_send_code,
+  .set_output = test_platform_set_output,
+  .set_strobe_polarity = test_platform_set_strobe_polarity,
+  .pulse_delay_short = test_platform_pulse_delay_short,
+  .reset = test_platform_reset,
 };
 
 static const asdf_hook_binding_t each_scan_hooks[] = {

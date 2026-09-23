@@ -27,40 +27,21 @@
 #include <stdint.h>
 #include "asdf_physical.h"
 #include "asdf_config.h"
-#include "asdf_arch.h"
+#include "asdf_platform.h"
 
 
-// For each physical resource, there is a handler and a "shadow" register for
-// the output value.
+// For each physical resource, there is a "shadow" register for the output
+// value, and the platform drives the output itself.
 //
 // For line outputs, the shadow register permits machine independent
 // implementations of the toggle and pulse functions to be implemented in this
-// module, requiring only a "set" function for each physical resource in the
-// architecture-dependent layer. This implementation is not as efficient, but
-// the timing is not critical, and the events are so infrequent that the
-// benefits of the refactoring far outweigh any performance penalty.
+// module, requiring only a "set" operation for each physical resource in the
+// platform. This implementation is not as efficient, but the timing is not
+// critical, and the events are so infrequent that the benefits of the
+// refactoring far outweigh any performance penalty.
 //
-// The handlers are fixed and kept in flash. The shadow registers and the
-// allocation links are held in the caller's asdf_physical_state_t.
-
-typedef void (*asdf_physical_handler_t)(uint8_t);
-
-// physical_handlers[] contains the set() function for each real output device.
-static const asdf_physical_handler_t FLASH physical_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
-  [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
-  [PHYSICAL_OUT1] = &asdf_arch_out1_set,
-  [PHYSICAL_OUT2] = &asdf_arch_out2_set,
-  [PHYSICAL_OUT3] = &asdf_arch_out3_set,
-  [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
-  [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
-  [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
-  [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
-  [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
-  [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
-  [PHYSICAL_LED1] = &asdf_arch_led1_set,
-  [PHYSICAL_LED2] = &asdf_arch_led2_set,
-  [PHYSICAL_LED3] = &asdf_arch_led3_set,
-};
+// The shadow registers, the allocation links, and the platform are held in the
+// caller's asdf_physical_state_t.
 
 // PROCEDURE: physical_index_valid
 // INPUTS: (asdf_physical_dev_t) device - device to check
@@ -95,19 +76,20 @@ static uint8_t valid_physical_device(asdf_physical_dev_t device)
 //         index), (uint8_t) value
 // OUTPUTS: none
 //
-// DESCRIPTION: Drives the output through its handler and records the value in
-// the shadow register.
+// DESCRIPTION: Drives the output through the platform, if any, and records
+// the value in the shadow register.
 //
 // SCOPE: private
 //
-// COMPLEXITY: 1
+// COMPLEXITY: 2
 //
 static void physical_write(asdf_physical_state_t *phys, asdf_physical_dev_t device, uint8_t value)
 {
-  asdf_physical_handler_t handler =
-    (asdf_physical_handler_t) FLASH_READ_PTR(&physical_handlers[device]);
+  const asdf_platform_t *platform = phys->platform;
 
-  handler(value);
+  if (platform) {
+    platform->set_output(platform->user, device, value);
+  }
   phys->shadow[device] = value;
 }
 
@@ -291,12 +273,34 @@ uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_
   return 1;
 }
 
-// PROCEDURE: asdf_physical_init_r
-// INPUTS: (asdf_physical_state_t *) phys
+// PROCEDURE: asdf_physical_pulse_delay_short_r
+// INPUTS: (const asdf_physical_state_t *) phys
 // OUTPUTS: none
 //
-// DESCRIPTION: Initialize the shadow registers to the default value and place
-// every device on the available list.
+// DESCRIPTION: Waits for the width of a short pulse on the outputs, through
+// the platform, if any.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys)
+{
+  const asdf_platform_t *platform = phys->platform;
+
+  if (platform) {
+    platform->pulse_delay_short(platform->user);
+  }
+}
+
+// PROCEDURE: asdf_physical_init_r
+// INPUTS: (asdf_physical_state_t *) phys
+//         (const asdf_platform_t *) platform - drives the outputs; NULL to
+//         track shadow values only
+// OUTPUTS: none
+//
+// DESCRIPTION: Initialize the shadow registers to the default value, place
+// every device on the available list, and record the platform.
 //
 // SIDE EFFECTS: see above
 //
@@ -304,8 +308,10 @@ uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_
 //
 // COMPLEXITY: 2
 //
-void asdf_physical_init_r(asdf_physical_state_t *phys)
+void asdf_physical_init_r(asdf_physical_state_t *phys, const asdf_platform_t *platform)
 {
+  phys->platform = platform;
+
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     phys->shadow[i] = ASDF_VIRTUAL_OUT_DEFAULT_VALUE;
     phys->next[i] = (asdf_physical_dev_t) (i + 1);

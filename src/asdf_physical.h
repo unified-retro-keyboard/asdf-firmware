@@ -49,18 +49,22 @@ typedef enum {
   ASDF_PHYSICAL_NUM_RESOURCES
 } asdf_physical_dev_t;
 
+struct asdf_platform; // asdf_platform.h
+
 // Changeable state of the physical outputs of one keyboard: the value last
-// written to each output, and the links of the available list and of each
-// virtual output's list of physical outputs.
+// written to each output, the links of the available list and of each virtual
+// output's list of physical outputs, and the platform that drives the outputs.
 typedef struct {
   uint8_t shadow[ASDF_PHYSICAL_NUM_RESOURCES];
   asdf_physical_dev_t next[ASDF_PHYSICAL_NUM_RESOURCES];
+  const struct asdf_platform *platform; // set by the owning keyboard
 } asdf_physical_state_t;
 
 // Instance API: each function operates only on the state passed to it.
-// Invalid devices are ignored. See asdf_physical.c.
+// Invalid devices are ignored. Outputs are driven through the state's platform;
+// with no platform, only the shadow values change. See asdf_physical.c.
 
-void asdf_physical_init_r(asdf_physical_state_t *phys);
+void asdf_physical_init_r(asdf_physical_state_t *phys, const struct asdf_platform *platform);
 void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                          uint8_t value);
 void asdf_physical_on_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
@@ -71,6 +75,7 @@ asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phy
                                                 asdf_physical_dev_t device);
 uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                                  asdf_physical_dev_t tail, uint8_t initial_value);
+void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys);
 
 // Single-keyboard API, operating on the default physical output state
 // (asdf_compat.c).

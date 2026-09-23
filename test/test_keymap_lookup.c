@@ -49,7 +49,7 @@ static void load_keymap(const asdf_keycode_t *plain_matrix,
                         uint8_t shift_rows,
                         uint8_t shift_cols)
 {
-    asdf_keymaps_init();
+    asdf_init(&asdf_arch_platform);
 
     // Clear modifier entries so default keymaps do not leak into the tests.
     asdf_keymaps_add_map(NULL, MOD_PLAIN_MAP, 0, 0);

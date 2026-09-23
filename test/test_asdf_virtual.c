@@ -9,14 +9,14 @@
 #include "asdf_config.h"
 #include "test_asdf_lib.h"
 #include "test_asdf_keymap_defs.h"
+#include "fake_platform.h"
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
 
 
 void setUp(void)
 {
-  asdf_arch_init();
-  asdf_keymaps_init();
+  asdf_init(&asdf_arch_platform);
 
   asdf_keymaps_select(SINGLE_TESTS_KEYMAP);
 
@@ -298,39 +298,45 @@ void test_cant_assign_real_output_twice(void)
   TEST_ASSERT_EQUAL_INT32(0, asdf_arch_check_output(PHYSICAL_LED1));
 }
 
-// Two virtual output states map and drive outputs independently. (The fake
-// hardware outputs behind them are shared, so each is checked right after it
-// is driven.)
+// Two virtual output states map and drive outputs independently, each on its
+// own hardware.
 void test_independent_virtual_states(void)
 {
+  fake_platform_t hw_a, hw_b;
   asdf_virtual_state_t a, b;
 
-  asdf_virtual_init_r(&a);
-  asdf_virtual_init_r(&b);
+  fake_platform_init(&hw_a);
+  fake_platform_init(&hw_b);
+  asdf_virtual_init_r(&a, &hw_a.platform);
+  asdf_virtual_init_r(&b, &hw_b.platform);
   asdf_virtual_assign_r(&a, VOUT1, PHYSICAL_LED1, V_TOGGLE, 0);
   asdf_virtual_assign_r(&b, VOUT1, PHYSICAL_LED2, V_TOGGLE, 1);
-  asdf_virtual_assign_r(&b, VOUT2, PHYSICAL_LED1, V_SET_HI, 0);
+  asdf_virtual_assign_r(&b, VOUT2, PHYSICAL_LED1, V_PULSE_SHORT, 0);
   asdf_virtual_sync_r(&a);
-  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED1));
+  asdf_virtual_sync_r(&b);
+  TEST_ASSERT_EQUAL_INT(0, hw_a.outputs[PHYSICAL_LED1]);
+  TEST_ASSERT_EQUAL_INT(1, hw_b.outputs[PHYSICAL_LED2]);
 
   asdf_virtual_activate_r(&a, VOUT1);
-  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
+  TEST_ASSERT_EQUAL_INT(1, hw_a.outputs[PHYSICAL_LED1]);
+  TEST_ASSERT_EQUAL_INT(0, hw_b.outputs[PHYSICAL_LED1]);
 
   asdf_virtual_activate_r(&b, VOUT1);
-  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED2));
+  TEST_ASSERT_EQUAL_INT(0, hw_b.outputs[PHYSICAL_LED2]);
+  TEST_ASSERT_EQUAL_INT(ASDF_VIRTUAL_OUT_DEFAULT_VALUE, hw_a.outputs[PHYSICAL_LED2]);
 
-  // b's LED1 shadow is still its initial 0, unaffected by a's toggle
-  asdf_virtual_sync_r(&b);
-  TEST_ASSERT_EQUAL_INT(0, asdf_arch_check_output(PHYSICAL_LED1));
-  asdf_virtual_sync_r(&a);
-  TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_LED1));
+  // a short pulse waits on its own hardware only
+  asdf_virtual_activate_r(&b, VOUT2);
+  TEST_ASSERT_EQUAL_INT(1, hw_b.short_pulses);
+  TEST_ASSERT_EQUAL_INT(0, hw_a.short_pulses);
+  TEST_ASSERT_EQUAL_INT(1, hw_a.outputs[PHYSICAL_LED1]);
 }
 
 void test_invalid_virtual_output_is_ignored(void)
 {
   asdf_virtual_state_t v;
 
-  asdf_virtual_init_r(&v);
+  asdf_virtual_init_r(&v, &asdf_arch_platform);
   asdf_virtual_action_r(&v, ASDF_VIRTUAL_NUM_RESOURCES, V_SET_HI);
   asdf_virtual_activate_r(&v, ASDF_VIRTUAL_NUM_RESOURCES);
   asdf_virtual_assign_r(&v, ASDF_VIRTUAL_NUM_RESOURCES, PHYSICAL_LED1, V_SET_HI, 0);
@@ -347,7 +353,7 @@ void test_long_pulse_is_scheduled(void)
 {
   asdf_virtual_state_t v;
 
-  asdf_virtual_init_r(&v);
+  asdf_virtual_init_r(&v, &asdf_arch_platform);
   asdf_virtual_assign_r(&v, VOUT1, PHYSICAL_OUT1, V_PULSE_LONG, 1);
   asdf_virtual_sync_r(&v);
   TEST_ASSERT_EQUAL_INT(1, asdf_arch_check_output(PHYSICAL_OUT1));

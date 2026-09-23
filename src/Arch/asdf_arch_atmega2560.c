@@ -46,32 +46,8 @@
 #include "asdf_platform.h"
 
 // Tick is true every 1 ms.
-static volatile uint8_t tick = 0;
 
 // data polarity may be changed with a DIP switch, so we use a static instead of a constant
-static uint8_t data_polarity = ASDF_DEFAULT_DATA_POLARITY;
-
-// PROCEDURE: ISR for Timer 0 overflow
-// INPUTS: none
-// OUTPUTS:none
-//
-// DESCRIPTION: Occurs every 1 ms.  Set tick flag, kick watchdog.
-//
-// SIDE EFFECTS:
-//
-// NOTES:
-//
-// SCOPE:
-//
-// COMPLEXITY:
-//
-ISR(TIMER0_COMPA_vect)
-{
-  // count elapsed ticks, saturating so a long stall cannot wrap the count
-  if (tick < UINT8_MAX) {
-    tick++;
-  }
-}
 
 // PROCEDURE: set_bit
 // INPUTS: port: pointer to a (uint8) port
@@ -160,8 +136,6 @@ static void arch_timer0_config(uint32_t bits)
 //
 static void asdf_arch_tick_timer_init(void)
 {
-  tick = 0;
-
   // set compare register first, so timer can operate correctly as soon as it is
   // enabled.
   OCR0A = TICK_COUNT;
@@ -172,7 +146,7 @@ static void asdf_arch_tick_timer_init(void)
 }
 
 // PROCEDURE: asdf_arch_tick
-// INPUTS: none
+// INPUTS: (asdf_arch_t *) arch
 // OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at
 //          255)
 //
@@ -186,15 +160,15 @@ static void asdf_arch_tick_timer_init(void)
 //
 // COMPLEXITY: 1
 //
-uint8_t asdf_arch_tick(void)
+uint8_t asdf_arch_tick(asdf_arch_t *arch)
 {
   uint8_t retval;
 
   // read and clear as one step, so a tick counted between them is not lost
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
   {
-    retval = tick;
-    tick = 0;
+    retval = arch->ticks;
+    arch->ticks = 0;
   }
   return retval;
 }
@@ -248,11 +222,11 @@ static void asdf_arch_init_leds(void)
 // NOTES: The LED1 port drives the LED directly by pulling the cathode low, so
 // clearing the bit turns the LED on.
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_led1_set(uint8_t value)
+static void asdf_arch_led1_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_LED1_PORT, ASDF_LED1_BIT);
@@ -273,11 +247,11 @@ void asdf_arch_led1_set(uint8_t value)
 // NOTES: The LED2 output drives the LED via an inverter buffer, so a high
 // output pulls the LED cathode low, lighting the LED.
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_led2_set(uint8_t value)
+static void asdf_arch_led2_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_LED2_PORT, ASDF_LED2_BIT);
@@ -298,11 +272,11 @@ void asdf_arch_led2_set(uint8_t value)
 // NOTES: The LED3 output drives the LED via an inverter buffer, so a high
 // output pulls the LED cathode low, lighting the LED.
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_led3_set(uint8_t value)
+static void asdf_arch_led3_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_LED3_PORT, ASDF_LED3_BIT);
@@ -322,11 +296,11 @@ void asdf_arch_led3_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_null_output(uint8_t value)
+static void asdf_arch_null_output(uint8_t value)
 {
   (void) value;
 }
@@ -341,11 +315,11 @@ void asdf_arch_null_output(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out1_set(uint8_t value)
+static void asdf_arch_out1_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT1_PORT, ASDF_OUT1_BIT);
@@ -366,11 +340,11 @@ void asdf_arch_out1_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out1_open_hi_set(uint8_t value)
+static void asdf_arch_out1_open_hi_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_OUT1_DDR, ASDF_OUT1_BIT);
@@ -392,11 +366,11 @@ void asdf_arch_out1_open_hi_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out1_open_lo_set(uint8_t value)
+static void asdf_arch_out1_open_lo_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT1_PORT, ASDF_OUT1_BIT);
@@ -418,11 +392,11 @@ void asdf_arch_out1_open_lo_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out2_set(uint8_t value)
+static void asdf_arch_out2_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT2_PORT, ASDF_OUT2_BIT);
@@ -443,11 +417,11 @@ void asdf_arch_out2_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out2_open_hi_set(uint8_t value)
+static void asdf_arch_out2_open_hi_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_OUT2_DDR, ASDF_OUT2_BIT);
@@ -469,11 +443,11 @@ void asdf_arch_out2_open_hi_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out2_open_lo_set(uint8_t value)
+static void asdf_arch_out2_open_lo_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT2_PORT, ASDF_OUT2_BIT);
@@ -495,11 +469,11 @@ void asdf_arch_out2_open_lo_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out3_set(uint8_t value)
+static void asdf_arch_out3_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT3_PORT, ASDF_OUT3_BIT);
@@ -520,11 +494,11 @@ void asdf_arch_out3_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out3_open_hi_set(uint8_t value)
+static void asdf_arch_out3_open_hi_set(uint8_t value)
 {
   if (value) {
     clear_bit(&ASDF_OUT3_DDR, ASDF_OUT3_BIT);
@@ -546,11 +520,11 @@ void asdf_arch_out3_open_hi_set(uint8_t value)
 //
 // NOTES:
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_out3_open_lo_set(uint8_t value)
+static void asdf_arch_out3_open_lo_set(uint8_t value)
 {
   if (value) {
     set_bit(&ASDF_OUT3_PORT, ASDF_OUT3_BIT);
@@ -571,11 +545,11 @@ void asdf_arch_out3_open_lo_set(uint8_t value)
 //
 // SIDE EFFECTS: See DESCRIPTION
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 1
 //
-void asdf_arch_set_pos_strobe(void)
+static void asdf_arch_set_pos_strobe(void)
 {
   clear_bit(&ASDF_STROBE_PORT, ASDF_STROBE_BIT);
   set_bit(&ASDF_STROBE_DDR, ASDF_STROBE_BIT);
@@ -593,14 +567,14 @@ void asdf_arch_set_pos_strobe(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_arch_set_neg_strobe(void)
+static void asdf_arch_set_neg_strobe(void)
 {
   set_bit(&ASDF_STROBE_PORT, ASDF_STROBE_BIT);
   set_bit(&ASDF_STROBE_DDR, ASDF_STROBE_BIT);
 }
 
 // PROCEDURE: asdf_arch_init_ascii_output
-// INPUTS: none
+// INPUTS: (uint8_t) data_polarity - idle output data
 // OUTPUTS: none
 //
 // DESCRIPTION: Sets up output port for ASCII output
@@ -611,7 +585,7 @@ void asdf_arch_set_neg_strobe(void)
 //
 // COMPLEXITY: 1
 //
-static void asdf_arch_init_ascii_output(void)
+static void asdf_arch_init_ascii_output(uint8_t data_polarity)
 {
   // set all outputs
   ASDF_ASCII_PORT = data_polarity;
@@ -654,71 +628,6 @@ static void asdf_arch_init_row_outputs(void)
   ASDF_LOROW_DDR = ALL_OUTPUTS;
 }
 
-// PROCEDURE: asdf_arch_pulse_delay_short
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Delays a fixed amount of time for keyboard output pulses specified by
-// ASDF_PULSE_DELAY_SHORT_US
-//
-// SIDE EFFECTS: see above.
-//
-// NOTES: Set ASDF_PULSE_DELAY_US in asdf_config.h
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_pulse_delay_short(void)
-{
-  _delay_us(ASDF_PULSE_DELAY_SHORT_US);
-}
-
-// PROCEDURE: asdf_arch_init
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: sets up all the hardware for the keyboard
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void asdf_arch_init(void)
-{
-  // disable interrupts:
-  cli();
-
-  // clear the tick count;
-  tick = 0;
-
-  // set up timers for 1 msec intervals
-  asdf_arch_init_clock();
-  asdf_arch_tick_timer_init();
-
-  // set up ASCII output port
-  asdf_arch_init_ascii_output();
-
-  // initialize keyboard data polarity and strobe polarity
-  data_polarity = ASDF_DEFAULT_DATA_POLARITY;
-
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) {
-    asdf_arch_set_pos_strobe();
-  } else {
-    asdf_arch_set_neg_strobe();
-  }
-
-  asdf_arch_init_leds();
-
-  // set up row and column ports
-  asdf_arch_init_row_outputs();
-  asdf_arch_init_columns();
-
-  // enable interrupts:
-  sei();
-}
 
 // PROCEDURE: asdf_arch_read_row
 // INPUTS: (uint8_t) row: the row number to be scanned
@@ -740,11 +649,11 @@ void asdf_arch_init(void)
 //    and reading the columns, which I think is due to capacitance across the
 //    reverse-biased diodes.
 //
-// SCOPE: public
+// SCOPE: private
 //
 // COMPLEXITY: 1
 //
-asdf_cols_t asdf_arch_read_row(uint8_t row)
+static asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
   uint32_t rows = ~(1L << row);
 
@@ -807,7 +716,8 @@ asdf_cols_t asdf_arch_osi_read_row(uint8_t row)
 
 
 // PROCEDURE: asdf_arch_send_code
-// INPUTS: (keycode_t) code - the 7-bit ASCII code to be output by the keyboard
+// INPUTS: (const asdf_arch_t *) arch - hardware state
+//         (keycode_t) code - the 7-bit ASCII code to be output by the keyboard
 // OUTPUTS: none
 //
 // DESCRIPTION: Takes a character code and outputs the code on a parallel ASCII
@@ -817,17 +727,17 @@ asdf_cols_t asdf_arch_osi_read_row(uint8_t row)
 // SIDE EFFECTS: See above.
 //
 // NOTES: The strobe is set by the ASDF_STROBE_LENGTH definition. The data
-// output and strobe polarity are set by the static data_polarity and static
-// strobe_polarity variables.
+// output polarity is set by arch->data_polarity. The strobe is toggled, so it
+// returns to the idle level set by the strobe polarity.
 //
 // SCOPE:
 //
 // COMPLEXITY:
 //
 
-void asdf_arch_send_code(asdf_keycode_t code)
+static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
 {
-  ASDF_ASCII_PORT = (code ^ data_polarity);
+  ASDF_ASCII_PORT = (code ^ arch->data_polarity);
 
 
   // toggle strobe.  Must test before setting to avoid spurious strobe
@@ -838,10 +748,72 @@ void asdf_arch_send_code(asdf_keycode_t code)
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 }
 
-// PROCEDURE: arch_platform_read_row, arch_platform_send_code
-// DESCRIPTION: adapt the architecture's row scanner and code output to the
-// typed platform interface. This architecture has one set of hardware, so the
-// platform context pointer is unused.
+// PROCEDURE: asdf_arch_set_output
+// INPUTS: (asdf_physical_dev_t) output - output to drive
+//         (uint8_t) value - value to drive it to
+// OUTPUTS: none
+//
+// DESCRIPTION: Drives an output through its handler. Invalid outputs are
+// ignored.
+//
+// SCOPE: private
+//
+// COMPLEXITY: 2
+//
+typedef void (*asdf_arch_output_handler_t)(uint8_t);
+
+static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
+  [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
+  [PHYSICAL_OUT1] = &asdf_arch_out1_set,
+  [PHYSICAL_OUT2] = &asdf_arch_out2_set,
+  [PHYSICAL_OUT3] = &asdf_arch_out3_set,
+  [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
+  [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
+  [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
+  [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
+  [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
+  [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
+  [PHYSICAL_LED1] = &asdf_arch_led1_set,
+  [PHYSICAL_LED2] = &asdf_arch_led2_set,
+  [PHYSICAL_LED3] = &asdf_arch_led3_set,
+};
+
+static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
+{
+  if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
+    asdf_arch_output_handler_t handler =
+      (asdf_arch_output_handler_t) FLASH_READ_PTR(&output_handlers[output]);
+    handler(value);
+  }
+}
+
+// PROCEDURE: asdf_arch_reset
+// INPUTS: (asdf_arch_t *) arch - hardware state
+// OUTPUTS: none
+//
+// DESCRIPTION: Returns the data and strobe polarity to their defaults, and
+// sets the ASCII output port to idle.
+//
+// SCOPE: private
+//
+// COMPLEXITY: 2
+//
+static void asdf_arch_reset(asdf_arch_t *arch)
+{
+  arch->data_polarity = ASDF_DEFAULT_DATA_POLARITY;
+  asdf_arch_init_ascii_output(arch->data_polarity);
+
+  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) {
+    asdf_arch_set_pos_strobe();
+  }
+  else {
+    asdf_arch_set_neg_strobe();
+  }
+}
+
+// PROCEDURE: arch_platform_*
+// DESCRIPTION: adapt the architecture's operations to the typed platform
+// interface. The platform context pointer is the keyboard's asdf_arch_t.
 static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
 {
   (void) user;
@@ -850,15 +822,82 @@ static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
 
 static void arch_platform_send_code(void *user, asdf_keycode_t code)
 {
-  (void) user;
-  asdf_arch_send_code(code);
+  asdf_arch_send_code(user, code);
 }
 
-const asdf_platform_t asdf_arch_platform = {
-  .user = NULL,
-  .read_row = arch_platform_read_row,
-  .send_code = arch_platform_send_code,
-};
+static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uint8_t value)
+{
+  (void) user;
+  asdf_arch_set_output(output, value);
+}
+
+static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
+{
+  (void) user;
+  if (positive) {
+    asdf_arch_set_pos_strobe();
+  }
+  else {
+    asdf_arch_set_neg_strobe();
+  }
+}
+
+static void arch_platform_pulse_delay_short(void *user)
+{
+  (void) user;
+  _delay_us(ASDF_PULSE_DELAY_SHORT_US);
+}
+
+static void arch_platform_reset(void *user)
+{
+  asdf_arch_reset(user);
+}
+
+// PROCEDURE: asdf_arch_init
+// INPUTS: (asdf_arch_t *) arch - hardware state to initialize
+// OUTPUTS: none
+//
+// DESCRIPTION: sets up all the hardware for the keyboard, sets up the platform
+// embedded in arch, and starts the tick interrupt.
+//
+// SIDE EFFECTS: see DESCRIPTION
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_arch_init(asdf_arch_t *arch)
+{
+  // disable interrupts:
+  cli();
+
+  arch->platform.user = arch;
+  arch->platform.read_row = arch_platform_read_row;
+  arch->platform.send_code = arch_platform_send_code;
+  arch->platform.set_output = arch_platform_set_output;
+  arch->platform.set_strobe_polarity = arch_platform_set_strobe_polarity;
+  arch->platform.pulse_delay_short = arch_platform_pulse_delay_short;
+  arch->platform.reset = arch_platform_reset;
+
+  // clear the tick count;
+  arch->ticks = 0;
+
+  // set up timers for 1 msec intervals
+  asdf_arch_init_clock();
+  asdf_arch_tick_timer_init();
+
+  // set up the ASCII output port, and the data and strobe polarity
+  asdf_arch_reset(arch);
+
+  asdf_arch_init_leds();
+
+  // set up row and column ports
+  asdf_arch_init_row_outputs();
+  asdf_arch_init_columns();
+
+  // enable interrupts:
+  sei();
+}
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

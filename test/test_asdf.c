@@ -43,7 +43,7 @@ void keyscan_delay(int32_t ticks);
 
 void setUp(void)
 {
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
 
   // asdf_init() does not reset modifier state, and CAPS is a toggle that
   // tearDown() cannot release, so reset modifiers explicitly.

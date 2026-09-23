@@ -27,6 +27,17 @@
 #include "asdf_arch.h"
 #include "asdf_hook.h"
 
+// The keyboard's hardware. The board owns it, and the tick interrupt below.
+static asdf_arch_t arch;
+
+// PROCEDURE: tick interrupt
+// DESCRIPTION: Occurs every 1 ms. Counts the tick for the hardware; the main
+// loop does the scanning and all other work.
+ASDF_ARCH_TICK_ISR
+{
+  asdf_arch_count_tick(&arch);
+}
+
 // PROCEDURE: main
 // INPUTS: none
 // OUTPUTS: none
@@ -59,11 +70,12 @@
 //
 int main(void)
 {
-  // initialize the keyboard logic:
-  asdf_init();
+  // initialize the hardware, then the keyboard logic:
+  asdf_arch_init(&arch);
+  asdf_init(&arch.platform);
 
   while (1) {
-    uint8_t elapsed_ms = asdf_arch_tick();
+    uint8_t elapsed_ms = asdf_arch_tick(&arch);
 
     if (elapsed_ms) {
       asdf_process(elapsed_ms);

@@ -54,7 +54,7 @@ static void release_dip(uint8_t col)
 
 void setUp(void)
 {
-  asdf_init();
+  asdf_init(&asdf_arch_platform);
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
