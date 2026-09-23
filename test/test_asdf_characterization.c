@@ -21,6 +21,7 @@
 #include "asdf_hook.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
+#include "asdf_physical.h"
 #include "asdf_repeat.h"
 #include "test_asdf_keymap_defs.h"
 
@@ -364,9 +365,14 @@ void unchecked_virtual_action_and_activate(void)
   TEST_IGNORE_MESSAGE("asdf_virtual_action/asdf_virtual_activate: virtual device is not validated");
 }
 
-void unchecked_physical_set_toggle_next(void)
+void invalid_physical_devices_are_ignored(void)
 {
-  TEST_IGNORE_MESSAGE("asdf_physical_set/toggle/next_device: physical device is not validated");
+  asdf_physical_set((asdf_physical_dev_t) 200, 1);
+  asdf_physical_toggle((asdf_physical_dev_t) 200);
+  asdf_physical_assert((asdf_physical_dev_t) 200);
+  TEST_ASSERT_EQUAL_INT(PHYSICAL_NO_OUT, asdf_physical_next_device((asdf_physical_dev_t) 200));
+  TEST_ASSERT_FALSE(asdf_physical_allocate((asdf_physical_dev_t) 200, PHYSICAL_NO_OUT, 0));
+  TEST_ASSERT_FALSE(asdf_physical_allocate(PHYSICAL_LED1, (asdf_physical_dev_t) 200, 0));
 }
 
 int main(void)
@@ -392,6 +398,6 @@ int main(void)
   RUN_TEST(unchecked_keymaps_get_code_row_and_col);
   RUN_TEST(unchecked_keymaps_get_code_modifier);
   RUN_TEST(unchecked_virtual_action_and_activate);
-  RUN_TEST(unchecked_physical_set_toggle_next);
+  RUN_TEST(invalid_physical_devices_are_ignored);
   return UNITY_END();
 }

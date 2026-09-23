@@ -33,6 +33,7 @@
 // keymap tables are read as plain arrays.
 #define FLASH
 #define FLASH_READ(a) (*(a))
+#define FLASH_READ_PTR(a) (*(a))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) ((matrix)[(row)][(col)])
 #define FLASH_STRING(s) (s)
 

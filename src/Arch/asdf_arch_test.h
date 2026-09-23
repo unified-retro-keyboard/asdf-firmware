@@ -55,6 +55,7 @@ typedef enum {
 
 #define FLASH
 #define FLASH_READ(a) (*(a))
+#define FLASH_READ_PTR(a) (*(a))
 #define FLASH_READ_MATRIX_ELEMENT(mat,row,col) (mat)[(row)][(col)]
 #define FLASH_STRING(s) (s)
 #define ASDF_ARCH_DEFAULT_ROW_SCANNER asdf_arch_read_row

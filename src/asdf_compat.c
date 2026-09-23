@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include "asdf_modifiers.h"
+#include "asdf_physical.h"
 #include "asdf_repeat.h"
 #include "asdf_virtual.h"
 
@@ -108,6 +109,43 @@ void asdf_modifier_capslock_activate(void)
 void asdf_modifier_ctrl_activate(void) { asdf_modifier_ctrl_activate_r(&default_modifiers); }
 void asdf_modifier_ctrl_deactivate(void) { asdf_modifier_ctrl_deactivate_r(&default_modifiers); }
 modifier_index_t asdf_modifier_index(void) { return asdf_modifier_index_r(&default_modifiers); }
+
+//
+// Physical outputs
+//
+
+static asdf_physical_state_t default_physical;
+
+void asdf_physical_init(void) { asdf_physical_init_r(&default_physical); }
+void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value)
+{
+  asdf_physical_set_r(&default_physical, physical_out, value);
+}
+void asdf_physical_on(asdf_physical_dev_t physical_out)
+{
+  asdf_physical_on_r(&default_physical, physical_out);
+}
+void asdf_physical_off(asdf_physical_dev_t physical_out)
+{
+  asdf_physical_off_r(&default_physical, physical_out);
+}
+void asdf_physical_assert(asdf_physical_dev_t physical_out)
+{
+  asdf_physical_assert_r(&default_physical, physical_out);
+}
+void asdf_physical_toggle(asdf_physical_dev_t physical_out)
+{
+  asdf_physical_toggle_r(&default_physical, physical_out);
+}
+asdf_physical_dev_t asdf_physical_next_device(asdf_physical_dev_t device)
+{
+  return asdf_physical_next_device_r(&default_physical, device);
+}
+uint8_t asdf_physical_allocate(asdf_physical_dev_t physical_out, asdf_physical_dev_t tail,
+                               uint8_t initial_value)
+{
+  return asdf_physical_allocate_r(&default_physical, physical_out, tail, initial_value);
+}
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
