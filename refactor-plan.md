@@ -21,7 +21,7 @@ outputs.
 Several related issues should be addressed as part of the refactor:
 
 - Hooks are stored as `void (*)(void)` and cast to incompatible function types.
-- Message pacing and output pulses use blocking delays.
+- Message pacing and long output pulses use millisecond-scale blocking delays.
 - Keymap setup is procedural and configures several global subsystems by side
   effect.
 - A keymap change can occur while a scan is in progress.
@@ -54,7 +54,9 @@ definitions may retain static storage duration.
 ## Design principles
 
 - No mandatory dynamic allocation.
-- Preserve support for the smallest AVR targets.
+- Support the ATmega328P and ATmega2560 as the primary AVR targets. Smaller
+  or secondary AVR targets are kept only while they fit cleanly (see Resource
+  constraints).
 - Keep the portable core in C99.
 - Keep hardware policy in platform adapters.
 - Prefer typed interfaces over generic function-pointer registries.
@@ -116,9 +118,10 @@ typedef void (*asdf_user_action_fn)(asdf_t *keyboard,
                                     uint8_t pressed);
 ```
 
-The exact interface should be kept small. Compile-time/static dispatch may be
-provided for the smallest AVR build if indirect calls cause unacceptable flash
-or RAM growth.
+The exact interface should be kept small, because indirect calls cost flash
+and RAM on AVR. There is no separate static-dispatch build for small parts: an
+AVR target that cannot fit the instance-based core is dropped rather than given
+its own dispatch path.
 
 ### Declarative keymaps
 
@@ -193,6 +196,10 @@ Exit criteria:
   atomically, or return a failure without leaving a partial CRLF sequence.
 - Retire integer buffer handles and the global buffer pool.
 - Preserve message-buffer priority over typed keycodes.
+- Replace the `printf`-style `asdf_print()` with a plain string writer that
+  reads from flash (`PROGMEM` on AVR), and move the keymap ID messages and the
+  Applesoft keyboard-test program into flash. No caller uses a format argument,
+  so the nanoprintf dependency can be dropped.
 
 This phase should reduce state and code size, creating budget for later context
 pointers and typed adapters.
@@ -203,6 +210,8 @@ Exit criteria:
 - Two ring-buffer objects can be interleaved without interference.
 - Existing output ordering remains unchanged.
 - CRLF conversion and overflow behavior are deterministic and reported.
+- No string literals remain in AVR `.data`, and nanoprintf is no longer linked.
+- Identity and typed-string simavr traces remain byte-for-byte equivalent.
 
 ### Phase 2: Extract leaf-module state
 
@@ -306,15 +315,21 @@ Exit criteria:
 - Drain interrupt-owned tick state inside a short critical section so ticks
   cannot be lost during read-and-clear.
 - Replace message-character delays with a next-eligible-output deadline.
-- Replace long and short output pulse delays with per-output pulse state and
-  deadlines.
+- Replace the long output pulse delay (50 ms) with per-output pulse state and
+  a deadline on the scan tick.
+- Keep microsecond-scale timing, the 10 us output strobe and the 10 us short
+  pulse, as bounded busy-waits in the platform adapter. They are far shorter
+  than the scan tick, so scheduling them would add complexity, or stretch them
+  to a full tick, for no practical gain.
 - Defer keymap changes and other structural mutations until a scan boundary.
 - Define behavior for large elapsed-time jumps and counter saturation.
 
 Exit criteria:
 
-- No portable-core operation calls a busy-wait delay.
-- Scanning continues while a message is paced or an output pulse is active.
+- No portable-core operation calls a busy-wait delay. Platform operations
+  busy-wait only for bounded microsecond-scale timing (strobe and short pulse).
+- Scanning continues while a message is paced or a long output pulse is active.
+- Strobe and pulse widths are verified in simavr traces for each AVR adapter.
 - Timing tests use a fake clock and require no real sleeping.
 
 ### Phase 7: Adapt each platform
@@ -326,8 +341,8 @@ Exit criteria:
   callback work.
 - Verify GPIO initialization, strobe polarity, row scanning, and output timing
   on each adapter.
-- Preserve an optional static-dispatch build for constrained AVR targets if
-  measurements justify it.
+- Drop any AVR target that no longer fits cleanly, rather than keeping a
+  separate static-dispatch build for it.
 
 Exit criteria:
 
@@ -387,25 +402,41 @@ During the transition:
 
 ## Resource constraints
 
-The ATmega88P is the limiting target. The existing local v1.7.0 artifact uses
-approximately 7,766 bytes of its 8 KiB flash when initialized data is included,
-and approximately 694 bytes of its 1 KiB SRAM for `.data` plus `.bss`. That
-leaves little room for code growth and roughly 330 bytes for stack and runtime
-margin.
+The ATmega328P and ATmega2560 are the primary AVR targets. The other AVR
+parts (ATmega88P, ATmega168P, ATmega640, ATmega1280) were added mainly to cope
+with component scarcity, and the ATmega88P now costs more than the ATmega328P.
+Secondary targets are supported only while they fit the instance-based core
+cleanly; a target that does not fit is dropped rather than given special-case
+code.
+
+The ATmega88P is the tightest secondary target. The v1.7.1 image uses 7,766
+bytes of its 8 KiB flash when initialized data is included, and 694 bytes of
+its 1 KiB SRAM for `.data` plus `.bss`. That leaves 426 bytes of flash for code
+growth and roughly 330 bytes for stack and runtime margin. The ATmega168P has
+the same 1 KiB SRAM, so its RAM margin is equally tight.
 
 Accordingly:
 
 - Capture a fresh baseline before implementation.
 - Treat size regressions as design feedback, not end-of-project cleanup.
 - Recover space early by removing the general buffer allocator.
+- Recover space early by dropping nanoprintf and storing strings in flash. In
+  the v1.7.1 ATmega88P image, nanoprintf occupies 1,798 bytes of flash, and
+  about 190 bytes of message strings are copied into SRAM as `.data`. Every
+  `asdf_print()` call passes a literal string with no format arguments. This
+  is the main source of flash headroom for instance-pointer passing on the
+  ATmega88P, estimated at 400-1,000 bytes.
 - Keep configuration and keymap descriptors immutable and in flash.
 - Avoid storing a full platform function table per instance; store a pointer to
   shared immutable operations.
 - Consider nibble-sized/saturating debounce storage only if measurements require
   it and behavioral tests prove equivalence.
-- Do not require two runtime instances to fit on the ATmega88P. The library must
-  be capable of independent instances, while constrained products may allocate
-  exactly one.
+- Do not require two runtime instances to fit on the 1 KiB-SRAM parts. The
+  library must be capable of independent instances, while constrained products
+  may allocate exactly one.
+- Decide at the end of Phase 1, and again after Phase 5, whether each secondary
+  target still fits with acceptable flash, RAM, and stack margins. Drop a
+  target that does not.
 
 ## Major risks and mitigations
 
@@ -418,8 +449,8 @@ trace tests must precede structural changes.
 ### AVR flash and RAM growth
 
 Context pointers and indirect platform calls can increase code size. Measure
-each phase, simplify state representation early, and retain an evidence-driven
-static-dispatch option.
+each phase and simplify state representation early. If a secondary target
+stops fitting, drop it; the ATmega328P and ATmega2560 must always fit.
 
 ### Harvard-architecture constant placement
 
@@ -453,7 +484,8 @@ The refactor is complete when:
 - Existing host and simavr behavior is preserved except for explicitly approved
   corrections.
 - All AVR and ARM targets build cleanly.
-- ATmega88P flash, RAM, and stack margins remain acceptable and enforced.
+- ATmega328P and ATmega2560 flash, RAM, and stack margins remain acceptable and
+  enforced, as do those of every secondary AVR target still supported.
 - The explicit-instance API and beginner facade are both documented and tested.
 - The PIC32CM claims clearly distinguish build verification from hardware
   validation until hardware tests exist.
