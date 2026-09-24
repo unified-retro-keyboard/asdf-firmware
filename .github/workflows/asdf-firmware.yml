@@ -90,6 +90,12 @@ jobs:
           cmake -S . -B build-test-sanitize -DARCH=test -DASDF_SANITIZE=ON
           cmake --build build-test-sanitize -j
           ctest --test-dir build-test-sanitize --output-on-failure
+      - name: Report host test coverage of the core
+        run: |
+          cmake -S . -B build-test-coverage -DARCH=test -DASDF_COVERAGE=ON
+          cmake --build build-test-coverage -j
+          ctest --test-dir build-test-coverage
+          uvx gcovr --root . --filter src/ --exclude src/Arch/ --exclude src/Keymaps/ build-test-coverage
 
   build_arm:
     runs-on: ubuntu-latest

@@ -164,6 +164,15 @@ You will also need to activate GitHub pages.  To do this:
         cmake .. -DARCH=test
         make && ctest
 
+   The host tests can also be built with checks:
+
+   - `-DASDF_SANITIZE=ON`: run under AddressSanitizer and
+     UndefinedBehaviorSanitizer; any finding fails the test.
+   - `-DASDF_COVERAGE=ON`: record coverage. After running the tests, report
+     the portable core's coverage with
+     `uvx gcovr --root . --filter src/ --exclude src/Arch/ --exclude src/Keymaps/ build-test`.
+   - `-DASDF_WERROR=ON` (any build): make warnings errors, as CI does.
+
 ## Porting
 
 This firmware was written in modular, portable C99, to be compiled with GCC

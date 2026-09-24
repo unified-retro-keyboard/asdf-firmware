@@ -112,11 +112,22 @@ void test_keymap_switch_reapplies_dip_actions(void)
   release_dip(AUTOREPEAT_COL);
 }
 
+// SHIFTLOCK_TOGGLE locks SHIFT on the first press and unlocks it on the next.
+void test_shiftlock_toggle_action_toggles_lock(void)
+{
+  TEST_ASSERT_FALSE(asdf_modifier_shift_locked_r(&kb.modifiers));
+  asdf_action_r(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
+  TEST_ASSERT_TRUE(asdf_modifier_shift_locked_r(&kb.modifiers));
+  asdf_action_r(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
+  TEST_ASSERT_FALSE(asdf_modifier_shift_locked_r(&kb.modifiers));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
   RUN_TEST(test_dip_strobe_action_toggles_polarity);
   RUN_TEST(test_dip_autorepeat_action_toggles_mode);
   RUN_TEST(test_keymap_switch_reapplies_dip_actions);
+  RUN_TEST(test_shiftlock_toggle_action_toggles_lock);
   return UNITY_END();
 }

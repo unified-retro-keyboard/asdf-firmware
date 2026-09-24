@@ -17,6 +17,14 @@ if(ASDF_SANITIZE OR "$ENV{ASDF_SANITIZE}")
   add_link_options(${ASDF_SANITIZE_FLAGS})
 endif()
 
+# With ASDF_COVERAGE set (CMake option or environment variable), the host tests
+# record line and branch coverage for gcov; report it with gcovr (see README).
+option(ASDF_COVERAGE "Build host tests with coverage instrumentation" OFF)
+if(ASDF_COVERAGE OR "$ENV{ASDF_COVERAGE}")
+  add_compile_options(--coverage -O0)
+  add_link_options(--coverage)
+endif()
+
 # Match the firmware's unsigned char (set by -funsigned-char on AVR, the default
 # on ARM) so host tests see the same char semantics.
 list(APPEND C_FLAGS
