@@ -3,7 +3,7 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_virtual_outputs.c
+// asdf_virtual.c
 //
 // This file contains code that maps "virtual" LEDs and outputs referenced by
 // the code to actual LEDs and outputs in hardware. This keeps keymap-specific
@@ -33,59 +33,63 @@
 #include "asdf_config.h"
 #include "asdf_platform.h"
 
-// A virtual output identifies one element of the tables in
-// asdf_virtual_state_t. Each element holds the first in the list of physical
-// resources (if any) assigned to the virtual output, and the function applied
-// to those resources when the virtual output is activated by a keypress. The
-// physical resources are held in the physical state embedded in the virtual
-// state.
+// A virtual output indexes the tables in asdf_virtual_state_t. Each entry holds
+// the head of the virtual output's list of physical outputs (if any) and the
+// function applied to those outputs when the virtual output is activated by a
+// keypress. The lists themselves are linked through the next[] table of the
+// physical state embedded in the virtual state. Assigning a physical output
+// allocates it from the physical available list and prepends it to the
+// virtual output's list, passing the current head as the tail. The public
+// contracts are in asdf_virtual.h.
 
-// Operations applied along a virtual output's list of physical resources.
+/** Operations applied along a virtual output's list of physical outputs. */
 typedef enum { MAP_TOGGLE, MAP_ON, MAP_OFF } virtual_map_op_t;
 
-// PROCEDURE: virtual_index_valid
-// INPUTS: (asdf_virtual_dev_t) device - virtual output to check
-// OUTPUTS: returns TRUE (nonzero) if device indexes the virtual tables,
-//          including V_NULL.
-//
-// SCOPE: private
-//
-// COMPLEXITY: 1
-//
+/**
+ * Check that a virtual output indexes the virtual tables.
+ *
+ * No side effects.
+ *
+ * @param device  Virtual output to check.
+ * @return Nonzero if @p device is < ASDF_VIRTUAL_NUM_RESOURCES, including
+ *         V_NULL.
+ */
 static uint8_t virtual_index_valid(asdf_virtual_dev_t device)
 {
   return device < ASDF_VIRTUAL_NUM_RESOURCES;
 }
 
-// PROCEDURE: valid_virtual_device
-// INPUTS: (asdf_virtual_dev_t) device - virtual output to check
-// OUTPUTS: returns TRUE (nonzero) if device is an assignable virtual output
-//          (not V_NULL).
-//
-// SCOPE: private
-//
-// COMPLEXITY: 1
-//
+/**
+ * Check that a virtual output can be assigned.
+ *
+ * No side effects.
+ *
+ * @param device  Virtual output to check.
+ * @return Nonzero if @p device indexes the virtual tables and is not V_NULL.
+ *
+ * Complexity: 2
+ */
 static uint8_t valid_virtual_device(asdf_virtual_dev_t device)
 {
   return (device > V_NULL && device < ASDF_VIRTUAL_NUM_RESOURCES);
 }
 
-// PROCEDURE: virtual_map
-// INPUTS: (asdf_physical_state_t *) phys - physical output state
-//         (asdf_physical_dev_t) device - first physical resource in the list
-//         (virtual_map_op_t) op - operation to apply to each resource
-// OUTPUTS: none
-//
-// DESCRIPTION: Applies op to each physical resource in the list starting at
-// device.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// SCOPE: private
-//
-// COMPLEXITY: 4
-//
+/**
+ * Apply an operation to each physical output in a list.
+ *
+ * Drives each output in the list through the platform and updates its shadow
+ * value.
+ *
+ * @param phys    Physical output state.
+ * @param device  First physical output in the list; PHYSICAL_NO_OUT for an
+ *                empty list.
+ * @param op      Operation to apply.
+ *
+ * The list is followed through asdf_physical_next_device_r() until it reaches
+ * PHYSICAL_NO_OUT.
+ *
+ * Complexity: 3
+ */
 static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
                         virtual_map_op_t op)
 {
@@ -100,24 +104,22 @@ static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
   }
 }
 
-// PROCEDURE: asdf_virtual_action_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-//         (asdf_virtual_dev_t) virtual_out - which virtual output to modify
-//         (asdf_virtual_function_t) function - what function to apply to the
-//         virtual output
-// OUTPUTS: none
-//
-// DESCRIPTION: for each physical resource assigned to the virtual output,
-// apply the specified function. Invalid virtual outputs are ignored.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// NOTES: The virtual output points to a linked list of physical resources.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 7
-//
+/**
+ * Apply a function to every physical output assigned to a virtual output.
+ *
+ * Drives the physical outputs through the platform and updates their shadow
+ * values. V_PULSE_LONG also records the pulse in @p virt; V_PULSE_SHORT
+ * blocks for the short pulse width. Out-of-range virtual outputs are ignored.
+ *
+ * @param virt         Virtual output state.
+ * @param virtual_out  Virtual output to act on.
+ * @param function     Function to apply.
+ *
+ * The virtual output heads a linked list of physical outputs, walked by
+ * virtual_map(). A long pulse is ended by asdf_virtual_tick_r().
+ *
+ * Complexity: 4
+ */
 void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                            asdf_virtual_function_t function)
 {
@@ -162,20 +164,17 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
   }
 }
 
-// PROCEDURE: asdf_virtual_activate_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-//         (asdf_virtual_dev_t) virtual_out - which virtual output to activate
-// OUTPUTS: none
-//
-// DESCRIPTION: apply the virtual output's assigned function to its physical
-// resources. Invalid virtual outputs are ignored.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Apply a virtual output's assigned function to its physical outputs.
+ *
+ * Side effects as asdf_virtual_action_r(). Out-of-range virtual outputs are
+ * ignored.
+ *
+ * @param virt         Virtual output state.
+ * @param virtual_out  Virtual output to activate.
+ *
+ * Complexity: 2
+ */
 void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out)
 {
   if (virtual_index_valid(virtual_out)) {
@@ -183,30 +182,27 @@ void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virt
   }
 }
 
-// PROCEDURE: asdf_virtual_assign_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-//         (asdf_virtual_dev_t) virtual_out - virtual output to be paired with
-//         the physical resource
-//         (asdf_physical_dev_t) physical_out to be assigned to the virtual output.
-//         (asdf_virtual_function_t) - the function to be applied to the virtual
-//              device when activated by a keypress.
-//         (uint8_t) initial_value - the initial state of the physical resource.
-//
-// OUTPUTS: returns TRUE (nonzero) if the physical output was assigned, FALSE
-//          (0) if not
-//
-// DESCRIPTION: map the virtual output specified by virtual_out to
-// physical_out, if both arguments are valid.
-//
-// SIDE EFFECTS: see above.
-//
-// NOTES: if the virtual output is invalid, or the physical resource is
-// invalid, or the physical resource is already assigned, then nothing happens.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 3
-//
+/**
+ * Assign a physical output to a virtual output.
+ *
+ * On success, allocates the physical output from the available list, prepends
+ * it to the virtual output's list, records @p initial_value as its shadow
+ * value, and sets the virtual output's function. No output is driven.
+ *
+ * @param virt           Virtual output state.
+ * @param virtual_out    Virtual output to assign to.
+ * @param physical_out   Physical output to assign.
+ * @param function       Function applied when the virtual output is
+ *                       activated.
+ * @param initial_value  Initial shadow value of the physical output.
+ * @return 1 if assigned; 0 if either output is invalid or @p physical_out is
+ *         already assigned, with the state unchanged.
+ *
+ * The shadow values are driven to the outputs by asdf_virtual_sync_r() only
+ * after all assignments are made.
+ *
+ * Complexity: 3
+ */
 uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                               asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
                               uint8_t initial_value)
@@ -222,21 +218,18 @@ uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t vir
   return 0;
 }
 
-// PROCEDURE: asdf_virtual_init_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-//         (const asdf_platform_t *) platform - drives the physical outputs, or
-//         NULL
-// OUTPUTS: none
-//
-// DESCRIPTION: Initialize the virtual outputs, with no physical resources
-// assigned and no function, and initialize the embedded physical state.
-//
-// SIDE EFFECTS: see above.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Initialize the virtual outputs, with no physical outputs assigned.
+ *
+ * Initializes the embedded physical state, then gives every virtual output an
+ * empty list, function V_NOFUNC, and no pulse in progress. Writes only
+ * @p virt; no output is driven.
+ *
+ * @param virt      State to initialize.
+ * @param platform  Platform that drives the physical outputs, or NULL.
+ *
+ * Complexity: 2
+ */
 void asdf_virtual_init_r(asdf_virtual_state_t *virt, const asdf_platform_t *platform)
 {
   asdf_physical_init_r(&virt->physical, platform);
@@ -248,18 +241,15 @@ void asdf_virtual_init_r(asdf_virtual_state_t *virt, const asdf_platform_t *plat
   }
 }
 
-// PROCEDURE: asdf_virtual_sync_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-// OUTPUTS: none
-//
-// DESCRIPTION: Drive every physical output to its shadow value.
-//
-// SIDE EFFECTS: see above.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Drive every physical output to its shadow value.
+ *
+ * Drives the outputs through the platform; @p virt is unchanged.
+ *
+ * @param virt  Virtual output state.
+ *
+ * Complexity: 2
+ */
 void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
 {
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
@@ -268,20 +258,17 @@ void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
 }
 
 
-// PROCEDURE: asdf_virtual_tick_r
-// INPUTS: (asdf_virtual_state_t *) virt - virtual output state
-//         (uint8_t) elapsed - ticks (ms) elapsed since the last call
-// OUTPUTS: none
-//
-// DESCRIPTION: Advances each long pulse in progress. When a pulse's time has
-// expired, its physical resources are toggled back.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// SCOPE: public
-//
-// COMPLEXITY: 4
-//
+/**
+ * Advance each long pulse in progress, ending those whose time has expired.
+ *
+ * Decrements the pulse counts in @p virt. When a pulse's time has expired,
+ * its physical outputs are toggled back through the platform.
+ *
+ * @param virt     Virtual output state.
+ * @param elapsed  Ticks (ms) elapsed since the last call.
+ *
+ * Complexity: 4
+ */
 void asdf_virtual_tick_r(asdf_virtual_state_t *virt, uint8_t elapsed)
 {
   for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {

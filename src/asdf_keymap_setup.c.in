@@ -33,38 +33,42 @@
 #include "asdf_keymaps.h"
 #include "asdf_keymap_setup.h"
 
-// keymap descriptors, defined by the keymap modules
+// Keymap descriptors, defined by the keymap modules.
 @keymap_declarations@
 
-// Keymap registry, indexed by keymap number. Unlisted numbers are NULL.
+/** Keymap registry, indexed by keymap number. Unlisted numbers are NULL. */
 static const asdf_keymap_t *const FLASH keymap_table[] = {@keymap_table@
 };
 
 #define NUM_KEYMAP_SLOTS (sizeof(keymap_table) / sizeof(keymap_table[0]))
 
-// PROCEDURE: asdf_keymap_descriptor
-// INPUTS: (uint8_t) index - keymap number
-// OUTPUTS: returns the keymap's descriptor (in flash), or NULL if there is no
-// keymap with that number.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Look up a keymap's descriptor in the registry.
+ *
+ * No side effects.
+ *
+ * @param index  Keymap number.
+ * @return The keymap's descriptor, in flash; NULL if @p index is past the end
+ *         of the registry or its slot is empty.
+ *
+ * The table entry is read out of flash with FLASH_READ_PTR.
+ *
+ * Complexity: 2
+ */
 const asdf_keymap_t *asdf_keymap_descriptor(uint8_t index) {
   return (index < NUM_KEYMAP_SLOTS)
            ? (const asdf_keymap_t *) FLASH_READ_PTR(&keymap_table[index])
            : NULL;
 }
 
-// PROCEDURE: asdf_keymap_valid
-// INPUTS: (uint8_t) index - keymap number
-// OUTPUTS: returns TRUE (nonzero) if there is a keymap with that number.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Report whether a keymap exists.
+ *
+ * No side effects.
+ *
+ * @param index  Keymap number.
+ * @return 1 if there is a keymap with that number; 0 otherwise.
+ */
 uint8_t asdf_keymap_valid(uint8_t index) {
   return NULL != asdf_keymap_descriptor(index);
 }

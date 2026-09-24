@@ -42,12 +42,27 @@
 #define KEY_ACE1000_KEYBOARD_TEST(unused)                                                          \
   ASDF_KEY(ACTION_ACE1000_KEYBOARD_TEST, 0, ACTION_NOTHING, 0)
 
-// Types an Applesoft BASIC program that prints the code of each key pressed
-// (asdf_keymap_apple2_add_map.c).
+/**
+ * Type an Applesoft BASIC keyboard test program.
+ *
+ * Queues one numbered program line, ending in CR, on the system message
+ * output. When run, the program prints the code of each key pressed, until
+ * CTRL-C is pressed. Bound to a key in the apple2 and classic keymaps.
+ *
+ * @param kb     Keyboard to type on.
+ * @param param  Ignored.
+ */
 void applesoft_keyboard_test(asdf_t *kb, uint8_t param);
 
-// The same keyboard test program, for the ACE 1000
-// (asdf_keymap_ace1000_add_map.c). No key is bound to it.
+/**
+ * Type the keyboard test program for the Franklin ACE 1000.
+ *
+ * Queues the same program line as applesoft_keyboard_test(). No key is bound
+ * to it.
+ *
+ * @param kb     Keyboard to type on.
+ * @param param  Ignored.
+ */
 void ace1000_keyboard_test(asdf_t *kb, uint8_t param);
 
 #endif /* !defined(ASDF_KEYMAP_ACTIONS_H) */

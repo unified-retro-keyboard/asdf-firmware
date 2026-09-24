@@ -18,10 +18,25 @@
 #include "asdf_platform.h"
 
 
-// PROCEDURE: asdf_arch_read_row
-// Output the encoded row to the 74LS138, then read the columns serially from
-// the shift register: LOAD (COLMODE low + clock pulse), back to SHIFT, then one
-// inverted bit per clock pulse for ASDF_MAX_COLS columns.
+/**
+ * Scans one row of the key matrix.
+ *
+ * Outputs the encoded row number on the row-select lines, then reads the
+ * columns of that row. Leaves the row-select lines selecting the row and the
+ * shift register in SHIFT mode.
+ *
+ * @param row  Row number to scan.
+ * @return The row's columns, one bit per column: 1 = pressed, 0 = released.
+ *
+ * The 4-bit row value drives the external 74LS138 decoder. The columns are
+ * then read serially from the shift register: LOAD (COLMODE low and a clock
+ * pulse), back to SHIFT, then one bit per clock pulse for ASDF_MAX_COLS
+ * columns. After the load, the first bit is already on the data line, so each
+ * bit is read before the clock pulse that shifts in the next. A pressed key
+ * reads low, so each bit is inverted.
+ *
+ * Complexity: 2
+ */
 static asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
   asdf_cols_t cols = 0;
@@ -44,8 +59,21 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
   return cols;
 }
 
-// PROCEDURE: asdf_arch_send_code
-// Output the polarity-adjusted byte and pulse the strobe (OUTTGL twice).
+/**
+ * Sends a code on the parallel ASCII port.
+ *
+ * Outputs the code, XORed with the data polarity, on the ASCII port, then
+ * pulses the strobe for ASDF_STROBE_LENGTH_US. The data stays on the port
+ * until the next code is sent.
+ *
+ * @param arch  Hardware state, giving the data polarity.
+ * @param code  The code to send.
+ *
+ * The ASCII byte (PA08..PA15) is written with one masked write. OUTTGL toggles
+ * the strobe twice (assert, then deassert), reproducing the AVR PINx
+ * write-toggle, so the strobe returns to the idle level set by the polarity
+ * setter.
+ */
 static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
 {
   uint32_t ascii = ((uint32_t)((uint8_t)(code ^ arch->data_polarity)) << ASCII_SHIFT) & ASCII_MASK;
@@ -58,44 +86,116 @@ static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
   pin_toggle(STROBE_GROUP, STROBE_PIN);
 }
 
+/**
+ * Ignores an output request.
+ *
+ * Handles outputs that do not exist on this board. No side effects.
+ *
+ * @param value  Ignored.
+ */
 static void asdf_arch_null_output(uint8_t value) { (void) value; }
 
+/**
+ * Sets the strobe to positive polarity.
+ *
+ * Makes the strobe pin an output idling LOW, so each strobe is a high pulse.
+ */
 static void asdf_arch_set_pos_strobe(void)
 {
   pin_clear(STROBE_GROUP, STROBE_PIN); // idle low
   pin_dir_out(STROBE_GROUP, STROBE_PIN);
 }
 
+/**
+ * Sets the strobe to negative polarity.
+ *
+ * Makes the strobe pin an output idling HIGH, so each strobe is a low pulse.
+ */
 static void asdf_arch_set_neg_strobe(void)
 {
   pin_set(STROBE_GROUP, STROBE_PIN); // idle high
   pin_dir_out(STROBE_GROUP, STROBE_PIN);
 }
 
-// LEDs are active low (on => drive low), matching the 328P.
+// LEDs are active low (on => drive low).
+
+/**
+ * Turns LED1 on or off.
+ *
+ * Drives the LED1 pin.
+ *
+ * @param value  Nonzero turns the LED on; zero turns it off.
+ *
+ * Complexity: 2
+ */
 static void asdf_arch_led1_set(uint8_t value)
 {
   value ? pin_clear(LED1_GROUP, LED1_PIN) : pin_set(LED1_GROUP, LED1_PIN);
 }
+
+/**
+ * Turns LED2 on or off.
+ *
+ * Drives the LED2 pin.
+ *
+ * @param value  Nonzero turns the LED on; zero turns it off.
+ *
+ * Complexity: 2
+ */
 static void asdf_arch_led2_set(uint8_t value)
 {
   value ? pin_clear(LED2_GROUP, LED2_PIN) : pin_set(LED2_GROUP, LED2_PIN);
 }
+
+/**
+ * Turns LED3 on or off.
+ *
+ * Drives the LED3 pin.
+ *
+ * @param value  Nonzero turns the LED on; zero turns it off.
+ *
+ * Complexity: 2
+ */
 static void asdf_arch_led3_set(uint8_t value)
 {
   value ? pin_clear(LED3_GROUP, LED3_PIN) : pin_set(LED3_GROUP, LED3_PIN);
 }
 
-// Push-pull OUT setters: drive the level and ensure output direction.
+/**
+ * Drives an OUT pin as a push-pull output.
+ *
+ * Sets the pin's level and makes it an output.
+ *
+ * @param g      Port group of the pin.
+ * @param b      Bit (pin) number within the group.
+ * @param value  Nonzero drives the pin high; zero drives it low.
+ *
+ * Complexity: 2
+ */
 static inline void out_set(uint8_t g, uint8_t b, uint8_t value)
 {
   value ? pin_set(g, b) : pin_clear(g, b);
   pin_dir_out(g, b);
 }
 
-// Open-drain variants, matching the 328P asymmetric sense:
+// Open-drain variants, matching the AVR asymmetric sense:
 //   open_hi: value true => Hi-Z (released high), false => driven low
 //   open_lo: value true => driven high, false => Hi-Z (released)
+
+/**
+ * Drives an OUT pin as an open-collector output.
+ *
+ * Sets the pin's direction, and its level when driven.
+ *
+ * @param g      Port group of the pin.
+ * @param b      Bit (pin) number within the group.
+ * @param value  Nonzero releases the pin to hi-z; zero drives it low.
+ *
+ * A released pin is an input with no pull resistor, so an external pullup
+ * sets the high level.
+ *
+ * Complexity: 2
+ */
 static inline void out_open_hi(uint8_t g, uint8_t b, uint8_t value)
 {
   if (value) {
@@ -106,6 +206,21 @@ static inline void out_open_hi(uint8_t g, uint8_t b, uint8_t value)
     pin_dir_out(g, b);
   }
 }
+
+/**
+ * Drives an OUT pin as an open-emitter output.
+ *
+ * Sets the pin's direction, and its level when driven.
+ *
+ * @param g      Port group of the pin.
+ * @param b      Bit (pin) number within the group.
+ * @param value  Nonzero drives the pin high; zero releases it to hi-z.
+ *
+ * A released pin is an input with no pull resistor, so an external pulldown
+ * sets the low level.
+ *
+ * Complexity: 2
+ */
 static inline void out_open_lo(uint8_t g, uint8_t b, uint8_t value)
 {
   if (value) {
@@ -117,17 +232,98 @@ static inline void out_open_lo(uint8_t g, uint8_t b, uint8_t value)
   }
 }
 
+/**
+ * Drives OUT1 as a push-pull output.
+ *
+ * Sets the OUT1 level and makes the pin an output.
+ *
+ * @param value  Nonzero drives OUT1 high; zero drives it low.
+ */
 static void asdf_arch_out1_set(uint8_t value) { out_set(OUT1_GROUP, OUT1_PIN, value); }
+
+/**
+ * Drives OUT1 as an open-collector output.
+ *
+ * Sets the OUT1 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero releases OUT1 to hi-z; zero drives it low.
+ */
 static void asdf_arch_out1_open_hi_set(uint8_t value) { out_open_hi(OUT1_GROUP, OUT1_PIN, value); }
+
+/**
+ * Drives OUT1 as an open-emitter output.
+ *
+ * Sets the OUT1 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero drives OUT1 high; zero releases it to hi-z.
+ */
 static void asdf_arch_out1_open_lo_set(uint8_t value) { out_open_lo(OUT1_GROUP, OUT1_PIN, value); }
+
+/**
+ * Drives OUT2 as a push-pull output.
+ *
+ * Sets the OUT2 level and makes the pin an output.
+ *
+ * @param value  Nonzero drives OUT2 high; zero drives it low.
+ */
 static void asdf_arch_out2_set(uint8_t value) { out_set(OUT2_GROUP, OUT2_PIN, value); }
+
+/**
+ * Drives OUT2 as an open-collector output.
+ *
+ * Sets the OUT2 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero releases OUT2 to hi-z; zero drives it low.
+ */
 static void asdf_arch_out2_open_hi_set(uint8_t value) { out_open_hi(OUT2_GROUP, OUT2_PIN, value); }
+
+/**
+ * Drives OUT2 as an open-emitter output.
+ *
+ * Sets the OUT2 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero drives OUT2 high; zero releases it to hi-z.
+ */
 static void asdf_arch_out2_open_lo_set(uint8_t value) { out_open_lo(OUT2_GROUP, OUT2_PIN, value); }
+
+/**
+ * Drives OUT3 as a push-pull output.
+ *
+ * Sets the OUT3 level and makes the pin an output.
+ *
+ * @param value  Nonzero drives OUT3 high; zero drives it low.
+ */
 static void asdf_arch_out3_set(uint8_t value) { out_set(OUT3_GROUP, OUT3_PIN, value); }
+
+/**
+ * Drives OUT3 as an open-collector output.
+ *
+ * Sets the OUT3 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero releases OUT3 to hi-z; zero drives it low.
+ */
 static void asdf_arch_out3_open_hi_set(uint8_t value) { out_open_hi(OUT3_GROUP, OUT3_PIN, value); }
+
+/**
+ * Drives OUT3 as an open-emitter output.
+ *
+ * Sets the OUT3 pin direction, and its level when driven.
+ *
+ * @param value  Nonzero drives OUT3 high; zero releases it to hi-z.
+ */
 static void asdf_arch_out3_open_lo_set(uint8_t value) { out_open_lo(OUT3_GROUP, OUT3_PIN, value); }
 
-// PROCEDURE: asdf_arch_init_hardware
+/**
+ * Sets up the clock, the tick timer and the pins.
+ *
+ * Brings up the shared clock and SysTick tick, which starts the tick
+ * interrupt; makes the encoded row-select lines, the ASCII byte, the LEDs and
+ * OUT1-3 outputs; and sets up the column shift register control lines with
+ * their idle levels.
+ *
+ * COLCLK idles low and COLMODE idles high (SHIFT); COL, the serial data line
+ * from the shift register, is an input.
+ */
 static void asdf_arch_init_hardware(void)
 {
   asdf_arch_common_clock_init();
@@ -155,8 +351,7 @@ static void asdf_arch_init_hardware(void)
 
 }
 
-// PROCEDURE: asdf_arch_set_output
-// Drive an output through its handler. Invalid outputs are ignored.
+// Output handlers, indexed by physical output.
 typedef void (*asdf_arch_output_handler_t)(uint8_t);
 
 static const asdf_arch_output_handler_t output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
@@ -175,6 +370,17 @@ static const asdf_arch_output_handler_t output_handlers[ASDF_PHYSICAL_NUM_RESOUR
   [PHYSICAL_LED3] = &asdf_arch_led3_set,
 };
 
+/**
+ * Drives a physical output through its handler.
+ *
+ * Calls the output's handler, which drives the pin. Invalid outputs are
+ * ignored.
+ *
+ * @param output  The physical output to drive.
+ * @param value   The value to drive it to.
+ *
+ * Complexity: 2
+ */
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
@@ -182,9 +388,16 @@ static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
   }
 }
 
-// PROCEDURE: asdf_arch_reset
-// Return the data and strobe polarity to their defaults, and idle the ASCII
-// output.
+/**
+ * Returns the ASCII output to its default state.
+ *
+ * Sets the data polarity and strobe polarity to their defaults, and sets the
+ * ASCII output to idle (the code 0 XORed with the data polarity).
+ *
+ * @param arch  Hardware state to reset.
+ *
+ * Complexity: 2
+ */
 static void asdf_arch_reset(asdf_arch_t *arch)
 {
   arch->data_polarity = ASDF_DEFAULT_DATA_POLARITY;
@@ -200,26 +413,64 @@ static void asdf_arch_reset(asdf_arch_t *arch)
   }
 }
 
-// PROCEDURE: arch_platform_*
-// Adapt the architecture's operations to the typed platform interface. The
-// platform context pointer is the keyboard's asdf_arch_t.
+// Platform operations (see asdf_platform.h). They adapt the architecture's
+// operations to the typed platform interface. The user pointer is the
+// keyboard's asdf_arch_t.
+
+/**
+ * Platform operation: scans one row of the key matrix.
+ *
+ * Selects the row on the row outputs.
+ *
+ * @param user  Platform context (the keyboard's asdf_arch_t); unused.
+ * @param row   Row number to scan.
+ * @return The row's columns, one bit per column: 1 = pressed.
+ */
 static asdf_cols_t arch_platform_read_row(void *user, uint8_t row)
 {
   (void) user;
   return asdf_arch_read_row(row);
 }
 
+/**
+ * Platform operation: sends a code on the parallel ASCII port.
+ *
+ * Drives the ASCII port and pulses the strobe.
+ *
+ * @param user  Platform context: the keyboard's asdf_arch_t.
+ * @param code  The code to send.
+ */
 static void arch_platform_send_code(void *user, asdf_keycode_t code)
 {
   asdf_arch_send_code(user, code);
 }
 
+/**
+ * Platform operation: drives a physical output.
+ *
+ * Drives the output's pin; invalid outputs are ignored.
+ *
+ * @param user    Platform context (the keyboard's asdf_arch_t); unused.
+ * @param output  The physical output to drive.
+ * @param value   The value to drive it to.
+ */
 static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uint8_t value)
 {
   (void) user;
   asdf_arch_set_output(output, value);
 }
 
+/**
+ * Platform operation: sets the strobe polarity.
+ *
+ * Sets the strobe pin to the idle level of the chosen polarity.
+ *
+ * @param user      Platform context (the keyboard's asdf_arch_t); unused.
+ * @param positive  Nonzero for a positive strobe (idles low); zero for a
+ *                  negative strobe (idles high).
+ *
+ * Complexity: 2
+ */
 static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
 {
   (void) user;
@@ -231,17 +482,40 @@ static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
   }
 }
 
+/**
+ * Platform operation: waits for a short output pulse.
+ *
+ * Busy-waits for ASDF_PULSE_DELAY_SHORT_US. No side effects.
+ *
+ * @param user  Platform context (the keyboard's asdf_arch_t); unused.
+ */
 static void arch_platform_pulse_delay_short(void *user)
 {
   (void) user;
   arch_delay_us(ASDF_PULSE_DELAY_SHORT_US);
 }
 
+/**
+ * Platform operation: returns the ASCII output to its default state.
+ *
+ * Restores the default data and strobe polarity and idles the ASCII port.
+ *
+ * @param user  Platform context: the keyboard's asdf_arch_t.
+ */
 static void arch_platform_reset(void *user) { asdf_arch_reset(user); }
 
-// PROCEDURE: asdf_arch_init
-// Set up the platform embedded in arch and the hardware, with the default data
-// and strobe polarity, and start the tick interrupt.
+/**
+ * Sets up the keyboard hardware and the platform embedded in arch.
+ *
+ * Fills in the platform operations and clears the tick count, then sets up the
+ * clock, the tick timer and the pins, which starts the tick interrupt, and
+ * sets the default data and strobe polarity.
+ *
+ * @param arch  Hardware state to initialize.
+ *
+ * The platform and tick count are set before the tick interrupt starts, so the
+ * interrupt never sees an uninitialized state.
+ */
 void asdf_arch_init(asdf_arch_t *arch)
 {
   arch->platform.user = arch;

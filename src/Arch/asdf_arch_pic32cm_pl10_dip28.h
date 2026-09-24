@@ -22,8 +22,6 @@
 
 #define ASDF_STROBE_LENGTH_US 10 // strobe length in microseconds
 
-// Default key matrix row scanner
-// Default keyboard output
 // DIP switch is on row 8
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
 #define ASDF_ARCH_DIPSWITCH_ROW 8
@@ -65,9 +63,16 @@
 #define OUT3_PIN 21u
 
 // --- public API (mirrors asdf_arch_atmega328p.h) ---
-// PROCEDURE: asdf_arch_init
-// Sets up all the hardware for the keyboard and the platform embedded in arch,
-// and starts the tick interrupt.
+/**
+ * Sets up the keyboard hardware and the platform embedded in arch.
+ *
+ * Call once, before the keyboard runs. Sets the core clock, the pins (row
+ * select, column shift register control, ASCII, strobe, LED and OUT1-3) and
+ * the default data and strobe polarity; fills in the platform operations and
+ * clears the tick count; and starts the 1 ms SysTick tick interrupt.
+ *
+ * @param arch  Hardware state to initialize.
+ */
 void asdf_arch_init(asdf_arch_t *arch);
 
 #endif /* !defined (ASDF_ARCH_H) */

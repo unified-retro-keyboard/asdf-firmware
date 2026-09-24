@@ -5,10 +5,10 @@
 //
 // asdf_keyboard.h
 //
-// The keyboard object. An asdf_t holds all of the changeable state of one
-// keyboard, so any number of keyboards can be run independently. The "_r"
-// functions operate on the keyboard passed to them. There is no default
-// keyboard: the application owns each asdf_t.
+// The keyboard object and its entry points. An asdf_t holds all of the
+// changeable state of one keyboard, so any number of keyboards can be run
+// independently. The "_r" functions operate on the keyboard passed to them.
+// There is no default keyboard: the application owns each asdf_t.
 //
 // Copyright 2019 David Fenyes
 //
@@ -39,10 +39,41 @@
 #include "asdf_ring.h"
 #include "asdf_virtual.h"
 
+/**
+ * One keyboard: all of its changeable state.
+ *
+ * The application owns each keyboard and passes it to every asdf_*_r()
+ * function; nothing is shared between keyboards. Initialize it with
+ * asdf_init_r() before any other call.
+ *
+ * Invariants, between public calls after asdf_init_r():
+ * - every debounce counter is in 1..ASDF_DEBOUNCE_TIME_MS
+ * - last_key_row and last_key_col are both 0xff (no repeating key) or both
+ *   name a key; in the latter case that key's bit in stable_rows is set
+ * - repeat_armed is 0, provided asdf_arm_repeat_r() is called only from press
+ *   actions
+ * - keymap.current is a valid keymap index
+ * - platform is never NULL
+ *
+ * @code
+ * #include "asdf_arch.h"
+ * #include "asdf_keyboard.h"
+ *
+ * static asdf_arch_t arch;
+ * static asdf_t kb;
+ *
+ * asdf_arch_init(&arch);                   // hardware and tick interrupt
+ * asdf_init_r(&kb, &arch.platform);        // keyboard logic, keymap 0
+ * while (1) {
+ *     // scan, debounce, repeat, and send codes for the ticks since last time
+ *     asdf_process_r(&kb, asdf_arch_tick(&arch));
+ * }
+ * @endcode
+ */
 struct asdf_keyboard {
   // Key matrix scanner
   asdf_cols_t stable_rows[ASDF_MAX_ROWS];                    // debounced key state
-  uint8_t debounce[ASDF_MAX_ROWS][ASDF_MAX_COLS];            // scans left to debounce
+  uint8_t debounce[ASDF_MAX_ROWS][ASDF_MAX_COLS];            // ticks left to debounce
   asdf_key_t repeat_key;                                     // the repeating key
   uint8_t last_key_row;                                      // ... and its position
   uint8_t last_key_col;
@@ -65,100 +96,229 @@ struct asdf_keyboard {
   const asdf_platform_t *platform;      // platform in use (a keymap may override)
 };
 
-// PROCEDURE: asdf_init_r
-// INPUTS: (asdf_t *) kb - keyboard to initialize
-//         (const asdf_platform_t *) platform - its hardware
-// OUTPUTS: none
-// DESCRIPTION: Initializes every part of the keyboard, with no keys pressed and
-// empty queues, and selects keymap 0. May be called again to reset the
-// keyboard.
+/**
+ * Initialize a keyboard, or reset one already in use.
+ *
+ * Empties the output queues and ends any message pause, forgets all key state
+ * (no keys pressed, no repeating key, debounce counters reloaded), and selects
+ * keymap 0, which in turn resets modifiers, repeat, the each-scan action, and
+ * virtual outputs, and applies keymap 0's descriptor, driving the outputs
+ * through @p platform. Key state is cleared before the keymap is selected, so
+ * keys held before a reset are not re-applied as held configuration.
+ *
+ * @param kb        Keyboard to initialize.
+ * @param platform  Hardware the keyboard is scanned and sent through; must
+ *                  not be NULL and must remain valid for the life of @p kb.
+ */
 void asdf_init_r(asdf_t *kb, const asdf_platform_t *platform);
 
-// PROCEDURE: asdf_keyscan_r
-// DESCRIPTION: Scans the key matrix once, debouncing and acting on key changes,
-// and applies any keymap change requested during the scan.
+/**
+ * Scan the key matrix once, as if one tick had elapsed.
+ *
+ * Debounces and acts on key changes, repeats the held repeating key, and
+ * applies any keymap change requested during the scan. Reads the matrix
+ * through the platform; the key actions run may queue codes, change modifiers,
+ * drive outputs, and switch keymaps. Does not advance the timers or send
+ * codes; asdf_process_r() is the usual entry point.
+ *
+ * @param kb  Keyboard to scan.
+ */
 void asdf_keyscan_r(asdf_t *kb);
 
-// PROCEDURE: asdf_process_r
-// INPUTS: (asdf_t *) kb, (uint16_t) elapsed_ms - ticks elapsed since the last
-//         call
-// DESCRIPTION: Runs the keyboard for the elapsed ticks: advance the timers,
-// send up to one code per tick, and scan the key matrix once with debounce and
-// repeat advanced by the elapsed ticks. Never blocks.
+/**
+ * Run the keyboard for the ticks elapsed since the last call.
+ *
+ * In order: advances the timers by @p elapsed_ms, sends up to one queued code
+ * per elapsed tick through the platform (subject to message pacing, see
+ * asdf_next_code_r()), then scans the key matrix once with debounce and
+ * repeat advanced by @p elapsed_ms. Timing therefore follows real time even
+ * if a call takes longer than a tick. Codes queued by this scan are sent on a
+ * later call. A key first seen changed after a gap of several ticks is taken
+ * to have been in its new state for the whole gap. Key actions run by the scan
+ * may queue codes, change modifiers, drive outputs, and switch keymaps.
+ *
+ * Never blocks. Does nothing if @p elapsed_ms is 0.
+ *
+ * @param kb          Keyboard to run.
+ * @param elapsed_ms  1 ms ticks since the last call, as returned by the
+ *                    platform adapter's asdf_arch_tick(); values above 255
+ *                    are treated as 255.
+ */
 void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms);
 
-// PROCEDURE: asdf_update_r
-// INPUTS: (asdf_t *) kb, (uint16_t) elapsed_ms - ticks elapsed since the last
-//         call
-// DESCRIPTION: Like asdf_process_r(), but sends nothing: advances the timers
-// and scans once, leaving codes queued for asdf_next_code_r(). Never blocks.
+/**
+ * Run the keyboard like asdf_process_r(), but send nothing.
+ *
+ * Advances the timers and scans the key matrix once, leaving codes queued for
+ * the caller to take with asdf_next_code_r(). For applications that deliver
+ * codes themselves. Key actions run by the scan may queue codes, change
+ * modifiers, drive outputs, and switch keymaps.
+ *
+ * Never blocks. Does nothing if @p elapsed_ms is 0.
+ *
+ * @param kb          Keyboard to run.
+ * @param elapsed_ms  1 ms ticks since the last call; values above 255 are
+ *                    treated as 255.
+ */
 void asdf_update_r(asdf_t *kb, uint16_t elapsed_ms);
 
-// PROCEDURE: asdf_tick_r
-// INPUTS: (asdf_t *) kb, (uint8_t) elapsed_ms - ticks elapsed
-// DESCRIPTION: Advances the keyboard's timers (message pacing and long output
-// pulses) without scanning or sending.
+/**
+ * Advance the keyboard's timers without scanning or sending.
+ *
+ * Counts down the pause after a system message character and any long output
+ * pulses; an expiring pulse drives its output through the platform.
+ *
+ * @param kb          Keyboard whose timers to advance.
+ * @param elapsed_ms  1 ms ticks elapsed.
+ */
 void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms);
 
-// PROCEDURE: asdf_next_code_r
-// INPUTS: (asdf_t *) kb, (asdf_keycode_t *) code - receives the code
-// OUTPUTS: returns TRUE (nonzero) and sets *code to the next code to send
-// (system messages first), or returns FALSE (0) if none is queued or output is
-// paused after a system message character.
+/**
+ * Take the next code to send to the host.
+ *
+ * System message characters take priority over typed keycodes. After each
+ * message character, output pauses for the current keymap's print delay, to
+ * reduce the risk of dropped characters on unbuffered polling hosts; the pause
+ * is counted down by asdf_tick_r(), so it does not block scanning. Typed
+ * keycodes are not paced, as they arrive at human speed. Removes the code
+ * taken from its queue, and starts the pause if it is a message character.
+ *
+ * @param kb    Keyboard to take the code from.
+ * @param code  Receives the code; not written when none is taken.
+ * @return 1 if a code was taken into @p code; 0 if none is queued or output is
+ *         paused after a message character.
+ */
 uint8_t asdf_next_code_r(asdf_t *kb, asdf_keycode_t *code);
 
-// PROCEDURE: asdf_send_code_r
-// DESCRIPTION: sends a code to the host through the keyboard's platform.
+/**
+ * Send a code to the host through the keyboard's platform, immediately.
+ *
+ * Drives the output through the platform; the queues are not involved.
+ *
+ * @param kb    Keyboard to send through.
+ * @param code  Code to send.
+ */
 void asdf_send_code_r(asdf_t *kb, asdf_keycode_t code);
 
-// PROCEDURE: asdf_put_code_r
-// OUTPUTS: returns TRUE (nonzero) if queued, FALSE (0) if the queue was full
-// DESCRIPTION: queues a typed keycode.
+/**
+ * Queue a typed keycode for output.
+ *
+ * Queues the code on the keyboard's keycode queue.
+ *
+ * @param kb    Keyboard to queue on.
+ * @param code  Code to queue.
+ * @return 1 if queued; 0 if the keycode queue was full, in which case the
+ *         code is dropped and counted (see asdf_dropped_codes_r()).
+ */
 uint8_t asdf_put_code_r(asdf_t *kb, asdf_keycode_t code);
 
-// PROCEDURE: asdf_putc_r
-// OUTPUTS: returns c, or EOF if the message queue had no room for it
-// DESCRIPTION: queues a system message character; a newline is queued as CR
-// LF, as a unit.
+/**
+ * Queue a system message character for output.
+ *
+ * A newline is queued as CR LF, as a unit: if both do not fit, neither is
+ * queued, so a message never ends with half a line ending. Queues the
+ * character on the keyboard's message queue.
+ *
+ * @param kb  Keyboard to queue on.
+ * @param c   Character to queue.
+ * @return @p c if queued; EOF if the message queue had no room, in which case
+ *         the character (or both CR and LF) is dropped and counted (see
+ *         asdf_dropped_messages_r()).
+ */
 int asdf_putc_r(asdf_t *kb, char c);
 
-// PROCEDURE: asdf_dropped_codes_r, asdf_dropped_messages_r
-// OUTPUTS: the number of typed codes (system message characters) dropped
-//          because their queue was full, saturating at 255.
+/**
+ * Number of typed keycodes dropped because the keycode queue was full.
+ *
+ * No side effects.
+ *
+ * @param kb  Keyboard to query.
+ * @return Codes dropped since asdf_init_r(), saturating at 255.
+ */
 uint8_t asdf_dropped_codes_r(const asdf_t *kb);
+
+/**
+ * Number of system message characters dropped because the message queue was
+ * full.
+ *
+ * No side effects.
+ *
+ * @param kb  Keyboard to query.
+ * @return Characters dropped since asdf_init_r(), saturating at 255.
+ */
 uint8_t asdf_dropped_messages_r(const asdf_t *kb);
 
-// PROCEDURE: asdf_keymap_errors_r
-// OUTPUTS: the number of entries of the current keymap's descriptor that could
-//          not be applied: a missing or oversize modifier map, or a virtual
-//          output assignment that is invalid or conflicts with another. Zero
-//          for a correct keymap.
+/**
+ * Number of entries of the current keymap's descriptor that could not be
+ * applied.
+ *
+ * An entry fails if it is a missing or oversize modifier map, or a virtual
+ * output assignment that is invalid or conflicts with another. No side
+ * effects.
+ *
+ * @param kb  Keyboard to query.
+ * @return Failed entries, saturating at 255; 0 for a correct keymap.
+ */
 uint8_t asdf_keymap_errors_r(const asdf_t *kb);
 
-// PROCEDURE: asdf_install_platform_r
-// DESCRIPTION: selects the platform the keyboard is scanned and sent through;
-// NULL restores the keyboard's base platform.
+/**
+ * Select the platform through which the key matrix is read, codes are sent,
+ * and outputs are driven.
+ *
+ * Keymaps with special hardware needs install their own. Changes the platform
+ * used by the keyboard and its virtual outputs; drives nothing.
+ *
+ * @param kb        Keyboard to configure.
+ * @param platform  Platform to use, or NULL to restore the platform given to
+ *                  asdf_init_r().
+ */
 void asdf_install_platform_r(asdf_t *kb, const asdf_platform_t *platform);
 
-// PROCEDURE: asdf_arm_repeat_r
-// DESCRIPTION: called by a press action to make the key being pressed the
-// repeating key: while it is held, its press action is run again at the
-// repeat rate.
+/**
+ * Make the key being pressed the repeating key.
+ *
+ * Called by a press action. While the key is held, and is still the same key
+ * under the current modifiers, its press action runs again at the repeat
+ * rate. Pressing a different key restarts the repeat timer. Sets a flag in
+ * @p kb that is consumed when the press action returns.
+ *
+ * @param kb  Keyboard whose key is being pressed.
+ */
 void asdf_arm_repeat_r(asdf_t *kb);
 
-// PROCEDURE: asdf_set_strobe_polarity_r
-// DESCRIPTION: sets the output strobe polarity through the keyboard's
-// platform: positive (idle low) if positive is nonzero, else negative.
+/**
+ * Set the output strobe polarity through the keyboard's platform.
+ *
+ * Drives the strobe output through the platform.
+ *
+ * @param kb        Keyboard to configure.
+ * @param positive  Nonzero for a positive (idle low) strobe; 0 for negative.
+ */
 void asdf_set_strobe_polarity_r(asdf_t *kb, uint8_t positive);
 
-// PROCEDURE: asdf_apply_configuration_r
-// DESCRIPTION: after a keymap switch, re-applies the configuration actions of
-// held switches (see asdf_apply_configuration in asdf.h).
+/**
+ * Re-apply held configuration switches after a keymap switch.
+ *
+ * Called after a keymap switch has reset the keyboard state. Forgets the
+ * repeating key, then runs the press actions of held keys that are
+ * configuration actions (see asdf_is_configuration_action()), such as DIP
+ * switches, so their settings persist across keymap changes. Other held keys,
+ * such as a held SHIFT, are not re-activated; they take effect again only when
+ * released and pressed. Uses the last debounced key state rather than
+ * rescanning. The press actions run have their usual effects.
+ *
+ * @param kb  Keyboard to configure.
+ */
 void asdf_apply_configuration_r(asdf_t *kb);
 
-// PROCEDURE: asdf_sync_lock_leds_r
-// DESCRIPTION: drives the SHIFTLOCK (VSHIFT_LED) and CAPSLOCK (VCAPS_LED)
-// indicators from the keyboard's modifier state.
+/**
+ * Drive the SHIFTLOCK (VSHIFT_LED) and CAPSLOCK (VCAPS_LED) indicators from
+ * the keyboard's modifier state.
+ *
+ * Drives the outputs through the platform.
+ *
+ * @param kb  Keyboard whose indicators to update.
+ */
 void asdf_sync_lock_leds_r(asdf_t *kb);
 
 #endif /* !defined (ASDF_KEYBOARD_H) */

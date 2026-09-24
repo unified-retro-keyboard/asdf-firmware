@@ -27,11 +27,14 @@
 
 #include <stdint.h>
 
-// The asdf_virtual_real_dev_t enumerates real outputs that can be assigned to
-// virtual outputs via the asdf_virtual_assign() function. The name is a bit
-// confusing, containing virtual and real. The "virtual" part refers to the
-// module and the "real_dev" part attempts to clarify that these are the
-// hardware outputs implemented by the architecture-specific module.
+/**
+ * The physical outputs the hardware can provide, which keymaps assign to
+ * virtual outputs with asdf_virtual_assign_r().
+ *
+ * PHYSICAL_NO_OUT is not an output: it ends each list of physical outputs and
+ * is never assigned. Each architecture adapter drives the outputs it has and
+ * ignores the rest.
+ */
 typedef enum {
   PHYSICAL_NO_OUT = 0,
   PHYSICAL_OUT1,
@@ -51,30 +54,152 @@ typedef enum {
 
 struct asdf_platform; // asdf_platform.h
 
-// Changeable state of the physical outputs of one keyboard: the value last
-// written to each output, the links of the available list and of each virtual
-// output's list of physical outputs, and the platform that drives the outputs.
+/**
+ * Changeable state of the physical outputs of one keyboard.
+ *
+ * shadow[] holds the value last written to each output. next[] links the
+ * outputs into singly linked lists: the available list, headed by
+ * next[PHYSICAL_NO_OUT], and one list per virtual output, whose head the
+ * virtual state holds. Each list ends at PHYSICAL_NO_OUT. The platform drives
+ * the outputs; with no platform, only the shadow values change.
+ *
+ * Each function operates only on the state passed to it.
+ *
+ * Invariants, after asdf_physical_init_r() and any sequence of operations:
+ * - every next[] value is < ASDF_PHYSICAL_NUM_RESOURCES
+ * - PHYSICAL_NO_OUT is never on the available list and is never allocated
+ * - an output leaves the available list only through
+ *   asdf_physical_allocate_r(), and returns to it only through
+ *   asdf_physical_init_r()
+ */
 typedef struct {
   uint8_t shadow[ASDF_PHYSICAL_NUM_RESOURCES];
   asdf_physical_dev_t next[ASDF_PHYSICAL_NUM_RESOURCES];
   const struct asdf_platform *platform; // set by the owning keyboard
 } asdf_physical_state_t;
 
-// Instance API: each function operates only on the state passed to it.
-// Invalid devices are ignored. Outputs are driven through the state's platform;
-// with no platform, only the shadow values change. See asdf_physical.c.
-
+/**
+ * Initialize the physical outputs: all available, none driven.
+ *
+ * Sets every shadow value to ASDF_VIRTUAL_OUT_DEFAULT_VALUE and places every
+ * output except PHYSICAL_NO_OUT on the available list, returning any
+ * allocated outputs to it. Writes only @p phys; the outputs themselves are not
+ * driven.
+ *
+ * @param phys      State to initialize.
+ * @param platform  Platform that drives the outputs; NULL to track shadow
+ *                  values only.
+ */
 void asdf_physical_init_r(asdf_physical_state_t *phys, const struct asdf_platform *platform);
+
+/**
+ * Drive an output to a value and record it as the output's shadow value.
+ *
+ * Drives the output through the platform, if any, and updates the shadow
+ * value.
+ *
+ * @param phys          Physical output state.
+ * @param physical_out  Output to set; values >= ASDF_PHYSICAL_NUM_RESOURCES
+ *                      are ignored.
+ * @param value         Value to drive and record, stored as given.
+ */
 void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                          uint8_t value);
+
+/**
+ * Set an output high (1), as asdf_physical_set_r().
+ *
+ * Drives the output through the platform, if any, and updates the shadow
+ * value. Out-of-range outputs are ignored.
+ *
+ * @param phys          Physical output state.
+ * @param physical_out  Output to set.
+ */
 void asdf_physical_on_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+
+/**
+ * Set an output low (0), as asdf_physical_set_r().
+ *
+ * Drives the output through the platform, if any, and updates the shadow
+ * value. Out-of-range outputs are ignored.
+ *
+ * @param phys          Physical output state.
+ * @param physical_out  Output to clear.
+ */
 void asdf_physical_off_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+
+/**
+ * Drive an output to its shadow value.
+ *
+ * Used to apply values recorded while the output was not being driven, such
+ * as initial values set by asdf_physical_allocate_r(). Drives the output
+ * through the platform, if any; the shadow value is unchanged.
+ *
+ * @param phys          Physical output state.
+ * @param physical_out  Output to drive; values >= ASDF_PHYSICAL_NUM_RESOURCES
+ *                      are ignored.
+ */
 void asdf_physical_assert_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+
+/**
+ * Invert an output: drive it to the logical NOT of its shadow value.
+ *
+ * The toggle is computed from the shadow value, so the platform needs only a
+ * set operation. Drives the output through the platform, if any, and updates
+ * the shadow value.
+ *
+ * @param phys          Physical output state.
+ * @param physical_out  Output to toggle; values >= ASDF_PHYSICAL_NUM_RESOURCES
+ *                      are ignored.
+ */
 void asdf_physical_toggle_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out);
+
+/**
+ * Follow one link of the list that contains an output.
+ *
+ * No side effects.
+ *
+ * @param phys    Physical output state.
+ * @param device  Current output in a virtual output's list.
+ * @return The output after @p device in its list; PHYSICAL_NO_OUT at the end
+ *         of the list or if @p device is >= ASDF_PHYSICAL_NUM_RESOURCES. For
+ *         PHYSICAL_NO_OUT, returns the head of the available list.
+ */
 asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phys,
                                                 asdf_physical_dev_t device);
+
+/**
+ * Take an output off the available list and prepend it to a list.
+ *
+ * On success, the output's next link is set to @p tail and its shadow value
+ * to @p initial_value. The output is not driven; asdf_physical_assert_r()
+ * applies the value once all assignments are made.
+ *
+ * @p tail is not checked beyond its range: the caller passes PHYSICAL_NO_OUT
+ * or the head of a list of allocated outputs.
+ *
+ * On success, updates the links and the shadow value in @p phys. No output is
+ * driven.
+ *
+ * @param phys           Physical output state.
+ * @param physical_out   Output to allocate.
+ * @param tail           List to link after @p physical_out.
+ * @param initial_value  Shadow value to record for @p physical_out.
+ * @return 1 if allocated; 0 if @p physical_out is PHYSICAL_NO_OUT, out of
+ *         range, or already allocated, or if @p tail is out of range. On
+ *         failure the state is unchanged.
+ */
 uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                                  asdf_physical_dev_t tail, uint8_t initial_value);
+
+/**
+ * Wait for the width of a short output pulse, through the platform.
+ *
+ * Returns at once if the state has no platform. Blocks the caller for the
+ * pulse width; no other side effects.
+ *
+ * @param phys  Physical output state.
+ */
 void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys);
 
 #endif /* !defined (ASDF_PHYSICAL_H) */

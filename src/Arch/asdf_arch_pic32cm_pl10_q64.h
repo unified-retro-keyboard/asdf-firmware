@@ -21,8 +21,6 @@
 #define ASDF_STROBE_LENGTH_US 10              // strobe length in microseconds
 #define ASDF_KEYBOARD_ROW_SETTLING_TIME_US 4  // row settling time
 
-// Default key matrix row scanner
-// Default keyboard output
 // DIP switch is on row 8
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
 #define ASDF_ARCH_DIPSWITCH_ROW 8
@@ -62,16 +60,28 @@
 #define OSI_RW_PIN 10u
 
 // --- public API (mirrors asdf_arch_atmega2560.h) ---
-// PROCEDURE: asdf_arch_osi_read_row
-// INPUTS: (uint8_t) row - the row to read
-// OUTPUTS: returns the pressed columns of the row, for an OSI keyboard
-// DESCRIPTION: An alternative row reader for OSI keyboards. Not used by any
-// keymap yet.
+/**
+ * Reads one row of an OSI keyboard.
+ *
+ * An alternative row reader for OSI keyboards. Not used by any keymap yet; a
+ * keymap uses it by installing a platform whose read_row calls it. Drives the
+ * row and OSI keyboard control lines, and leaves the column lines as inputs.
+ *
+ * @param row  Row number to scan.
+ * @return The row's columns, one bit per column, with 1 = pressed.
+ */
 asdf_cols_t asdf_arch_osi_read_row(uint8_t row);
 
-// PROCEDURE: asdf_arch_init
-// Sets up all the hardware for the keyboard and the platform embedded in arch,
-// and starts the tick interrupt.
+/**
+ * Sets up the keyboard hardware and the platform embedded in arch.
+ *
+ * Call once, before the keyboard runs. Sets the core clock, the pins (row,
+ * column, ASCII, strobe, LED, OUT1-3 and OSI control lines) and the default
+ * data and strobe polarity; fills in the platform operations and clears the
+ * tick count; and starts the 1 ms SysTick tick interrupt.
+ *
+ * @param arch  Hardware state to initialize.
+ */
 void asdf_arch_init(asdf_arch_t *arch);
 
 #endif /* !defined (ASDF_ARCH_H) */

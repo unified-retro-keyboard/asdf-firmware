@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
 // asdf_keymap_ace1000_add_map.h
 //
-// Keymap matrices for the Franklin ACE 1000 replacement keyboard
+// Key codes for the Franklin ACE 1000 replacement keyboard, used by the key
+// matrices in asdf_keymap_ace1000_maps.yaml.
 // https://github.com/ryucats/Franklin-ACE-1000-Keyboard
 //
 // Copyright 2023 Chris RYU
@@ -30,14 +31,6 @@
 #include "asdf_arch.h"
 #include "asdf_keymap_ace1000.h"
 #include "asdf_modifiers.h"
-
-// Keycode matrices, one per modifier state, used by the ACE 1000 keymap
-// descriptors.
-
-
-
-// function prototypes
-
 
 // Key value definitions
 #define ACE_KEY_0	0x30

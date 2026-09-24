@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
 // main.c
 //
-// main program loop.  Initialize hardware.  Schedule key scans and i/o.
+// The main program for a single keyboard: initializes the hardware and the
+// keyboard, then runs the keyboard from the 1 ms tick in a superloop.
 //
 // Copyright 2019 David Fenyes
 //
@@ -32,44 +33,39 @@
 static asdf_arch_t arch;
 static asdf_t keyboard;
 
-// PROCEDURE: tick interrupt
-// DESCRIPTION: Occurs every 1 ms. Counts the tick for the hardware; the main
-// loop does the scanning and all other work.
+/**
+ * The 1 ms tick interrupt.
+ *
+ * Counts the tick in the hardware state, for the main loop to collect. It does
+ * nothing else; the main loop does the scanning and all other work.
+ */
 ASDF_ARCH_TICK_ISR
 {
   asdf_arch_count_tick(&arch);
 }
 
-// PROCEDURE: main
-// INPUTS: none
-// OUTPUTS: none
-//
-// DESCRIPTION: Initialize hardware, Schedule key scans and i/o
-//
-// SIDE EFFECTS: See above
-//
-// NOTES: This code just initializes the hardware, and then loops. The loop
-// includes:
-//
-//     - Collect the 1 ms ticks counted by the timer interrupt since the last
-//       pass, and run the keyboard for that many ticks. For each tick, the
-//       keyboard advances its timers, sends at most one buffered character,
-//       and scans the key matrix. Ticks that elapse while a pass is busy are
-//       caught up on the next pass, so no time is lost. Nothing blocks.
-//
-// This is not the most efficient use of the hardware, but is an example of how
-// the keyboard scanner is used. Of course, this loop can be replaced with an
-// RTOS process as well. If an RTOS is used, then the output queues can be modified
-// to use RTOS message queues instead of an internal buffer, or to keep the
-// internal buffer and use a counting semaphore to indicate characters in the
-// buffer.
-//
-// If you are adding special functions when using an RTOS, make sure the
-// functions do not block, or do any heavy computation. Rather, they should be
-// small and pass messages to appropriate processes to handle the activities.
-//
-// COMPLEXITY: 2
-//
+/**
+ * Run the keyboard firmware.
+ *
+ * Initializes the hardware and the keyboard, then loops forever. Each pass
+ * collects the 1 ms ticks counted by the tick interrupt since the last pass
+ * and runs the keyboard for them: it advances the timers by the elapsed ticks,
+ * sends up to one buffered code per tick, and scans the key matrix once.
+ * Ticks that elapse while a pass is busy (up to 255) are caught up on the next
+ * pass, so no time is lost. Nothing blocks. Side effects: drives all of the
+ * keyboard's hardware through the architecture's platform.
+ *
+ * @return Never returns.
+ *
+ * The loop is an example of how to use the keyboard, not the most efficient
+ * use of the hardware. It can be replaced by an RTOS task. The output queues
+ * could then become RTOS message queues, or keep their internal buffers with a
+ * counting semaphore to signal waiting codes. Keymap actions run in that task,
+ * so they must not block or compute heavily; they should pass messages to
+ * other tasks to do the work.
+ *
+ * Complexity: 3
+ */
 int main(void)
 {
   // initialize the hardware, then the keyboard logic:

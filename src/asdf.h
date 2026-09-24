@@ -5,6 +5,8 @@
 //
 // asdf.h
 //
+// Basic types and sizes shared by all of the firmware.
+//
 // Copyright 2019 David Fenyes
 //
 // This program is free software: you can redistribute it and/or modify it under
@@ -27,23 +29,32 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// Returned by asdf_next_code() when no code is ready. Every 8-bit value is a
-// valid code, so this is outside their range.
+/**
+ * A value meaning "no code". Every 8-bit value is a valid code, so this lies
+ * outside their range.
+ */
 #define ASDF_INVALID_CODE 0x100
 
-// define ASDF_MAX_COLS to fit in asdf_cols_t
+// Maximum key matrix size. ASDF_MAX_COLS must fit in asdf_cols_t.
 #define ASDF_MAX_COLS 8
 #define ASDF_MAX_ROWS 16
 
-// for efficiency on 8-bit machines, use 8 columns per row. For 16 columns per
-// row, change cols_t to uint16_t and increase ASDF_NUM_COLS to 16.
+/**
+ * The state of one row of the key matrix, one bit per column.
+ *
+ * 8 columns per row, for efficiency on 8-bit machines. For 16 columns per row,
+ * change this to uint16_t and increase ASDF_MAX_COLS to 16.
+ */
 typedef uint8_t asdf_cols_t;
 
-// A code sent to the host: any 8-bit value. Key actions are separate from
-// codes (see asdf_actions.h).
+/**
+ * A code sent to the host: any 8-bit value.
+ *
+ * Key actions are separate from codes (see asdf_actions.h).
+ */
 typedef uint8_t asdf_keycode_t;
 
-// One keyboard: all of its changeable state (defined in asdf_keyboard.h).
+/** One keyboard: all of its changeable state (defined in asdf_keyboard.h). */
 typedef struct asdf_keyboard asdf_t;
 
 

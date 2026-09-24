@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_apple_add_map.h
+// asdf_keymap_apple2_add_map.h
 //
-// defines keymap matrices for apple2 layouts
+// Matrix size, outputs, and arrow key codes shared by the Apple II keymaps.
+// The key matrices are in asdf_keymap_apple2_maps.yaml.
 //
 // Copyright 2019 David Fenyes
 //
@@ -22,11 +23,6 @@
 // You should have received a copy of the GNU General Public License along with
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
-
-// To use this ascii for a new keymap, edit the keymaps definitions as
-// desired. The keymaps are organized from row 0, counting upward, and each row
-// includes the columns from 0-NUM_COLS.
-//
 
 #if !defined(ASDF_KEYMAP_APPLE_ADD_MAP_H)
 #define ASDF_KEYMAP_APPLE_ADD_MAP_H
@@ -56,14 +52,6 @@
 
 #define APPLE_LEFT_ARROW ASCII_CTRL_H
 #define APPLE_RIGHT_ARROW ASCII_CTRL_U
-
-// Keycode matrices, one per modifier state, used by the Apple II keymap
-// descriptors.
-
-
-
-// function prototypes
-
 
 #endif /* !defined (ASDF_KEYMAP_APPLE_ADD_MAP_H) */
 

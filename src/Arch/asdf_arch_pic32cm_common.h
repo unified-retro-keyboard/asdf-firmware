@@ -43,14 +43,70 @@
 // (group, bit) pin helpers over the PIC32CM PORT peripheral, using the
 // Harmony-style register names (PORT_REGS->GROUP[g].PORT_*). GROUP[0]=PA,
 // GROUP[1]=PB. The AVR analogue of set_bit/clear_bit.
+
+/**
+ * Drives an output pin high.
+ *
+ * Sets the pin's output latch through the OUTSET register, leaving the other
+ * pins of the group unchanged.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ */
 static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTSET = (1u << b); }
+/**
+ * Drives an output pin low.
+ *
+ * Clears the pin's output latch through the OUTCLR register, leaving the other
+ * pins of the group unchanged.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ */
 static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTCLR = (1u << b); }
+/**
+ * Toggles an output pin.
+ *
+ * Inverts the pin's output latch through the OUTTGL register, leaving the
+ * other pins of the group unchanged.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ */
 static inline void pin_toggle(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTTGL = (1u << b); }
+/**
+ * Reads the level of a pin.
+ *
+ * The pin's input buffer must be enabled (see pin_dir_in()). No side effects.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ * @return 1 if the pin reads high; 0 if it reads low.
+ */
 static inline uint8_t pin_read(uint8_t g, uint8_t b)
 {
   return (uint8_t)((PORT_REGS->GROUP[g].PORT_IN >> b) & 1u);
 }
+/**
+ * Makes a pin an output.
+ *
+ * Sets the pin's direction bit through the DIRSET register; the pin then
+ * drives its output latch.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ */
 static inline void pin_dir_out(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_DIRSET = (1u << b); }
+/**
+ * Makes a pin an input.
+ *
+ * Clears the pin's direction bit through the DIRCLR register and sets its pin
+ * configuration to input buffer enabled, with no pull resistor. Overwrites the
+ * pin's whole PINCFG register.
+ *
+ * @param g  Port group (0 = PA, 1 = PB).
+ * @param b  Bit (pin) number within the group.
+ */
 static inline void pin_dir_in(uint8_t g, uint8_t b)
 {
   PORT_REGS->GROUP[g].PORT_DIRCLR = (1u << b);
@@ -66,13 +122,19 @@ typedef struct {
   uint8_t data_polarity;    // XORed with each code sent
 } asdf_arch_t;
 
-// The tick interrupt: SysTick, every 1 ms. Defining it overrides the weak
+// The tick interrupt: SysTick, every 1 ms. The application defines the
+// interrupt handler with this macro; defining it overrides the weak
 // SysTick_Handler in the DFP startup file.
 #define ASDF_ARCH_TICK_ISR void SysTick_Handler(void)
 
-// PROCEDURE: asdf_arch_count_tick
-// Counts one elapsed tick, saturating so a long stall cannot wrap the count.
-// Called only from the tick interrupt.
+/**
+ * Counts one elapsed 1 ms tick.
+ *
+ * The count saturates at 255, so a long stall cannot wrap it. Call only from
+ * the tick interrupt. Increments the tick count in arch.
+ *
+ * @param arch  Hardware state of the keyboard whose tick is counted.
+ */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
   if (arch->ticks < UINT8_MAX) {
@@ -81,11 +143,43 @@ static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 }
 
 // Shared mechanics (asdf_arch_pic32cm_common.c).
+
+/**
+ * Sets the core clock to 24 MHz (F_CPU).
+ *
+ * Switches the internal high-frequency oscillator to 24 MHz and returns once
+ * it has locked at the new frequency. Call once, early in the variant's
+ * asdf_arch_init(), before anything that depends on F_CPU.
+ */
 void asdf_arch_common_clock_init(void);
+
+/**
+ * Starts the 1 ms tick timer.
+ *
+ * Configures SysTick to interrupt every 1 ms and enables its interrupt, so the
+ * tick interrupt (ASDF_ARCH_TICK_ISR) starts running.
+ */
 void asdf_arch_common_tick_init(void);
+
+/**
+ * Busy-waits for approximately the given number of microseconds.
+ *
+ * The delay is approximate and assumes the core runs at F_CPU. No side
+ * effects.
+ *
+ * @param us  Delay in microseconds.
+ */
 void arch_delay_us(uint16_t us);
 
-// Shared public-API functions, identical for both variants (also declared in
-// the variant header, which mirrors the AVR reference header).
+/**
+ * Collects the ticks counted since the last call.
+ *
+ * Shared by both variants. Reads and clears the tick count as one step with
+ * respect to the tick interrupt, so no tick is lost. Clears the tick count in
+ * arch.
+ *
+ * @param arch  Hardware state of the keyboard.
+ * @return The number of 1 ms ticks since the last call, saturating at 255.
+ */
 uint8_t asdf_arch_tick(asdf_arch_t *arch);
 #endif /* !defined (ASDF_ARCH_PIC32CM_COMMON_H) */

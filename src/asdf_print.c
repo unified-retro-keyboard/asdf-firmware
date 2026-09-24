@@ -23,37 +23,23 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-
-//
-// Headers
-//
 #include "asdf.h"
 #include "asdf_arch.h"
 #include "asdf_keyboard.h"
 #include "asdf_print.h"
 
-//
-// Regular functions
-//
-
-// PROCEDURE: asdf_print_flash_r
-// INPUTS: (asdf_t *) kb - keyboard
-//         (const char *) str - NUL-terminated string stored in flash (see
-//         FLASH_STRING)
-// OUTPUTS: none
-//
-// DESCRIPTION: Queues the string on the system message output, sending each
-// newline as CR LF.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// NOTES: Characters that do not fit in the message queue are dropped (see
-// asdf_putc).
-//
-// SCOPE: public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Queue a string stored in flash on the system message output.
+ *
+ * Queues each character with asdf_putc_r(), which sends each newline as
+ * CR LF. Characters that do not fit in the message queue are dropped and
+ * counted by asdf_putc_r().
+ *
+ * @param kb   Keyboard to print to.
+ * @param str  NUL-terminated string in flash (see FLASH_STRING()).
+ *
+ * Complexity: 2
+ */
 void asdf_print_flash_r(asdf_t *kb, const char *str)
 {
   char c;

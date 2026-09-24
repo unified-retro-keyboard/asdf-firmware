@@ -5,7 +5,7 @@
 //
 //  asdf_arch_test.h
 //
-// Architecture-dependent definitions for the unit-testing ASDF software.
+// Emulated hardware for the host unit tests.
 //
 // Copyright 2019 David Fenyes
 //
@@ -37,6 +37,11 @@
 
 
 
+// Pulse detector states, reported by asdf_arch_check_pulse(). Each emulated
+// output has a detector that recognizes a pulse as a transition, a pulse delay,
+// then a transition back: low, high, delay, low gives PD_ST_PULSE_HIGH_DETECTED.
+// A sequence that is not a valid pulse leaves the detector in an error state,
+// where it stays until reset.
 typedef enum {
               PD_ST_INITIAL_STATE = 0,
               PD_ST_STABLE_LOW = 1,
@@ -47,7 +52,7 @@ typedef enum {
               PD_ST_PULSE_DELAY_HIGH = 6,
               PD_ST_PULSE_HIGH_DETECTED = 7,
               PD_ST_PULSE_LOW_DETECTED = 8,
-              PD_ST_NUM_VALID_PULSE_STATES = 9, // error states below this
+              PD_ST_NUM_VALID_PULSE_STATES = 9, // error states follow
               PD_ST_ERROR_DOUBLE_DELAY = 10,
               PD_ST_ERROR_DOUBLE_SET = 11,
               PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY = 12, 
@@ -63,159 +68,243 @@ typedef enum {
 #define FLASH_READ_MATRIX_ELEMENT(mat,row,col) (mat)[(row)][(col)]
 #define FLASH_STRING(s) (s)
 
-// PROCEDURE: asdf_arch_pos_strobe
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Initialize strobe output to positive polarity. Initial state is
-// LOW
+// Strobe polarity setters. The emulation records the polarity only; there is no
+// strobe pin.
+
+/**
+ * Emulates setting the strobe to positive polarity.
+ *
+ * Records the strobe polarity as positive.
+ */
 void asdf_arch_set_pos_strobe(void);
 
-// PROCEDURE: asdf_arch_neg_strobe
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Initialize strobe output
+/**
+ * Emulates setting the strobe to negative polarity.
+ *
+ * Records the strobe polarity as negative.
+ */
 void asdf_arch_set_neg_strobe(void);
 
-// PROCEDURE: asdf_arch_is_strobe_positive
-// OUTPUTS: returns non-zero if test arch currently uses positive strobe polarity
+/**
+ * Reports the recorded strobe polarity.
+ *
+ * No side effects.
+ *
+ * @return Nonzero if the strobe polarity is positive; 0 if it is negative.
+ */
 uint8_t asdf_arch_is_strobe_positive(void);
 
-// PROCEDURE: asdf_arch_null_output
-// INPUTS: (uint8_t) value - ignored
-// OUTPUTS: none
-// DESCRIPTION: Does nothing.
+// Output setters. Each records its value in the emulated outputs and advances
+// that output's pulse detector.
+
+/**
+ * Emulates writing the nonexistent output (PHYSICAL_NO_OUT).
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_null_output(uint8_t value);
 
-// PROCEDURE: asdf_arch_led1_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED1.  If value is false, turn off LED1
+/**
+ * Emulates setting LED1.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_led1_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_led2_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED2.  If value is false, turn off LED2
+/**
+ * Emulates setting LED2.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_led2_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_led3_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: If value is true, turn on LED3.  If value is false, turn off LED3
+/**
+ * Emulates setting LED3.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_led3_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out1_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT1 bit if value is true, and clear OUT1 if value is false.
+/**
+ * Emulates setting OUT1 as a push-pull output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out1_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out1_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT1 bit to high if value is true, and hi-z
-// if value is false. For testing, set PHYSICAL_OUT1_OPEN_LO to the value.
+/**
+ * Emulates setting OUT1 as an open-collector output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out1_open_hi_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out1_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT1 bit to high if value is true, and hi-z
-// if value is false. For testing, set PHYSICAL_OUT1_OPEN_LO to the value.
+/**
+ * Emulates setting OUT1 as an open-emitter output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out1_open_lo_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out2_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT2 bit if value is true, and clear OUT2 if value is false.
+/**
+ * Emulates setting OUT2 as a push-pull output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out2_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out2_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT2 bit to hi-z if value is true, and low
-// if value is false. For testing, set PHYSICAL_OUT2_OPEN_HI to the value.
+/**
+ * Emulates setting OUT2 as an open-collector output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out2_open_hi_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out2_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT2 bit to high if value is true, and hi-z
-// if value is false. For testing, set PHYSICAL_OUT2_OPEN_LO to the value.
+/**
+ * Emulates setting OUT2 as an open-emitter output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out2_open_lo_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out3_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Sets the OUT3 bit if value is true, and clear OUT3 if value is false.
+/**
+ * Emulates setting OUT3 as a push-pull output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out3_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out3_open_hi_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT3 bit to high if value is true, and hi-z
-// if value is false. For testing, set PHYSICAL_OUT3_OPEN_LO to the value.
+/**
+ * Emulates setting OUT3 as an open-collector output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out3_open_hi_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_out3_open_lo_set
-// INPUTS: (uint8_t) value
-// OUTPUTS: none
-// DESCRIPTION: Emulates setting the OUT3 bit to high if value is true, and hi-z
-// if value is false. For testing, set PHYSICAL_OUT3_OPEN_LO to the value.
+/**
+ * Emulates setting OUT3 as an open-emitter output.
+ *
+ * Records the value as the output's current value and advances its pulse
+ * detector with a set-high (nonzero) or set-low (zero) event.
+ *
+ * @param value  Value written to the output.
+ */
 void asdf_arch_out3_open_lo_set(uint8_t value);
 
-// PROCEDURE: asdf_arch_check_output
-// INPUTS:(asdf_physical_dev_t) device - which device to check
-// OUTPUTS: the value of the device setting.
-// DESCRIPTION: For a given real device, return the current setting (true or false)
+/**
+ * Reports the value of an emulated output.
+ *
+ * No side effects.
+ *
+ * @param device  The physical output to check; must be a valid device.
+ * @return The last value written to the output, or 0 if none has been
+ *         written since the last reset.
+ */
 uint8_t asdf_arch_check_output(asdf_physical_dev_t device);
 
-// PROCEDURE: asdf_arch_check_pulse
-// INPUTS:(asdf_physical_dev_t) device - which device to check
-// OUTPUTS: the value of the device pulse detector
-// DESCRIPTION: For a given real device, return the state of the pulse detector
+/**
+ * Reports the pulse detector state of an emulated output.
+ *
+ * No side effects.
+ *
+ * @param device  The physical output to check; must be a valid device.
+ * @return The detector state, as a pulse_state_t: PD_ST_PULSE_HIGH_DETECTED
+ *         or PD_ST_PULSE_LOW_DETECTED after a complete pulse; a PD_ST_ERROR_*
+ *         state if the output sequence was not a valid pulse; otherwise the
+ *         intermediate state reached so far.
+ */
 uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device);
 
-// PROCEDURE: asdf_arch_pulse_delay_short
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: Emulates a short delay by advancing the pulse detector state machine
-// for each output.
+/**
+ * Emulates the short pulse delay.
+ *
+ * Advances every output's pulse detector with a delay event.
+ */
 void asdf_arch_pulse_delay_short(void);
 
-// PROCEDURE: asdf_arch_read_row
-// INPUTS: (uint8_t) row: the row number to be scanned
-// OUTPUTS: returns a word containing the emulated active (pressed) columns
-// DESCRIPTION: reads the word from the key state emulation array and returns
-// the value. The value is a binary representation of the keys pressed within
-// the row, with 1=pressed, 0=released.
+/**
+ * Reads one row of the emulated key matrix.
+ *
+ * The default (weak) definition reports no keys pressed; tests that press keys
+ * define their own. The default has no side effects.
+ *
+ * @param row  Row number to read.
+ * @return The row's columns, one bit per column, with 1 = pressed.
+ */
 asdf_cols_t asdf_arch_read_row(uint8_t row);
 
-// PROCEDURE: asdf_arch_send_code
-// INPUTS: asdf_keycode_t code
-// OUTPUTS: none
-// DESCRIPTION: emulates sending a code, by copying code to a register that can
-// be tested.
+/**
+ * Emulates sending a code.
+ *
+ * Latches the code for asdf_arch_get_sent_code() and sets the code-sent flag.
+ *
+ * @param code  The code sent.
+ */
 void asdf_arch_send_code(asdf_keycode_t);
 
-// PROCEDURE: asdf_arch_get_sent_code
-// INPUTS: none
-// OUTPUTS: returns type (asdf_keycode_t) in register and zeros the register.
-// DESCRIPTION: faciliates test of sending a code, by reporting contents of the
-// "sent register"
+/**
+ * Collects the last code sent.
+ *
+ * Clears the code-sent flag.
+ *
+ * @return The last code sent through asdf_arch_send_code(). If no code has
+ *         been sent since the last reset, the value is stale.
+ */
 asdf_keycode_t asdf_arch_get_sent_code(void);
 
-// PROCEDURE: asdf_arch_was_code_sent
-// INPUTS: none
-// OUTPUTS: returns TRUE if a code was sent, FALSE otherwise.
+/**
+ * Reports whether a code is waiting to be collected.
+ *
+ * No side effects.
+ *
+ * @return TRUE if a code was sent since the last asdf_arch_get_sent_code() or
+ *         reset; FALSE otherwise.
+ */
 uint8_t asdf_arch_was_code_sent(void);
 
-// PROCEDURE: asdf_arch_test_reset
-// INPUTS: none
-// OUTPUTS: none
-// DESCRIPTION: resets the emulated hardware: outputs low, pulse detectors in
-// their initial state, no code sent, and negative strobe polarity. The
-// platform's reset operation does the same.
+/**
+ * Resets the emulated hardware.
+ *
+ * Sets every output to 0 with its pulse detector in PD_ST_INITIAL_STATE,
+ * clears the code-sent flag, and sets negative strobe polarity. The
+ * platform's reset operation does the same.
+ */
 void asdf_arch_test_reset(void);
 
 // The platform of the emulated hardware. Its operations act on the emulation
@@ -234,9 +323,27 @@ typedef struct {
   volatile uint8_t ticks;   // ticks counted by the interrupt, not yet collected
 } asdf_arch_t;
 
+// Stands in for the firmware targets' tick interrupt vector: the application
+// defines the handler with this macro, and tests call it to count a tick.
 #define ASDF_ARCH_TICK_ISR void asdf_arch_test_tick_isr(void)
+
+/**
+ * Emulated tick interrupt handler, defined by the application through
+ * ASDF_ARCH_TICK_ISR.
+ *
+ * Tests call it to emulate one 1 ms tick; the handler counts the tick with
+ * asdf_arch_count_tick().
+ */
 void asdf_arch_test_tick_isr(void);
 
+/**
+ * Counts one elapsed tick.
+ *
+ * The count saturates at 255, so a long stall cannot wrap it. Call only from
+ * the tick interrupt handler. Increments the tick count in arch.
+ *
+ * @param arch  Hardware state of the keyboard whose tick is counted.
+ */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
   if (arch->ticks < UINT8_MAX) {
@@ -244,20 +351,27 @@ static inline void asdf_arch_count_tick(asdf_arch_t *arch)
   }
 }
 
-// PROCEDURE: asdf_arch_init
-// INPUTS: (asdf_arch_t *) arch
-// DESCRIPTION: resets the emulated hardware and sets up arch.
+/**
+ * Resets the emulated hardware and sets up arch.
+ *
+ * Resets the shared emulation (see asdf_arch_test_reset()), copies
+ * asdf_arch_platform into arch, and clears the tick count. There is no timer;
+ * ticks are counted only when a test calls the tick interrupt handler.
+ *
+ * @param arch  Hardware state to initialize.
+ */
 void asdf_arch_init(asdf_arch_t *arch);
 
-// PROCEDURE: asdf_arch_tick
-// OUTPUTS: returns the ticks counted since the last call, and clears the count.
+/**
+ * Collects the ticks counted since the last call.
+ *
+ * Clears the tick count in arch.
+ *
+ * @param arch  Hardware state of the keyboard.
+ * @return The number of ticks counted since the last call, saturating at 255.
+ */
 uint8_t asdf_arch_tick(asdf_arch_t *arch);
 
-
-
-//-------|---------|---------+---------+---------+---------+---------+---------+
-// Above line is 80 columns, and should display completely in the editor.
-//
 
 #endif // !defined (ASDF_ARCH_H)
 

@@ -27,59 +27,48 @@
 
 // This module keeps track of a single repeat event per repeat state object,
 // which makes sense for a single keyboard, since only one key can repeat at any
-// given time. All state is held in the caller's asdf_repeat_state_t; see
-// asdf_repeat.h for the meaning of each repeat mode.
+// given time. All state is held in the caller's asdf_repeat_state_t. The
+// public contracts, the repeat modes, and the state machine are described in
+// asdf_repeat.h.
 
-// PROCEDURE: asdf_repeat_init_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Initialize the repeat state state machine
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Initialize the repeat state machine.
+ *
+ * Sets the base mode and mode to ASDF_DEFAULT_REPEAT_STATE and loads the timer
+ * for that mode. Writes only @p repeat.
+ *
+ * @param repeat  Repeat state to initialize.
+ */
 void asdf_repeat_init_r(asdf_repeat_state_t *repeat)
 {
   repeat->mode = repeat->base_mode = ASDF_DEFAULT_REPEAT_STATE;
   repeat->timer = (uint16_t) repeat->mode;
 }
 
-// PROCEDURE: asdf_repeat_reset_count_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: resets the repeat counter for the current key, to begin a new
-// repeat cycle. The counter is reset to the countdown value for the current
-// state (no repeat, autorepeat, normal repeat).
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// SCOPE: Public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Reset the repeat timer for the current key, to begin a new repeat cycle.
+ *
+ * Reloads the timer with the countdown for the current mode (no repeat,
+ * autorepeat, normal repeat). Writes only @p repeat.
+ *
+ * @param repeat  Repeat state to update.
+ */
 void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat)
 {
   repeat->timer = (uint16_t) repeat->mode;
 }
 
-// PROCEDURE: asdf_repeat_auto_off_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Turns Autorepeat mode off by setting the base state to
-// autorepeat. If key is repeating, then the new behavior will be realized after
-// the repeat key is released. This function can be bound to a key or DIP switch
-// to turn autorepeat off.
-//
-// SIDE EFFECTS: See DESCRIPTION
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Turn autorepeat off by setting the base mode to REPEAT_OFF.
+ *
+ * If a key is repeating under REPEAT_ON, the new behavior takes effect when
+ * REPEAT is released; otherwise the mode and timer change at once. Writes only
+ * @p repeat. Can be bound to a key or DIP switch.
+ *
+ * @param repeat  Repeat state to update.
+ *
+ * Complexity: 2
+ */
 void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_OFF;
@@ -88,21 +77,17 @@ void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat)
   }
 }
 
-// PROCEDURE: asdf_repeat_auto_on_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Turns Autorepeat mode on by setting the base state to
-// autorepeat. If key is repeating, then the new behavior will be realized after
-// the repeat key is released.  This function can be bound to a key or DIP switch
-// to turn autorepeat on.
-//
-// SIDE EFFECTS: see above
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Turn autorepeat on by setting the base mode to REPEAT_AUTO.
+ *
+ * If a key is repeating under REPEAT_ON, the new behavior takes effect when
+ * REPEAT is released; otherwise the mode and timer change at once. Writes only
+ * @p repeat. Can be bound to a key or DIP switch.
+ *
+ * @param repeat  Repeat state to update.
+ *
+ * Complexity: 2
+ */
 void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_AUTO;
@@ -111,21 +96,20 @@ void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat)
   }
 }
 
-// PROCEDURE: asdf_repeat_activate_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: set repeat state machine to repeat mode. Called when REPEAT key
-// is pressed.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// NOTES: If a key is pressed and the key timer is less than or equal to the
-// normal repeat rate, then don't change the timing, to avoid appearance of
-// stuttering.
-//
-// COMPLEXITY: 1
-//
+/**
+ * Switch the repeat state machine to REPEAT_ON, when REPEAT is pressed.
+ *
+ * Writes only @p repeat.
+ *
+ * @param repeat  Repeat state to update.
+ *
+ * The timer is left alone when it is already due within the repeat interval
+ * and a mode other than REPEAT_OFF is running, to avoid visible stutter. In
+ * that case the mode is left unchanged too: if it was REPEAT_AUTO, it stays
+ * REPEAT_AUTO while REPEAT is held.
+ *
+ * Complexity: 3
+ */
 void asdf_repeat_activate_r(asdf_repeat_state_t *repeat)
 {
   if (repeat->timer > REPEAT_ON || REPEAT_OFF == repeat->mode) {
@@ -133,76 +117,66 @@ void asdf_repeat_activate_r(asdf_repeat_state_t *repeat)
   }
 }
 
-// PROCEDURE: asdf_repeat_deactivate_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Reset repeat state to default state. Called when REPEAT
-// key is released.
-//
-// SIDE EFFECTS: See DESCRIPTION
-//
-// NOTES: Releasing repeat disrupts any repeat timers. If a key is still held
-// down after REPEAT is released, and autorepeat mode is enabled, then restart
-// the autorepeat timer. Otherwise disable repeat.
-//
-// SCOPE: Public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Restore the base mode and restart the timer, when REPEAT is released.
+ *
+ * Writes only @p repeat.
+ *
+ * @param repeat  Repeat state to update.
+ *
+ * Releasing REPEAT disrupts any repeat timing. If a key is still held and
+ * autorepeat is enabled, the autorepeat delay starts over; otherwise repeat
+ * stops.
+ */
 void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat)
 {
   repeat->timer = repeat->mode = repeat->base_mode;
 }
 
-// PROCEDURE: asdf_repeat_is_autorepeat_enabled_r
-// INPUTS: (const asdf_repeat_state_t *) repeat - repeat state to query
-// OUTPUTS: returns TRUE (nonzero) if the base mode is autorepeat
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Report whether autorepeat is enabled.
+ *
+ * No side effects.
+ *
+ * @param repeat  Repeat state to query.
+ * @return 1 if the base mode is REPEAT_AUTO, else 0.
+ */
 uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat)
 {
   return (repeat->base_mode == REPEAT_AUTO);
 }
 
-// PROCEDURE: asdf_repeat_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: counts down the repeat timer (if activated) and returns a TRUE
-// value when the counter times out. A true values indicates that the last value
-// should be repeated to the output.
-//
-// SIDE EFFECTS: none
-//
-// NOTES: The repeat->timer is only decremented if it is nonzero.
-//
-// SCOPE: Public
-//
-// COMPLEXITY: 2
-//
+/**
+ * Advance the repeat timer by one tick.
+ *
+ * Counts down and may reload the timer in @p repeat.
+ *
+ * @param repeat  Repeat state to update.
+ * @return 1 when the timer expires and the last code should be repeated to the
+ *         output, else 0.
+ */
 uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat)
 {
   return asdf_repeat_advance_r(repeat, 1);
 }
 
-// PROCEDURE: asdf_repeat_advance_r
-// INPUTS: (asdf_repeat_state_t *) repeat - repeat state to operate on
-//         (uint8_t) elapsed - ticks elapsed
-// OUTPUTS: returns TRUE (nonzero) when the current key should repeat
-//
-// DESCRIPTION: Advances the repeat timer by elapsed ticks. When it expires, the
-// key repeats once and the timer is reloaded for the repeat interval.
-//
-// NOTES: The timer only runs while it is nonzero (REPEAT_OFF stops it).
-//
-// SCOPE: public
-//
-// COMPLEXITY: 3
-//
+/**
+ * Advance the repeat timer by @p elapsed ticks.
+ *
+ * When the timer expires, the key repeats once and the timer reloads with the
+ * repeat interval (REPEAT_ON). Counts down and may reload the timer in
+ * @p repeat.
+ *
+ * @param repeat   Repeat state to update.
+ * @param elapsed  Ticks (ms) since the last call.
+ * @return 1 when the timer expires and the current key should repeat; 0 when
+ *         the timer is stopped (REPEAT_OFF) or has not yet expired.
+ *
+ * A zero timer means REPEAT_OFF: the timer does not run. Time beyond expiry is
+ * not carried over into the next interval.
+ *
+ * Complexity: 3
+ */
 uint8_t asdf_repeat_advance_r(asdf_repeat_state_t *repeat, uint8_t elapsed)
 {
   if (!repeat->timer) {

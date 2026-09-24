@@ -3,9 +3,10 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_classic.c
+// asdf_keymap_ace1000.c
 //
-// Implements the Franklin ACE 1000 replacement keyboard keymaps
+// The keymap descriptor, outputs, and ID message for the Franklin ACE 1000
+// replacement keyboard. The key matrices are in asdf_keymap_ace1000_maps.yaml.
 // https://github.com/ryucats/Franklin-ACE-1000-Keyboard
 //
 // Copyright 2023 Chris RYU

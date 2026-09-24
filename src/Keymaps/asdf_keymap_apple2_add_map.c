@@ -30,17 +30,16 @@
 #include "asdf_keymap_actions.h"
 #include "asdf_print.h"
 
-// PROCEDURE: applesoft_keyboard_test
-// INPUTS: (asdf_t *) kb - keyboard; (uint8_t) param - ignored
-// OUTPUTS: none
-//
-// DESCRIPTION: Types a BASIC program that prints the code of each key pressed,
-// until CTRL-C is pressed. A keymap-provided key action.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Type an Applesoft BASIC keyboard test program.
+ *
+ * Queues one numbered program line, ending in CR, on the system message
+ * output. When run, the program prints the code of each key pressed, until
+ * CTRL-C is pressed. A keymap-provided key action.
+ *
+ * @param kb     Keyboard to type on.
+ * @param param  Ignored.
+ */
 void applesoft_keyboard_test(asdf_t *kb, uint8_t param)
 {
   (void) param;
