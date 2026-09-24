@@ -79,7 +79,8 @@ uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capac
 //
 static void asdf_ring_drop(asdf_ring_t *ring, uint8_t n)
 {
-  ring->dropped = (ring->dropped > (uint8_t) (UINT8_MAX - n)) ? UINT8_MAX : ring->dropped + n;
+  ring->dropped = (ring->dropped > (uint8_t) (UINT8_MAX - n)) ? (uint8_t) UINT8_MAX
+                                                              : (uint8_t) (ring->dropped + n);
 }
 
 // PROCEDURE: asdf_ring_store

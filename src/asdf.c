@@ -225,7 +225,7 @@ void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms) {
 // COMPLEXITY: 4
 //
 void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms) {
-    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? UINT8_MAX : (uint8_t)elapsed_ms;
+    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? (uint8_t)UINT8_MAX : (uint8_t)elapsed_ms;
 
     if (!elapsed) {
         return;
@@ -258,7 +258,7 @@ void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms) {
 // COMPLEXITY: 2
 //
 void asdf_update_r(asdf_t *kb, uint16_t elapsed_ms) {
-    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? UINT8_MAX : (uint8_t)elapsed_ms;
+    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? (uint8_t)UINT8_MAX : (uint8_t)elapsed_ms;
 
     if (elapsed) {
         asdf_tick_r(kb, elapsed);
