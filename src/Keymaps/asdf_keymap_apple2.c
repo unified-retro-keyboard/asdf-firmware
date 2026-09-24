@@ -25,37 +25,16 @@
 
 
 #include "asdf_print.h"
-#include "asdf_hook.h"
 #include "asdf_keymaps.h"
 #include "asdf_virtual.h"
 #include "asdf_modifiers.h"
 #include "asdf_keymap_apple2_add_map.h"
 #include "asdf_keymap_apple2.h"
+#include "asdf_keymap_apple2_maps.h"
 
-// PROCEDURE:
-// INPUTS:
-// OUTPUTS:
-//
-// DESCRIPTION:
-//
-// SIDE EFFECTS:
-//
-// NOTES:
-//
-// SCOPE:
-//
-// COMPLEXITY:
-//
 
-void apple2_id_message(void)
-{
-  asdf_print("[Keymap: Apple 2 (u/l case)]");
-}
-
-static const asdf_hook_binding_t FLASH apple2_hooks[] = {
-  { APPLESOFT_KEYBOARD_TEST, applesoft_keyboard_test },
-  { APPLE2_ID_MESSAGE, apple2_id_message },
-};
+// Printed by the KEYMAP_ID key.
+static const char FLASH apple2_id_message[] = "[Keymap: Apple 2 (u/l case)]";
 
 static const asdf_virtual_initializer_t FLASH apple2_outputs[] = {
   // Attach the physical POWER LED as the CAPS LED. Assign no triggered
@@ -85,8 +64,7 @@ const asdf_keymap_t FLASH apple2_keymap = {
   .cols = ASDF_APPLE2_NUM_COLS,
   .print_delay_ms = APPLE2_PRINT_DELAY,
   .flags = ASDF_KEYMAP_CAPS_ON,
-  .num_hooks = ASDF_NUM_ELEMENTS(apple2_hooks),
-  .hooks = apple2_hooks,
+  .id_message = apple2_id_message,
   .num_outputs = ASDF_NUM_ELEMENTS(apple2_outputs),
   .outputs = apple2_outputs,
 };

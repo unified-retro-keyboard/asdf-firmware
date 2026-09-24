@@ -2,11 +2,16 @@
 ** Keymap definition modules are in src/Keymaps
 ** Each keymap is described by one immutable descriptor
 *** const asdf_keymap_t FLASH mapname_keymap - keymap descriptor (asdf_keymaps.h)
-**** a keycode map for each modifier state (plain, shift, caps, ctrl)
-***** The keycode maps are in flash (ROM)
+**** a key matrix for each modifier state (plain, shift, caps, ctrl)
+***** The key matrices are in flash (ROM)
 ***** all maps share the descriptor's row and column count
+***** each key is an asdf_key_t: a press action and a release action, each an
+      action number (index into the action table) and a parameter
+      (asdf_actions.h). Sending a code is an action, so a key can send any
+      code 0x00-0xFF.
 **** the delay between system message characters
-**** hook bindings: table of { hook id, function }
+**** the ID message, printed by the KEYMAP_ID key action
+**** an optional action run at the start of each scan
 **** virtual output assignments: table of asdf_virtual_initializer_t
 ***** virtual device to physical device mapping
 ***** associated virtual device function on activate
@@ -14,6 +19,15 @@
 **** flags: start with CAPSLOCK on, start with negative strobe
 **** optional platform, for keymaps that need special scanning or output
 ** The descriptor and its tables are stored in flash
+** Key matrices are written in YAML (Keymaps/*_maps.yaml) and generated into C
+   at build time by src/asdf_keymap_gen.py (run with uv). The master keymap
+   file (Keymaps/asdf_keymap_<name>.c) includes the generated header and
+   assigns the named matrices to modifier states in its descriptor.
+** Actions
+*** The action table (asdf_action_table, 256 entries, in flash) maps each
+    action number to its function. Built-in actions come first; numbers from
+    ASDF_KEYMAP_ACTIONS on are keymap-provided actions, listed in
+    Keymaps/asdf_keymap_actions.h and .c. Unused entries do nothing.
 ** Keymap registry
 *** keymap_list.cmake lists each keymap as <name:number>
 *** The build generates a flash table of descriptor pointers by number
@@ -21,11 +35,12 @@
 
 ** Selecting a keymap (asdf_keymaps_switch)
 *** reset the architecture and all runtime state (maps, virtual outputs,
-    modifiers, repeat, hooks, platform)
-*** apply the descriptor, in field order: maps, print delay, hooks, virtual
+    modifiers, repeat, each-scan action, platform)
+*** apply the descriptor, in field order: maps, print delay, each-scan action, virtual
     outputs, flags, platform
-*** re-apply the configuration actions of held switches (keymap select,
-    strobe polarity, autorepeat select); other held keys are not re-activated
+*** re-apply the press actions of held keys that are configuration actions
+    (keymap select, strobe polarity, autorepeat select); other held keys are
+    not re-activated
 *** drive every output to its initial value (asdf_virtual_sync)
 
 

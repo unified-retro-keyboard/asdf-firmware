@@ -2,6 +2,9 @@ configure_file(${PROJECT_SRC_DIR}/Arch/asdf_arch_test.h ${CMAKE_CURRENT_BINARY_D
 configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.h.in ${CMAKE_CURRENT_BINARY_DIR}/asdf_keymap_setup.h COPYONLY)
 
 include(${CMAKE_SOURCE_DIR}/cmake/asdf_warnings.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
+
+asdf_generate_keymaps(test_keymaps_gen ${CMAKE_CURRENT_SOURCE_DIR}/test_keymaps.yaml)
 
 # Match the firmware's unsigned char (set by -funsigned-char on AVR, the default
 # on ARM) so host tests see the same char semantics.
@@ -35,7 +38,7 @@ add_library(asdf_core
   asdf_keymap_table.c
   ${PROJECT_SRC_DIR}/asdf.c
   ${PROJECT_SRC_DIR}/asdf_ring.c
-  ${PROJECT_SRC_DIR}/asdf_hook.c
+  ${PROJECT_SRC_DIR}/asdf_actions.c
   ${PROJECT_SRC_DIR}/asdf_keymaps.c
   ${PROJECT_SRC_DIR}/asdf_modifiers.c
   ${PROJECT_SRC_DIR}/asdf_physical.c
@@ -50,6 +53,7 @@ target_compile_options(asdf_core
   PRIVATE
   ${C_FLAGS}
   )
+add_dependencies(asdf_core test_keymaps_gen)
 
 target_include_directories(asdf_core
   PRIVATE
@@ -65,7 +69,9 @@ add_library(test_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/fake_platform.c
   ${CMAKE_CURRENT_SOURCE_DIR}/test_asdf_keymap_defs.c
   ${CMAKE_CURRENT_SOURCE_DIR}/asdf_keymap_table.c
+  ${ASDF_GENERATED_KEYMAP_SOURCES}
   )
+add_dependencies(test_helpers test_keymaps_gen)
 
 target_include_directories(test_helpers
   PRIVATE
@@ -101,6 +107,7 @@ function(setup_test testname)
     )
 
   target_link_libraries(${testname} unity asdf_core test_helpers)
+  add_dependencies(${testname} test_keymaps_gen)
 
   add_test(
     NAME ${testname}
@@ -121,7 +128,7 @@ setup_test(test_asdf_output)
 setup_test(test_asdf_actions)
 setup_test(test_asdf_print)
 setup_test(test_asdf_virtual)
-setup_test(test_asdf_hook)
+setup_test(test_asdf_descriptor)
 setup_test(test_keymap_lookup)
 setup_test(test_asdf)
 setup_test(test_asdf_characterization)

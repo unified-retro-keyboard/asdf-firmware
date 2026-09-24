@@ -1,7 +1,7 @@
 #ifndef ASDF_SIMAVR_IO_FAMILYA_H
 #define ASDF_SIMAVR_IO_FAMILYA_H
 
-/* Pin map for atmega328p / atmega168p / atmega88p.
+/* Pin map for atmega328p / atmega168p.
  * Source of truth: src/Arch/asdf_arch_atmega328p.h.
  * Duplicated here so the harness stays decoupled from ASDF source. */
 

@@ -58,17 +58,20 @@ void get_from_empty_ring_fails_without_writing(void)
   TEST_ASSERT_EQUAL_INT('z', code);
 }
 
-// A queued code equal to ASDF_INVALID_CODE is still returned as a code.
-void invalid_code_value_is_stored_like_any_code(void)
+// Every 8-bit value, including 0x00 and 0xFF, is stored like any code.
+void every_code_value_is_stored(void)
 {
   asdf_keycode_t storage[TEST_CAPACITY];
   asdf_ring_t ring;
   asdf_keycode_t code;
 
   asdf_ring_init(&ring, storage, TEST_CAPACITY);
-  asdf_ring_put(&ring, ASDF_INVALID_CODE);
+  asdf_ring_put(&ring, 0x00);
+  asdf_ring_put(&ring, 0xFF);
   TEST_ASSERT_TRUE(asdf_ring_get(&ring, &code));
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, code);
+  TEST_ASSERT_EQUAL_INT(0x00, code);
+  TEST_ASSERT_TRUE(asdf_ring_get(&ring, &code));
+  TEST_ASSERT_EQUAL_INT(0xFF, code);
 }
 
 void put_then_get_returns_same_code(void)
@@ -260,7 +263,7 @@ int main(void)
   RUN_TEST(init_rejects_zero_capacity);
   RUN_TEST(init_rejects_null_storage);
   RUN_TEST(get_from_empty_ring_fails_without_writing);
-  RUN_TEST(invalid_code_value_is_stored_like_any_code);
+  RUN_TEST(every_code_value_is_stored);
   RUN_TEST(put_then_get_returns_same_code);
   RUN_TEST(order_is_preserved_across_wraparound);
   RUN_TEST(overfill_keeps_first_codes_and_counts_drops);

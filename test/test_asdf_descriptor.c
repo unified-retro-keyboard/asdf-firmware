@@ -1,3 +1,7 @@
+// -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
+//
+// Tests for the keymap descriptor's optional platform and each-scan action.
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -9,15 +13,11 @@
 #include "asdf_modifiers.h"
 #include "asdf_keymaps.h"
 #include "asdf_repeat.h"
-#include "asdf_hook.h"
 #include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "test_asdf_keymap_defs.h"
 
-//ASDF_TEST_DECLARATIONS;
-
-// emulates arch_read_row function, used mainly to see that the read_row hook is
-// getting called.
+// emulates the arch row reader, to see that the platform's read_row is called.
 asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
   return (asdf_keycode_t) (row + 1);
@@ -64,7 +64,7 @@ void test_keymap_switch_restores_arch_platform(void)
 
 #define NUM_SCAN_TEST_REPS 101
 
-void test_each_scan_hook_is_executed_each_scan(void)
+void test_each_scan_action_runs_each_scan(void)
 {
 
   test_hook_clear();
@@ -84,6 +84,6 @@ int main(void)
   RUN_TEST(test_default_platform_is_arch_platform);
   RUN_TEST(test_keymap_can_install_platform);
   RUN_TEST(test_keymap_switch_restores_arch_platform);
-  RUN_TEST(test_each_scan_hook_is_executed_each_scan);
+  RUN_TEST(test_each_scan_action_runs_each_scan);
   return UNITY_END();
 }

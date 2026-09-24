@@ -11,6 +11,8 @@
 #include "asdf_keymaps.h"
 #include "test_asdf_keymap_defs.h"
 #include "asdf_repeat.h"
+#include "test_keymaps.h"
+#include "test_asdf_lib.h"
 
 #define A 'a'
 #define B 'b'
@@ -29,12 +31,9 @@ typedef struct {
   int32_t col;
 } coord_t;
 
-// Copies of the test keymap (index 0) that asdf_init() selects, used to find
-// key positions and expected codes.
-static const asdf_keycode_t test_PLAIN_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_PLAIN_MAP;
-static const asdf_keycode_t test_SHIFT_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_SHIFT_MAP;
-static const asdf_keycode_t test_CAPS_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CAPS_MAP;
-static const asdf_keycode_t test_CTRL_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CTRL_MAP;
+// The test key matrices (test_keymaps.h) of the keymap (index 0) that
+// asdf_init() selects are used to find key positions and expected codes. Keys
+// are identified by test_key_value(): a code, or TEST_ACTION(fn).
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
 
@@ -65,14 +64,14 @@ void tearDown(void)
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS);
 }
 
-coord_t *find_code(asdf_keycode_t code)
+coord_t *find_code(uint16_t code)
 {
   uint32_t done = 0;
   static coord_t location = { .row = -1, .col = -1 };
 
   for (uint32_t row = 0; !done && (row < TEST_NUM_ROWS); row++) {
     for (uint32_t col = 0; !done && (col < TEST_NUM_COLS); col++) {
-      if (test_PLAIN_matrix[row][col] == code) {
+      if (test_key_value(test_PLAIN_matrix[row][col]) == code) {
         done = 1;
         location.row = row;
         location.col = col;
@@ -83,22 +82,22 @@ coord_t *find_code(asdf_keycode_t code)
 }
 
 
-asdf_keycode_t shifted(asdf_keycode_t code)
+uint16_t shifted(uint16_t code)
 {
   coord_t *location = find_code(code);
-  return test_SHIFT_matrix[location->row][location->col];
+  return test_key_value(test_SHIFT_matrix[location->row][location->col]);
 }
 
-asdf_keycode_t caps(asdf_keycode_t code)
+uint16_t caps(uint16_t code)
 {
   coord_t *xy = find_code(code);
-  return test_CAPS_matrix[xy->row][xy->col];
+  return test_key_value(test_CAPS_matrix[xy->row][xy->col]);
 }
 
-asdf_keycode_t ctrl(asdf_keycode_t code)
+uint16_t ctrl(uint16_t code)
 {
   coord_t *xy = find_code(code);
-  return test_CTRL_matrix[xy->row][xy->col];
+  return test_key_value(test_CTRL_matrix[xy->row][xy->col]);
 }
 
 
@@ -110,25 +109,25 @@ void keyscan_delay(int32_t ticks)
 }
 
 
-void press_no_debounce(asdf_keycode_t code)
+void press_no_debounce(uint16_t code)
 {
   coord_t *location = find_code(code);
   key_matrix[location->row] |= (1 << location->col);
 }
 
-void release_no_debounce(asdf_keycode_t code)
+void release_no_debounce(uint16_t code)
 {
   coord_t *location = find_code(code);
   key_matrix[location->row] &= ~(1 << location->col);
 }
 
-void press(asdf_keycode_t code)
+void press(uint16_t code)
 {
   press_no_debounce(code);
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS);
 }
 
-void release(asdf_keycode_t code)
+void release(uint16_t code)
 {
   release_no_debounce(code);
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS);
@@ -172,7 +171,7 @@ void pressing_a_gives_a(void)
 // pressing SHIFT+A gives 'A'
 void pressing_shift_a_gives_shifted_a(void)
 {
-  press(ACTION_SHIFT);
+  press(TEST_ACTION(ACTION_SHIFT));
   press(key_a);
   TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (int32_t) asdf_next_code());
 }
@@ -180,8 +179,8 @@ void pressing_shift_a_gives_shifted_a(void)
 // pressing CAPS+A gives 'A'
 void pressing_caps_a_gives_caps_a(void)
 {
-  press(ACTION_CAPS);
-  release(ACTION_CAPS);
+  press(TEST_ACTION(ACTION_CAPS));
+  release(TEST_ACTION(ACTION_CAPS));
   press(key_a);
 
   TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (int32_t) asdf_next_code());
@@ -190,7 +189,7 @@ void pressing_caps_a_gives_caps_a(void)
 // pressing CTRL+A gives 0x01 (Ctrl-A)
 void pressing_ctrl_a_gives_ctrl_a(void)
 {
-  press(ACTION_CTRL);
+  press(TEST_ACTION(ACTION_CTRL));
   press(key_a);
   TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (int32_t) asdf_next_code());
 }
@@ -198,7 +197,7 @@ void pressing_ctrl_a_gives_ctrl_a(void)
 // pressing REPT+A repeats 'a'
 void pressing_rept_a_repeats_a(void)
 {
-  press(ACTION_REPEAT);
+  press(TEST_ACTION(ACTION_REPEAT));
   press(key_a);
 
   TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
@@ -218,8 +217,8 @@ void pressing_rept_a_repeats_a(void)
 // pressing REPT+SHIFT+A repeats 'A'
 void pressing_shift_rept_a_repeats_shifted_a(void)
 {
-  press(ACTION_REPEAT);
-  press(ACTION_SHIFT);
+  press(TEST_ACTION(ACTION_REPEAT));
+  press(TEST_ACTION(ACTION_SHIFT));
   press(key_a);
 
   TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (uint32_t) asdf_next_code());
@@ -239,8 +238,8 @@ void pressing_shift_rept_a_repeats_shifted_a(void)
 // pressing REPT+CAPS+A repeats 'A'
 void pressing_caps_rept_a_repeats_caps_a(void)
 {
-  press(ACTION_REPEAT);
-  press(ACTION_CAPS);
+  press(TEST_ACTION(ACTION_REPEAT));
+  press(TEST_ACTION(ACTION_CAPS));
 
   press(key_a);
 
@@ -261,8 +260,8 @@ void pressing_caps_rept_a_repeats_caps_a(void)
 // pressing REPT+CTRL+A repeats CTRL-A
 void pressing_ctrl_rept_a_repeats_ctrl_a(void)
 {
-  press(ACTION_REPEAT);
-  press(ACTION_CTRL);
+  press(TEST_ACTION(ACTION_REPEAT));
+  press(TEST_ACTION(ACTION_CTRL));
 
   press(key_a);
   TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) asdf_next_code());
@@ -452,7 +451,7 @@ void holding_a_then_holding_b_autorepeats_a_then_autorepeats_b(void)
 // Pressing and holding 'A' then holding 'B' with repeat key held repeats 'A' then 'B'
 void repeating_with_a_then_adding_b_repeats_a_then_repeats_b(void)
 {
-  press(ACTION_REPEAT);
+  press(TEST_ACTION(ACTION_REPEAT));
   press(key_a);
 
   TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());

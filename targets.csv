@@ -10,7 +10,6 @@
 test,test,no
 atmega328p,avr,yes
 atmega168p,avr,yes
-atmega88p,avr,no
 atmega2560,avr,yes
 atmega1280,avr,yes
 atmega640,avr,no

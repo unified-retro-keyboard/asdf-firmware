@@ -1,0 +1,47 @@
+# Key matrices for the classic keymaps. The master keymap files assign these
+# matrices to modifier states. See src/asdf_keymap_gen.py for the format.
+
+include: [asdf_keymap_classic.h, asdf_keymap_actions.h, asdf_ascii.h, asdf_virtual.h]
+rows: CLASSIC_NUM_ROWS
+cols: CLASSIC_NUM_COLS
+maps:
+  classic_plain_matrix:
+    0: [~, KEY_SHIFT, KEY_SHIFT, ~, $ASCII_ESC, $ASCII_TAB, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [$ASCII_DEL, 'p', ';', '/', $ASCII_SPACE, 'z', 'a', 'q']
+    2: [~, $ASCII_COMMA, 'm', 'n', 'b', 'v', 'c', 'x']
+    3: [~, 'k', 'j', 'h', 'g', 'f', 'd', 's']
+    4: [~, 'i', 'u', 'y', 't', 'r', 'e', 'w']
+    5: [~, KEY_REPEAT, KEY_CAPS, $ASCII_CR, $ASCII_LF, 'o', 'l', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', $ASCII_ZERO, '9', '8']
+    7: [$ASCII_AT, '7', '6', '5', '4', '3', '2', '1']
+    ASDF_ARCH_DIPSWITCH_ROW: &dip [KEY_MAPSEL(0), KEY_MAPSEL(1), KEY_MAPSEL(2), KEY_MAPSEL(3), ~, ~, KEY_STROBE_POLARITY, KEY_AUTOREPEAT]
+  classic_shift_matrix:
+    0: [~, KEY_SHIFT, KEY_SHIFT, ~, $ASCII_ESC, $ASCII_TAB, KEY_CTRL, $ASCII_VERT_BAR]
+    1: [$ASCII_DEL, 'P', '+', '?', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [KEY_VIRTUAL(CLASSIC_VIRTUAL_CLR_SCR), '<', 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [~, KEY_REPEAT, KEY_CAPS, $ASCII_CR, $ASCII_LF, 'O', 'L', '>']
+    6: [$ASCII_TILDE, $ASCII_RT_CURLY_BRACE, $ASCII_LT_CURLY_BRACE, '=', '*', $ASCII_ZERO, $ASCII_RT_PAREN, $ASCII_LT_PAREN]
+    7: [$ASCII_GRAVE_ACCENT, $ASCII_SINGLE_QUOTE, '&', '%', '$', '#', $ASCII_DOUBLE_QUOTE, '!']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  classic_caps_matrix:
+    0: [~, KEY_SHIFT, KEY_SHIFT, ~, $ASCII_ESC, $ASCII_TAB, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [$ASCII_DEL, 'P', ';', '/', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, $ASCII_COMMA, 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [~, KEY_REPEAT, KEY_CAPS, $ASCII_CR, $ASCII_LF, 'O', 'L', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', $ASCII_ZERO, '9', '8']
+    7: [$ASCII_AT, '7', '6', '5', '4', '3', '2', '1']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  classic_ctrl_matrix:
+    0: [~, KEY_SHIFT, KEY_SHIFT, ~, $ASCII_ESC, $ASCII_TAB, KEY_CTRL, 0x1C]
+    1: [~, $ASCII_CTRL_P, ~, ~, $ASCII_SPACE, $ASCII_CTRL_Z, $ASCII_CTRL_A, $ASCII_CTRL_Q]
+    2: [KEY_VIRTUAL(CLASSIC_VIRTUAL_RESET), $ASCII_COMMA, $ASCII_CTRL_M, $ASCII_CTRL_N, $ASCII_CTRL_B, $ASCII_CTRL_V, $ASCII_CTRL_C, $ASCII_CTRL_X]
+    3: [~, $ASCII_CTRL_K, $ASCII_CTRL_J, $ASCII_CTRL_H, $ASCII_CTRL_G, $ASCII_CTRL_F, $ASCII_CTRL_D, $ASCII_CTRL_S]
+    4: [~, $ASCII_CTRL_I, $ASCII_CTRL_U, $ASCII_CTRL_Y, $ASCII_CTRL_T, $ASCII_CTRL_R, $ASCII_CTRL_E, $ASCII_CTRL_W]
+    5: [~, KEY_REPEAT, KEY_CAPS, $ASCII_CR, $ASCII_LF, $ASCII_CTRL_O, $ASCII_CTRL_L]
+    6: [~, 0x1D, $ASCII_ESC, ~, ~, KEY_KEYMAP_ID, KEY_APPLESOFT_KEYBOARD_TEST]
+    7: [$ASCII_NULL]
+    ASDF_ARCH_DIPSWITCH_ROW: *dip

@@ -31,7 +31,6 @@
 #if !defined(ASDF_KEYMAP_SOL_H)
 #define ASDF_KEYMAP_SOL_H
 #include "asdf.h"
-#include "asdf_keymap_defs_dipswitch.h"
 
 // Edit the number of rows and columns used in this map. If the number is less
 // than the maxium, the unused elements will be initialized to 0.
@@ -68,14 +67,12 @@
 
 // Notes:
 //
-// 1) To ensure consistent DIP switch operation within the keymap, a
-//    ASDF_SOL_DIP_SWITCHES macro is defined. Keeping the ACTION_MAPSEL0-3
-//    definitions in positions 0-3 ensures consistent map selection among all
-//    keymaps.
+// 1) The DIP switch row (ASDF_ARCH_DIPSWITCH_ROW) is the same in every
+//    keymap's YAML matrices. Keeping the MAPSEL 0-3 keys in positions 0-3
+//    ensures consistent map selection among all keymaps.
 
 
 #define SOL_PRINT_DELAY 40 // msec
-#define SOL_ID_MESSAGE_HOOK ASDF_HOOK_USER_10
 
 #define SOL_NUM_ROWS 13
 #define SOL_NUM_COLS 8
@@ -87,17 +84,8 @@
 #define SOL_KBD_LED_OFF 0
 
 // The SOL manual (sec. 7.7.8) indicates shiftlock locks SHIFT on, and SHIFT
-// returns to unshifted. For Toggle behavior, change to ACTION_SHIFTLOCK_TOGGLE.
-#define SOL_KBD_SHIFTLOCK_ACTION ACTION_SHIFTLOCK_ON
-
-
-// The weird C preprocessor expansion behavior requires one dereference for each
-// expansion.
-#define SOL_KBD_VIRTUAL_SUB1(SOL_VDEVICE) ACTION_ ## SOL_VDEVICE
-#define SOL_KBD_VIRTUAL_SUB(SOL_VDEVICE) SOL_KBD_VIRTUAL_SUB1(SOL_VDEVICE)
-#define SOL_KBD_LOCAL_ACTION SOL_KBD_VIRTUAL_SUB(SOL_KBD_VLOCAL)
-#define SOL_KBD_RESET_ACTION SOL_KBD_VIRTUAL_SUB(SOL_KBD_VRESET)
-#define SOL_KBD_BREAK_ACTION SOL_KBD_VIRTUAL_SUB(SOL_KBD_VBREAK)
+// returns to unshifted. For Toggle behavior, change SHIFTLOCK_ON to
+// SHIFTLOCK_TOGGLE in asdf_keymap_sol_maps.yaml.
 
 #define SOL_ASCII_LOAD 0x8C
 #define SOL_ASCII_MODE_SELECT 0x80
@@ -118,7 +106,6 @@
 #define SOL_KBD_TTLOUT_BREAK PHYSICAL_OUT2
 #define SOL_KBD_TTLOUT_LOCAL PHYSICAL_OUT1
 
-#define ASDF_SOL_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
 
 #endif /* !defined (ASDF_KEYMAP_SOL_H) */

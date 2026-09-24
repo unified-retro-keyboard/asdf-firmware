@@ -33,7 +33,6 @@
 #if !defined(ASDF_KEYMAP_DEFS_ACE1000_H)
 #define ASDF_KEYMAP_DEFS_ACE1000_H
 
-#include "asdf_hook.h"
 
 // Edit the number of rows and columns used in this map. If the number is less
 // than the maxium, the unused elements will be initialized to 0.
@@ -41,15 +40,12 @@
 #define ACE1000_NUM_ROWS 10 // DIP switches are row 8 (zero based)
 #define ACE1000_NUM_COLS 8
 
-#define ACE1000_ACTION_BREAK ACTION_NOTHING
 
 #define ACE1000_VIRTUAL_RESET VOUT1
-#define ACE1000_ACTION_RESET ACTION_VOUT1
 #define ACE1000_RESET_OUTPUT PHYSICAL_OUT3_OPEN_HI
 #define ACE1000_RESET_ACTIVE_VALUE 0
 
 #define ACE1000_VIRTUAL_CLR_SCR VOUT2
-#define ACE1000_ACTION_CLEAR ACTION_VOUT2
 #define ACE1000_CLR_SCR_OUT PHYSICAL_OUT1_OPEN_LO
 #define ACE1000_CLR_SCR_ACTIVE_VALUE 1
 
@@ -60,8 +56,6 @@
 #define ACE1000_CAPS_LED PHYSICAL_LED3
 #define ACE1000_CAPS_LED_INIT_VALUE 0
 
-#define ACE1000_ID_MESSAGE_HOOK ASDF_HOOK_USER_10
-#define APPLESOFT_KEYBOARD_TEST_HOOK ASDF_HOOK_USER_9
 
 #define ASDF_ACE1000_PRINT_SPEED 40
 

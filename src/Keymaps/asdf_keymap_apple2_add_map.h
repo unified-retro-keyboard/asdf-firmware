@@ -31,19 +31,16 @@
 #if !defined(ASDF_KEYMAP_APPLE_ADD_MAP_H)
 #define ASDF_KEYMAP_APPLE_ADD_MAP_H
 
-#include "asdf_keymap_defs_dipswitch.h"
 #include "asdf_arch.h"
 #include "asdf_modifiers.h"
 
 #define ASDF_APPLE2_NUM_ROWS 9 // DIP switches are row 8 (zero-based)
 #define ASDF_APPLE2_NUM_COLS 8
 
-#define APPLE_ACTION_RESET ACTION_VOUT1
 #define APPLE_VIRTUAL_RESET VOUT1
 #define APPLE_RESET_OUTPUT PHYSICAL_OUT3_OPEN_HI
 #define APPLE_RESET_ACTIVE_VALUE 0
 
-#define APPLE_ACTION_CLEAR ACTION_VOUT2
 #define APPLE_VIRTUAL_CLR_SCR VOUT2
 #define APPLE_CLR_SCR_OUTPUT PHYSICAL_OUT1_OPEN_LO
 #define APPLE_CLR_SCR_ACTIVE_VALUE 1
@@ -56,24 +53,16 @@
 #define APPLE_DISABLED_LED PHYSICAL_LED3
 #define APPLE_DISABLED_INIT_VALUE 0
 
-#define ASDF_APPLE2_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
 #define APPLE_LEFT_ARROW ASCII_CTRL_H
 #define APPLE_RIGHT_ARROW ASCII_CTRL_U
 
 // Keycode matrices, one per modifier state, used by the Apple II keymap
 // descriptors.
-typedef asdf_keycode_t apple_keycode_matrix_t[ASDF_APPLE2_NUM_ROWS][ASDF_APPLE2_NUM_COLS];
 
-extern const FLASH apple_keycode_matrix_t apple_plain_matrix;
-extern const FLASH apple_keycode_matrix_t apple_shift_matrix;
-extern const FLASH apple_keycode_matrix_t apple_caps_shift_matrix;
-extern const FLASH apple_keycode_matrix_t apple_caps_matrix;
-extern const FLASH apple_keycode_matrix_t apple_ctrl_matrix;
 
 
 // function prototypes
-void applesoft_keyboard_test(void);
 
 
 #endif /* !defined (ASDF_KEYMAP_APPLE_ADD_MAP_H) */

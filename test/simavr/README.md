@@ -67,9 +67,9 @@ regression cases per target:
 | ctest case suffix | runner `--mode` | what it asserts |
 |---|---|---|
 | `simavr_<tgt>_<km>` | `events` (default) | A small set of atomic keypresses with optional shift/ctrl modifier; one expected ASCII byte per press. |
-| `simavr_<tgt>_<km>_identity` | `identity` | Presses the keymap's ID-message trigger key (typically CTRL+0, which fires ACTION_FN_10 / ASDF_HOOK_USER_10) and asserts the exact byte sequence printed in response. |
+| `simavr_<tgt>_<km>_identity` | `identity` | Presses the keymap's ID-message trigger key (typically CTRL+0, bound to the KEYMAP_ID key action) and asserts the exact byte sequence printed in response. |
 | `simavr_<tgt>_<km>_string` | `string` | A typed sentence (`<shift>t</shift>his is a <caps>test<caps> of the <mapname> keymap.<ctrl>m</ctrl>`) that exercises shift held, shift released mid-stream, a sticky caps-toggle, and ctrl held in one capture. |
-| `simavr_<tgt>_<km>_latency` | `latency` | Presses the keymap's first unmodified event key 20 times, each shifted by a fraction of the 1 ms scan tick, and reports the minimum and maximum time from press to the first strobe edge. Fails above 15 ms; with elapsed-time scanning the worst case is 13.2 ms (sol on atmega328p) against 10 ms of debounce. Also checks each output strobe is 10-20 us wide (nominally 10 us). The atmega1280 image is measured on the atmega2560 model (see Simulator limitations). |
+| `simavr_<tgt>_<km>_latency` | `latency` | Presses the keymap's first unmodified event key 20 times, each shifted by a fraction of the 1 ms scan tick, and reports the minimum and maximum time from press to the first strobe edge. Fails above 15 ms; with elapsed-time scanning the worst case is 13.2 ms (sol on atmega328p) against 10 ms of debounce. Also checks each output strobe is 10-20 us wide (nominally 10 us). |
 | `simavr_<tgt>_sol_out2` | `out2` | Presses Sol-20 BREAK (6,0) and asserts OUT2 produced exactly one pulse (two edges), 47-52 ms wide (nominally 50 ms, timed by the 1 ms tick), while LED2 did not change. Sol-only: it is the one keymap routing a virtual output to `PHYSICAL_OUT2`. |
 | `simavr_<tgt>_sol_repeat` | `repeat` | Holds each of sol row 6 columns 1-7 in turn, requires actual repeat activity, and asserts the emission count agrees across columns. |
 
@@ -119,10 +119,12 @@ Consequences for the tests:
   each key and modifier (`SIM_KEY_WAIT_MS` and `SIM_SETTLE_MS` in
   `asdf_simavr_runner.c`, 50 ms each). They check which bytes a key produces,
   not how quickly.
-- `latency` mode is the only timing measurement. For atmega1280, the latency
-  cases run the atmega1280 image on the atmega2560 model, so they measure the
-  firmware rather than the simulator (the same image measured up to 31.7 ms
-  on the atmega1280 model and 13 ms on the atmega2560 model).
+- `latency` mode is the only timing measurement, and runs each image on its
+  own model. The atmega1280 image was once measured on the register-compatible
+  atmega2560 model instead, but the two parts push return addresses of
+  different sizes, so that stopped working as the code changed. Its latency on
+  the atmega1280 model is now 10-11 ms; if the model's distortion returns, the
+  latency cases for atmega1280 are the ones to watch.
 
 ## Add a new keymap test
 

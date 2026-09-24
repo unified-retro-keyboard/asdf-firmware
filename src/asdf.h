@@ -27,13 +27,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// Define the code at which keyboard actions begin. Codes below this value are
-// values to be transmitted to the host machine. Codes above this value are
-// actions to be performed.
-#define ASDF_ACTION 0xA0 // SOL-20 uses codes 0x80-0x9A
-
-// an action code is not a valid keycode.
-#define ASDF_INVALID_CODE ASDF_ACTION
+// Returned by asdf_next_code() when no code is ready. Every 8-bit value is a
+// valid code, so this is outside their range.
+#define ASDF_INVALID_CODE 0x100
 
 // define ASDF_MAX_COLS to fit in asdf_cols_t
 #define ASDF_MAX_COLS 8
@@ -43,69 +39,12 @@
 // row, change cols_t to uint16_t and increase ASDF_NUM_COLS to 16.
 typedef uint8_t asdf_cols_t;
 
-// ASCII keycodes are 7 bits. An 8-bit datatype encodes ASCII, plus a flag for a
-// key function. For longer codes, such as extended ASCII or unicode, change
-// keycode_t appropriately, and also change ASDF_ACTION so that the action key
-// codes (enumerated in action_t) do not conflict with the encoding scheme.
+// A code sent to the host: any 8-bit value. Key actions are separate from
+// codes (see asdf_actions.h).
 typedef uint8_t asdf_keycode_t;
 
 // One keyboard: all of its changeable state (defined in asdf_keyboard.h).
 typedef struct asdf_keyboard asdf_t;
-
-
-// This typedef enumerates the valid ACTIONS than can be specified in a keymap.
-typedef enum {
-  ACTION_NOTHING = ASDF_ACTION,
-  ACTION_SHIFT,
-  ACTION_SHIFTLOCK_ON,
-  ACTION_SHIFTLOCK_TOGGLE,
-  ACTION_CAPS,
-  ACTION_CTRL,
-  ACTION_REPEAT,
-  ACTION_HERE_IS,
-  ACTION_MAPSEL_0,
-  ACTION_MAPSEL_1,
-  ACTION_MAPSEL_2,
-  ACTION_MAPSEL_3,
-  ACTION_AUTOREPEAT_SELECT,
-  ACTION_STROBE_POLARITY_SELECT,
-  ACTION_VLED1,
-  ACTION_VLED2,
-  ACTION_VLED3,
-  ACTION_VOUT1,
-  ACTION_VOUT2,
-  ACTION_VOUT3,
-  ACTION_VOUT4,
-  ACTION_VOUT5,
-  ACTION_VOUT6,
-  ACTION_FN_1,
-  ACTION_FN_2,
-  ACTION_FN_3,
-  ACTION_FN_4,
-  ACTION_FN_5,
-  ACTION_FN_6,
-  ACTION_FN_7,
-  ACTION_FN_8,
-  ACTION_FN_9,
-  ACTION_FN_10,
-  ACTION_FN_11,
-  RESERVED_1,
-  RESERVED_2,
-  RESERVED_3,
-  RESERVED_4,
-  RESERVED_5,
-  RESERVED_6,
-  RESERVED_7,
-  RESERVED_8,
-  RESERVED_9,
-  RESERVED_10,
-  RESERVED_11,
-  RESERVED_12,
-  RESERVED_13,
-  RESERVED_14,
-  RESERVED_15,
-  RESERVED_16,
-} action_t;
 
 
 struct asdf_platform; // asdf_platform.h
@@ -175,15 +114,15 @@ int asdf_putc(char c, FILE *stream);
 
 // PROCEDURE: asdf_next_code
 // INPUTS: none
-// OUTPUTS: (asdf_keycode_t) returns next value in buffer. If both buffers are
-// empty, the code ASDF_INVALID_CODE is returned.
+// OUTPUTS: returns the next code in the buffers, or ASDF_INVALID_CODE if none
+// is ready.
 // DESCRIPTION: Checks the message buffer, and returns a character
 // if present.  Otherwise, return the next code in the keycode
 // buffer.
 // NOTES: A delay is enforced for system messages, to reduce the risk of dropped
 // characters with unbuffered polling hosts. No delay is needed for typed
 // keycodes, as these are generated at human speeds.
-asdf_keycode_t asdf_next_code(void);
+uint16_t asdf_next_code(void);
 
 // PROCEDURE: asdf_set_print_delay
 // INPUTS: (uint8_t) delay_ms

@@ -50,4 +50,7 @@ void asdf_print_flash(const char *str);
 // in flash, not copied to RAM, so the argument must be a string literal.
 #define asdf_print(literal) asdf_print_flash(FLASH_STRING(literal))
 
+// Prints a string literal, stored in flash, to the keyboard kb.
+#define asdf_print_r(kb, literal) asdf_print_flash_r((kb), FLASH_STRING(literal))
+
 #endif /* !defined (ASDF_PRINT_H) */

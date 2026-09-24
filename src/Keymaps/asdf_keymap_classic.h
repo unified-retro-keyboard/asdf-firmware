@@ -31,7 +31,6 @@
 #if !defined(ASDF_KEYMAP_DEFS_CLASSIC_H)
 #define ASDF_KEYMAP_DEFS_CLASSIC_H
 
-#include "asdf_hook.h"
 
 // Edit the number of rows and columns used in this map. If the number is less
 // than the maxium, the unused elements will be initialized to 0.
@@ -39,15 +38,12 @@
 #define CLASSIC_NUM_ROWS 9 // DIP switches are row 8 (zero based)
 #define CLASSIC_NUM_COLS 8
 
-#define CLASSIC_ACTION_BREAK ACTION_NOTHING
 
 #define CLASSIC_VIRTUAL_RESET VOUT1
-#define CLASSIC_ACTION_RESET ACTION_VOUT1
 #define CLASSIC_RESET_OUTPUT PHYSICAL_OUT3_OPEN_HI
 #define CLASSIC_RESET_ACTIVE_VALUE 0
 
 #define CLASSIC_VIRTUAL_CLR_SCR VOUT2
-#define CLASSIC_ACTION_CLEAR ACTION_VOUT2
 #define CLASSIC_CLR_SCR_OUT PHYSICAL_OUT1_OPEN_LO
 #define CLASSIC_CLR_SCR_ACTIVE_VALUE 1
 
@@ -58,8 +54,6 @@
 #define CLASSIC_CAPS_LED PHYSICAL_LED3
 #define CLASSIC_CAPS_LED_INIT_VALUE 0
 
-#define CLASSIC_ID_MESSAGE_HOOK ASDF_HOOK_USER_10
-#define APPLESOFT_KEYBOARD_TEST_HOOK ASDF_HOOK_USER_9
 
 #define ASDF_CLASSIC_PRINT_SPEED 40
 
