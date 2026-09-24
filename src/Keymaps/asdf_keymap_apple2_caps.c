@@ -30,15 +30,10 @@
 #include "asdf_modifiers.h"
 #include "asdf_keymap_apple2_add_map.h"
 #include "asdf_keymap_apple2_caps.h"
+#include "asdf_keymap_apple2_maps.h"
 
-void apple2_caps_id_message(void) {
-  asdf_print("[Keymap: Apple 2 CAPS]");
-}
-
-static const asdf_hook_binding_t FLASH apple2_caps_hooks[] = {
-  { APPLESOFT_KEYBOARD_TEST, applesoft_keyboard_test },
-  { APPLE2_CAPS_ID_MESSAGE, apple2_caps_id_message },
-};
+// Printed by the KEYMAP_ID key.
+static const char FLASH apple2_caps_id_message[] = "[Keymap: Apple 2 CAPS]";
 
 static const asdf_virtual_initializer_t FLASH apple2_caps_outputs[] = {
   // Turn the POWER LED on and don't assign to any function
@@ -65,8 +60,7 @@ const asdf_keymap_t FLASH apple2_caps_keymap = {
   .rows = ASDF_APPLE2_NUM_ROWS,
   .cols = ASDF_APPLE2_NUM_COLS,
   .print_delay_ms = APPLE2_PRINT_DELAY,
-  .num_hooks = ASDF_NUM_ELEMENTS(apple2_caps_hooks),
-  .hooks = apple2_caps_hooks,
+  .id_message = apple2_caps_id_message,
   .num_outputs = ASDF_NUM_ELEMENTS(apple2_caps_outputs),
   .outputs = apple2_caps_outputs,
 };

@@ -1,0 +1,63 @@
+# Key matrices for the sol keymaps. The master keymap files assign these
+# matrices to modifier states. See src/asdf_keymap_gen.py for the format.
+
+include: [asdf_keymap_sol.h, asdf_keymap_actions.h, asdf_ascii.h, asdf_virtual.h]
+rows: ASDF_SOL_NUM_ROWS
+cols: ASDF_SOL_NUM_COLS
+maps:
+  sol_plain_map:
+    0: [KEY_CTRL, KEY_SHIFTLOCK_ON, 'a', 's', 'd', 'f', 'g', 'h']
+    1: ['j', 'k', 'l', ';', ':', $ASCII_DEL, KEY_REPEAT, KEY_CTRL]
+    2: [KEY_CAPS, KEY_SHIFT, 'z', 'x', 'c', 'v', 'b', 'n']
+    3: ['m', $ASCII_COMMA, $ASCII_PERIOD, '/', KEY_SHIFT, $SOL_ASCII_MODE_SELECT]
+    4: [$ASCII_ESC, '1', '2', '3', '4', '5', '6', '7']
+    5: ['8', '9', $ASCII_ZERO, '-', '^', $ASCII_LT_SQUARE_BRACE, $ASCII_BACKSLASH, $ASCII_RT_SQUARE_BRACE]
+    6: [KEY_VIRTUAL(SOL_KBD_VBREAK), $ASCII_TAB, 'q', 'w', 'e', 'r', 't', 'y']
+    7: ['u', 'i', 'o', 'p', $ASCII_AT, $ASCII_CR, $ASCII_LF, $SOL_ASCII_LOAD]
+    9: [KEY_VIRTUAL(SOL_KBD_VLOCAL), $SOL_ASCII_UP_ARROW, $SOL_ASCII_LT_ARROW, $ASCII_SPACE, $SOL_ASCII_RT_ARROW, $SOL_ASCII_DN_ARROW, $SOL_ASCII_HOME, $SOL_ASCII_CLEAR]
+    10: ['-', '7', '*', '8', '/', '9']
+    11: ['4', '1', '5', '2', '6', '3']
+    12: ['0', $ASCII_PERIOD, '+']
+    ASDF_ARCH_DIPSWITCH_ROW: &dip [KEY_MAPSEL(0), KEY_MAPSEL(1), KEY_MAPSEL(2), KEY_MAPSEL(3), ~, ~, KEY_STROBE_POLARITY, KEY_AUTOREPEAT]
+  sol_shift_map:
+    0: [KEY_CTRL, KEY_SHIFTLOCK_ON, 'A', 'S', 'D', 'F', 'G', 'H']
+    1: ['J', 'K', 'L', '+', '*', $ASCII_UNDERSCORE, KEY_REPEAT, KEY_CTRL]
+    2: [KEY_CAPS, KEY_SHIFT, 'Z', 'X', 'C', 'V', 'B', 'N']
+    3: ['M', '<', '>', '?', KEY_SHIFT, $SOL_ASCII_MODE_SELECT]
+    4: [$ASCII_ESC, '!', $ASCII_DOUBLE_QUOTE, '#', '$', '%', '&', $ASCII_SINGLE_QUOTE]
+    5: [$ASCII_LT_PAREN, $ASCII_RT_PAREN, $ASCII_SPACE, '=', $ASCII_TILDE, $ASCII_LT_CURLY_BRACE, $ASCII_VERT_BAR, $ASCII_RT_CURLY_BRACE]
+    6: [KEY_VIRTUAL(SOL_KBD_VBREAK), $ASCII_TAB, 'Q', 'W', 'E', 'R', 'T', 'Y']
+    7: ['U', 'I', 'O', 'P', $ASCII_GRAVE_ACCENT, $ASCII_CR, $ASCII_LF, $SOL_ASCII_LOAD]
+    9: [KEY_VIRTUAL(SOL_KBD_VLOCAL), $SOL_ASCII_UP_ARROW, $SOL_ASCII_LT_ARROW, $ASCII_SPACE, $SOL_ASCII_RT_ARROW, $SOL_ASCII_DN_ARROW, $SOL_ASCII_HOME, $SOL_ASCII_CLEAR]
+    10: ['-', '7', '*', '8', '/', '9']
+    11: ['4', '1', '5', '2', '6', '3']
+    12: ['0', $ASCII_PERIOD, '+']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  sol_caps_map:
+    0: [KEY_CTRL, KEY_SHIFTLOCK_ON, 'A', 'S', 'D', 'F', 'G', 'H']
+    1: ['J', 'K', 'L', ';', ':', $ASCII_DEL, KEY_REPEAT, KEY_CTRL]
+    2: [KEY_CAPS, KEY_SHIFT, 'Z', 'X', 'C', 'V', 'B', 'N']
+    3: ['M', $ASCII_COMMA, $ASCII_PERIOD, '/', KEY_SHIFT, $SOL_ASCII_MODE_SELECT]
+    4: [$ASCII_ESC, '1', '2', '3', '4', '5', '6', '7']
+    5: ['8', '9', $ASCII_ZERO, '-', '^', $ASCII_LT_SQUARE_BRACE, $ASCII_BACKSLASH, $ASCII_RT_SQUARE_BRACE]
+    6: [KEY_VIRTUAL(SOL_KBD_VBREAK), $ASCII_TAB, 'Q', 'W', 'E', 'R', 'T', 'Y']
+    7: ['U', 'I', 'O', 'P', $ASCII_AT, $ASCII_CR, $ASCII_LF, $SOL_ASCII_LOAD]
+    9: [KEY_VIRTUAL(SOL_KBD_VLOCAL), $SOL_ASCII_UP_ARROW, $SOL_ASCII_LT_ARROW, $ASCII_SPACE, $SOL_ASCII_RT_ARROW, $SOL_ASCII_DN_ARROW, $SOL_ASCII_HOME, $SOL_ASCII_CLEAR]
+    10: ['-', '7', '*', '8', '/', '9']
+    11: ['4', '1', '5', '2', '6', '3']
+    12: ['0', $ASCII_PERIOD, '+']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  sol_ctrl_map:
+    0: [KEY_CTRL, KEY_SHIFTLOCK_ON, $ASCII_CTRL_A, $ASCII_CTRL_S, $ASCII_CTRL_D, $ASCII_CTRL_F, $ASCII_CTRL_G, $ASCII_CTRL_H]
+    1: [$ASCII_CTRL_J, $ASCII_CTRL_K, $ASCII_CTRL_L, $ASCII_VT, $ASCII_LF, $ASCII_DEL, KEY_VIRTUAL(SOL_KBD_VRESET), KEY_CTRL]
+    2: [KEY_CAPS, KEY_SHIFT, $ASCII_CTRL_Z, $ASCII_CTRL_X, $ASCII_CTRL_C, $ASCII_CTRL_V, $ASCII_CTRL_B, $ASCII_CTRL_N]
+    3: [$ASCII_CTRL_M, $ASCII_FF, $ASCII_SO, $ASCII_SI, KEY_SHIFT, $SOL_ASCII_MODE_SELECT]
+    4: [$ASCII_ESC, $ASCII_SOH, $ASCII_STX, $ASCII_ETX, $ASCII_EOT, $ASCII_ENQ, $ASCII_ACK, $ASCII_BEL]
+    5: [$ASCII_BS, $ASCII_TAB, KEY_KEYMAP_ID, $ASCII_CR, $ASCII_RS, $ASCII_ESC, $ASCII_FS, $ASCII_GS]
+    6: [KEY_VIRTUAL(SOL_KBD_VBREAK), $ASCII_TAB, $ASCII_CTRL_Q, $ASCII_CTRL_W, $ASCII_CTRL_E, $ASCII_CTRL_R, $ASCII_CTRL_T, $ASCII_CTRL_Y]
+    7: [$ASCII_CTRL_U, $ASCII_CTRL_I, $ASCII_CTRL_O, $ASCII_CTRL_P, $ASCII_NULL, $ASCII_CR, $ASCII_LF, $SOL_ASCII_LOAD]
+    9: [KEY_VIRTUAL(SOL_KBD_VLOCAL), $SOL_ASCII_UP_ARROW, $SOL_ASCII_LT_ARROW, $ASCII_SPACE, $SOL_ASCII_RT_ARROW, $SOL_ASCII_DN_ARROW, $SOL_ASCII_HOME, $SOL_ASCII_CLEAR]
+    10: ['-', '7', '*', '8', '/', '9']
+    11: ['4', '1', '5', '2', '6', '3']
+    12: ['0', $ASCII_PERIOD, '+']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip

@@ -8,8 +8,8 @@
 // Single-keyboard API. The keyboard core keeps no state of its own: every
 // operation takes the keyboard (asdf_t) or module state it acts on (the "_r"
 // functions). This file owns one default keyboard, and implements the original
-// argument-less functions on it, so that existing callers, including main(),
-// keymap hooks, and tests, keep working unchanged.
+// argument-less functions on it, so that existing callers, including main()
+// and tests, keep working unchanged.
 //
 // Copyright 2019 David Fenyes
 //
@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "asdf.h"
-#include "asdf_hook.h"
 #include "asdf_keyboard.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
@@ -59,7 +58,11 @@ int asdf_putc(char c, FILE *stream)
   (void) stream;
   return asdf_putc_r(kb, c);
 }
-asdf_keycode_t asdf_next_code(void) { return asdf_next_code_r(kb); }
+uint16_t asdf_next_code(void)
+{
+  asdf_keycode_t code;
+  return asdf_next_code_r(kb, &code) ? code : ASDF_INVALID_CODE;
+}
 void asdf_set_print_delay(uint8_t delay_ms) { kb->print_delay_ms = delay_ms; }
 void asdf_install_platform(const asdf_platform_t *platform) { asdf_install_platform_r(kb, platform); }
 const asdf_platform_t *asdf_current_platform(void) { return kb->platform; }
@@ -69,7 +72,7 @@ void asdf_print_flash(const char *str) { asdf_print_flash_r(kb, str); }
 // Keymaps
 //
 
-void asdf_keymaps_add_map(const asdf_keycode_t *matrix, modifier_index_t modifier_index,
+void asdf_keymaps_add_map(const asdf_key_t *matrix, modifier_index_t modifier_index,
                           uint8_t num_rows, uint8_t num_cols)
 {
   asdf_keymaps_add_map_r(&kb->keymap, matrix, modifier_index, num_rows, num_cols);
@@ -82,9 +85,9 @@ uint8_t asdf_keymaps_num_cols(void)
 {
   return asdf_keymaps_num_cols_r(&kb->keymap, asdf_modifier_index_r(&kb->modifiers));
 }
-asdf_keycode_t asdf_keymaps_get_code(uint8_t row, uint8_t col, uint8_t modifier_index)
+asdf_key_t asdf_keymaps_get_key(uint8_t row, uint8_t col, uint8_t modifier_index)
 {
-  return asdf_keymaps_get_code_r(&kb->keymap, row, col, modifier_index);
+  return asdf_keymaps_get_key_r(&kb->keymap, row, col, modifier_index);
 }
 void asdf_keymaps_init(void) { asdf_keymaps_init_r(kb); }
 void asdf_keymaps_select(uint8_t index) { asdf_keymaps_select_r(kb, index); }
@@ -97,17 +100,6 @@ void asdf_keymaps_map_select_2_clear(void) { asdf_keymaps_request_bit_r(&kb->key
 void asdf_keymaps_map_select_2_set(void) { asdf_keymaps_request_bit_r(&kb->keymap, ASDF_KEYMAP_BIT_2, 1); }
 void asdf_keymaps_map_select_3_clear(void) { asdf_keymaps_request_bit_r(&kb->keymap, ASDF_KEYMAP_BIT_3, 0); }
 void asdf_keymaps_map_select_3_set(void) { asdf_keymaps_request_bit_r(&kb->keymap, ASDF_KEYMAP_BIT_3, 1); }
-
-//
-// Hooks
-//
-
-void asdf_hook_init(void) { asdf_hook_init_r(&kb->hooks); }
-void asdf_hook_assign(asdf_hook_id_t hook_id, asdf_hook_function_t func)
-{
-  asdf_hook_assign_r(&kb->hooks, hook_id, func);
-}
-void asdf_hook_execute(asdf_hook_id_t hook_id) { asdf_hook_execute_r(&kb->hooks, hook_id); }
 
 //
 // Modifiers. Changes to SHIFT and CAPS also drive the lock indicator LEDs.

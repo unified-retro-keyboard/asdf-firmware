@@ -14,13 +14,13 @@
 #include "asdf.h"
 #include "asdf_arch.h"
 #include "asdf_config.h"
-#include "asdf_hook.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
 #include "asdf_physical.h"
 #include "asdf_repeat.h"
 #include "asdf_virtual.h"
 #include "test_asdf_keymap_defs.h"
+#include "test_asdf_lib.h"
 
 // Key positions in the test keymap (ASDF_TEST_PLAIN_MAP) selected by
 // asdf_init().
@@ -34,6 +34,8 @@
 #define KEY_REPEAT_COL 0
 #define KEY_HERE_IS_ROW 5
 #define KEY_HERE_IS_COL 1
+#define KEY_NOREPEAT_ROW 7 // NOREPEAT 0x7F
+#define KEY_NOREPEAT_COL 0
 #define KEY_CTRL_ROW 0
 #define KEY_CTRL_COL 6
 #define KEY_ESC1_ROW 0 // ASCII_ESC in the test CTRL map
@@ -45,7 +47,6 @@
 #define DIP_STROBE_COL 6
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
-static int user1_hook_calls;
 
 asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
@@ -69,11 +70,6 @@ static void lift(uint8_t row, uint8_t col)
   key_matrix[row] &= ~(1u << col);
 }
 
-static void count_user1_hook(void)
-{
-  user1_hook_calls++;
-}
-
 // Number of scans after the key is first held until it produces a code.
 static int32_t scans_until_code(void)
 {
@@ -93,7 +89,7 @@ void setUp(void)
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
-  user1_hook_calls = 0;
+  test_here_is_clear();
 }
 
 void tearDown(void)
@@ -142,6 +138,25 @@ void autorepeat_timing_after_registration(void)
   TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS, scans_until_code());
   TEST_ASSERT_EQUAL_INT32(ASDF_REPEAT_TIME_MS, scans_until_code());
   TEST_ASSERT_EQUAL_INT32(ASDF_REPEAT_TIME_MS, scans_until_code());
+}
+
+// A NOREPEAT key sends its code once, however long it is held.
+void norepeat_key_sends_once(void)
+{
+  hold(KEY_NOREPEAT_ROW, KEY_NOREPEAT_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+  TEST_ASSERT_EQUAL_INT32(-1, scans_until_code());
+}
+
+// A NOREPEAT key does not take over repeat: a key already repeating keeps its
+// timing.
+void norepeat_key_leaves_repeating_key_alone(void)
+{
+  hold(KEY_A_ROW, KEY_A_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+  hold(KEY_NOREPEAT_ROW, KEY_NOREPEAT_COL);
+  TEST_ASSERT_EQUAL_INT32(ASDF_DEBOUNCE_TIME_MS, scans_until_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_AUTOREPEAT_TIME_MS - ASDF_DEBOUNCE_TIME_MS, scans_until_code());
 }
 
 // The repeating key is tracked by position. ESC is on two keys of the test
@@ -251,44 +266,42 @@ void keymap_switch_keeps_dip_configuration(void)
   TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
 }
 
-// Re-applying configuration runs only configuration actions: a held key mapped
-// to ACTION_NOTHING (which the dispatcher routes to the USER_1 hook) is not
-// dispatched.
+// Re-applying configuration runs only configuration actions: the press action
+// of a held non-configuration key is not run again.
 void apply_configuration_ignores_non_configuration_keys(void)
 {
-  asdf_hook_assign(ASDF_HOOK_USER_1, count_user1_hook);
-  hold(KEY_NOTHING_ROW, KEY_NOTHING_COL);
+  hold(KEY_HERE_IS_ROW, KEY_HERE_IS_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
+  TEST_ASSERT_EQUAL_INT(1, test_here_is_count());
 
   asdf_apply_configuration();
-  TEST_ASSERT_EQUAL_INT(0, user1_hook_calls);
+  TEST_ASSERT_EQUAL_INT(1, test_here_is_count());
 }
 
 //
 // Action dispatch
 //
 
-// ACTION_HERE_IS shares the ACTION_FN_1 case, so it runs the USER_1 hook.
-void currently_here_is_runs_user1_hook(void)
+// A key's press action runs once when the key is pressed.
+void function_key_runs_its_action(void)
 {
-  asdf_hook_assign(ASDF_HOOK_USER_1, count_user1_hook);
   hold(KEY_HERE_IS_ROW, KEY_HERE_IS_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
-  TEST_ASSERT_EQUAL_INT(1, user1_hook_calls);
+  scan(ASDF_DEBOUNCE_TIME_MS);
+  TEST_ASSERT_EQUAL_INT(1, test_here_is_count());
 }
 
-// A key mapped to ACTION_NOTHING is not treated as an action: its code (equal
-// to ASDF_INVALID_CODE) is queued as a keycode. It occupies a buffer slot and
-// reads back as "empty" ahead of the next real code.
-void currently_nothing_key_queues_invalid_code(void)
+// A key that does nothing queues nothing. (Before keys had press and release
+// actions, a "nothing" key queued an invalid code.)
+void nothing_key_queues_nothing(void)
 {
   hold(KEY_NOTHING_ROW, KEY_NOTHING_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
   hold(KEY_A_ROW, KEY_A_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
 
-  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, asdf_next_code());
   TEST_ASSERT_EQUAL_INT32('a', asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, asdf_next_code());
 }
 
 //
@@ -305,7 +318,7 @@ static void fill_message_buffer_leaving(int slots)
 static int drain_message_buffer_tail(char *tail, int tail_len)
 {
   int count = 0;
-  asdf_keycode_t code;
+  uint16_t code;
   while (ASDF_INVALID_CODE != (code = asdf_next_code())) {
     tail[count % tail_len] = (char) code;
     count++;
@@ -346,21 +359,12 @@ void newline_with_no_slots_queues_nothing(void)
 // Invalid indices at public boundaries
 //
 
-static void null_hook(void) {}
-
 void invalid_keymap_select_is_ignored(void)
 {
   asdf_keymaps_select(200);
   hold(KEY_A_ROW, KEY_A_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
   TEST_ASSERT_EQUAL_INT32('a', asdf_next_code());
-}
-
-void invalid_hook_ids_are_ignored(void)
-{
-  asdf_hook_assign((asdf_hook_id_t) 200, null_hook);
-  asdf_hook_execute((asdf_hook_id_t) 200);
-  TEST_PASS();
 }
 
 void invalid_virtual_assign_is_ignored(void)
@@ -372,16 +376,16 @@ void invalid_virtual_assign_is_ignored(void)
 
 void invalid_keymap_row_and_col_return_nothing(void)
 {
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(200, 0, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 200, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(TEST_NUM_ROWS, 0, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, TEST_NUM_COLS, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(200, 0, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(0, 200, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(TEST_NUM_ROWS, 0, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(0, TEST_NUM_COLS, MOD_PLAIN_MAP));
 }
 
 void invalid_keymap_modifier_returns_nothing(void)
 {
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 0, ASDF_MOD_NUM_MODIFIERS));
-  TEST_ASSERT_EQUAL_INT(ACTION_NOTHING, asdf_keymaps_get_code(0, 0, 200));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(0, 0, ASDF_MOD_NUM_MODIFIERS));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(0, 0, 200));
 }
 
 void invalid_virtual_devices_are_ignored(void)
@@ -408,19 +412,20 @@ int main(void)
   RUN_TEST(debounce_glitch_does_not_shorten_next_press);
   RUN_TEST(autorepeat_timing_after_registration);
   RUN_TEST(repeat_follows_key_position_not_code);
+  RUN_TEST(norepeat_key_sends_once);
+  RUN_TEST(norepeat_key_leaves_repeating_key_alone);
   RUN_TEST(reinit_forgets_keys_held_before_init);
   RUN_TEST(keymap_switch_resets_caps);
   RUN_TEST(keymap_switch_does_not_reactivate_held_keys);
   RUN_TEST(keymap_switch_resets_held_repeat);
   RUN_TEST(keymap_switch_keeps_dip_configuration);
   RUN_TEST(apply_configuration_ignores_non_configuration_keys);
-  RUN_TEST(currently_here_is_runs_user1_hook);
-  RUN_TEST(currently_nothing_key_queues_invalid_code);
+  RUN_TEST(function_key_runs_its_action);
+  RUN_TEST(nothing_key_queues_nothing);
   RUN_TEST(newline_with_two_slots_queues_crlf);
   RUN_TEST(newline_with_one_slot_queues_nothing);
   RUN_TEST(newline_with_no_slots_queues_nothing);
   RUN_TEST(invalid_keymap_select_is_ignored);
-  RUN_TEST(invalid_hook_ids_are_ignored);
   RUN_TEST(invalid_virtual_assign_is_ignored);
   RUN_TEST(invalid_keymap_row_and_col_return_nothing);
   RUN_TEST(invalid_keymap_modifier_returns_nothing);

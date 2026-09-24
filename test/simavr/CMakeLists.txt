@@ -90,13 +90,7 @@ foreach(tgt ${SIMAVR_TARGETS})
       else()
         set(suffix "_${mode}")
       endif()
-      # simavr's atmega1280 model distorts key timing (see README, Simulator
-      # limitations), so the atmega1280 image's latency is measured on the
-      # register-compatible atmega2560 model.
       set(sim_model ${tgt})
-      if(mode STREQUAL latency AND tgt STREQUAL atmega1280)
-        set(sim_model atmega2560)
-      endif()
       add_test(
         NAME simavr_${tgt}_${km}${suffix}
         COMMAND asdf_simavr_runner

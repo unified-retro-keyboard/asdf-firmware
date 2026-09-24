@@ -25,7 +25,6 @@
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_arch.h"
-#include "asdf_hook.h"
 
 // The keyboard's hardware. The board owns it, and the tick interrupt below.
 static asdf_arch_t arch;

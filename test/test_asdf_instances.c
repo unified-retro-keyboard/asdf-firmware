@@ -77,7 +77,7 @@ static void runner_tick(runner_t *r)
   asdf_keyscan_r(&r->kb);
 
   asdf_keycode_t code;
-  while (ASDF_INVALID_CODE != (code = asdf_next_code_r(&r->kb))) {
+  while (asdf_next_code_r(&r->kb, &code)) {
     if (r->log_len < MAX_LOG) {
       r->log[r->log_len++] = code;
     }

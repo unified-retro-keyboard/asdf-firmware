@@ -28,7 +28,7 @@
 #define ASDF_KEYMAPS_H
 
 #include "asdf.h"
-#include "asdf_hook.h"
+#include "asdf_actions.h"
 #include "asdf_virtual.h"
 #include "asdf_physical.h"
 #include "asdf_modifiers.h"
@@ -43,22 +43,16 @@
 #define ASDF_KEYMAP_BIT_2 4
 #define ASDF_KEYMAP_BIT_3 8
 
-// define the struct for each keymap matrix in the keymap array. One per
+// define the struct for each key matrix in the keymap array. One per
 // modifier state. Each keymap can have it's own row and column count.
 typedef struct {
-  const asdf_keycode_t *matrix;
+  const asdf_key_t *matrix;
   uint8_t rows;
   uint8_t cols;
 } asdf_keycode_map_t;
 
 // Number of elements in an array, for the descriptor table counts.
 #define ASDF_NUM_ELEMENTS(array) ((uint8_t)(sizeof(array) / sizeof((array)[0])))
-
-// Binds a function to a hook for the duration of a keymap.
-typedef struct {
-  asdf_hook_id_t hook;
-  asdf_hook_function_t function;
-} asdf_hook_binding_t;
 
 // Flags in asdf_keymap_t.flags
 #define ASDF_KEYMAP_CAPS_ON 0x01         // start with CAPSLOCK on
@@ -67,42 +61,44 @@ typedef struct {
 // A keymap descriptor. Each keymap is described by one immutable descriptor,
 // stored in flash, which the keymap registry (asdf_keymap_setup.h) lists by
 // index. Selecting a keymap applies its descriptor, in field order: the
-// modifier maps, the message print delay, the hook bindings, the virtual
-// output assignments, the flags, and the platform.
+// modifier maps, the message print delay, the each-scan action, the virtual
+// output assignments, the flags, and the platform. The ID message is printed by
+// the KEYMAP_ID key action.
 typedef struct {
-  // keycode matrix for each modifier state (indexed by modifier_index_t), each
+  // key matrix for each modifier state (indexed by modifier_index_t), each
   // rows x cols, stored in flash
-  const asdf_keycode_t *maps[ASDF_MOD_NUM_MODIFIERS];
+  const asdf_key_t *maps[ASDF_MOD_NUM_MODIFIERS];
   uint8_t rows;
   uint8_t cols;
   uint8_t print_delay_ms; // delay between system message characters
   uint8_t flags;          // ASDF_KEYMAP_* flags
-  uint8_t num_hooks;
+  uint8_t each_scan;      // action at the start of each scan (param 0), or ACTION_NOTHING
   uint8_t num_outputs;
-  const asdf_hook_binding_t *hooks;           // num_hooks entries, in flash
-  const asdf_virtual_initializer_t *outputs;  // num_outputs entries, in flash
-  const asdf_platform_t *platform;            // NULL for the architecture's platform
+  const char *id_message;                    // flash string, or NULL
+  const asdf_virtual_initializer_t *outputs; // num_outputs entries, in flash
+  const asdf_platform_t *platform;           // NULL for the architecture's platform
 } asdf_keymap_t;
 
 // Keymap state of one keyboard: the matrices in use for each modifier state,
-// and the current and requested keymap numbers.
+// the each-scan action, and the current and requested keymap numbers.
 typedef struct {
   asdf_keycode_map_t maps[ASDF_MOD_NUM_MODIFIERS];
+  uint8_t each_scan; // action at the start of each scan, or ACTION_NOTHING
   uint8_t current;   // keymap now in use
   uint8_t requested; // keymap requested by the keymap select actions
 } asdf_keymap_state_t;
 
 // Instance API on keymap state. See asdf_keymaps.c.
 
-void asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_keycode_t *matrix,
+void asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
                             modifier_index_t modifier_index, uint8_t num_rows,
                             uint8_t num_cols);
 uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index);
 uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index);
-asdf_keycode_t asdf_keymaps_get_code_r(const asdf_keymap_state_t *keymap, uint8_t row,
-                                       uint8_t col, uint8_t modifier_index);
+asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
+                                  uint8_t modifier_index);
 void asdf_keymaps_request_bit_r(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set);
 
 // Instance API on a whole keyboard, since selecting a keymap resets and
@@ -116,8 +112,8 @@ void asdf_keymaps_apply_request_r(asdf_t *kb);
 // Single-keyboard API, operating on the default keyboard (asdf_compat.c).
 
 // PROCEDURE: asdf_keymaps_add_map
-// DESCRIPTION: Sets the keycode matrix used for one modifier state.
-void asdf_keymaps_add_map(const asdf_keycode_t *matrix, modifier_index_t modifier_index,
+// DESCRIPTION: Sets the key matrix used for one modifier state.
+void asdf_keymaps_add_map(const asdf_key_t *matrix, modifier_index_t modifier_index,
                           uint8_t num_rows, uint8_t num_cols);
 
 // PROCEDURE: asdf_keymaps_apply_request
@@ -152,11 +148,11 @@ void asdf_keymaps_map_select_3_set(void);
 // DESCRIPTION: Select keymap 0.
 void asdf_keymaps_init(void);
 
-// PROCEDURE: asdf_keymaps_get_code
+// PROCEDURE: asdf_keymaps_get_key
 // INPUTS: (uint8_t) row, col - key position; (uint8_t) modifier_index
-// OUTPUTS: the keycode at that position for that modifier state, or
-// ACTION_NOTHING if any index is out of range.
-asdf_keycode_t asdf_keymaps_get_code(uint8_t row, uint8_t col, uint8_t modifier_index);
+// OUTPUTS: the key at that position for that modifier state, or a key that
+// does nothing if any index is out of range.
+asdf_key_t asdf_keymaps_get_key(uint8_t row, uint8_t col, uint8_t modifier_index);
 
 #endif /* !defined (ASDF_KEYMAPS_H) */
 

@@ -100,7 +100,7 @@ You will also need to activate GitHub pages.  To do this:
             -c   Clean all artifacts
             -s   Copy dist files to sphinx directory
 
-    Valid targets: atmega88p, atmega168p, atmega328p, atmega640, atmega1280, atmega2560, pic32cm_pl10_q64, pic32cm_pl10_dip28, test, simavr_test
+    Valid targets: atmega168p, atmega328p, atmega640, atmega1280, atmega2560, pic32cm_pl10_q64, pic32cm_pl10_dip28, test, simavr_test
 
     (`test` runs the host-side Unity unit tests; `simavr_test` runs
     simavr-driven integration tests against the built AVR ELFs.)

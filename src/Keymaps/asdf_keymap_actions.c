@@ -3,13 +3,11 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_ace1000_add_map.c
+// asdf_keymap_actions.c
 //
-// Keyboard test action for the Franklin ACE 1000 replacement keyboard. The key
-// matrices are in asdf_keymap_ace1000_maps.yaml.
-// https://github.com/ryucats/Franklin-ACE-1000-Keyboard
+// The action table for the production keymaps: the built-in actions and the
+// keymap-provided actions (asdf_keymap_actions.h).
 //
-// Copyright 2023 Chris RYU
 // Copyright 2019 David Fenyes
 //
 // This program is free software: you can redistribute it and/or modify it under
@@ -26,28 +24,22 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include <stdint.h>
-#include "asdf.h"
 #include "asdf_arch.h"
+#include "asdf_actions.h"
 #include "asdf_keymap_actions.h"
-#include "asdf_print.h"
 
-// PROCEDURE: ace1000_keyboard_test
-// INPUTS: (asdf_t *) kb - keyboard; (uint8_t) param - ignored
-// OUTPUTS: none
-//
-// DESCRIPTION: Types a BASIC program that prints the code of each key pressed,
-// until CTRL-C is pressed. A keymap-provided key action.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
-void ace1000_keyboard_test(asdf_t *kb, uint8_t param)
-{
-  (void) param;
-  asdf_print_r(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
-}
+// Every entry is first set to asdf_action_nothing (a GCC range designator),
+// then the used entries are overridden, so the override warning is disabled
+// for the table.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Woverride-init"
+const asdf_action_fn_t FLASH asdf_action_table[ASDF_NUM_ACTION_SLOTS] = {
+  [0 ... ASDF_NUM_ACTION_SLOTS - 1] = asdf_action_nothing,
+  ASDF_BUILTIN_ACTIONS,
+  [ACTION_APPLESOFT_KEYBOARD_TEST] = applesoft_keyboard_test,
+  [ACTION_ACE1000_KEYBOARD_TEST] = ace1000_keyboard_test,
+};
+#pragma GCC diagnostic pop
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

@@ -7,7 +7,7 @@ set(KEYMAPFILE keymaps.txt)
 set(ARCH_FAMILY_ATMEGA328P atmega328p)
 set(ARCH_FAMILY_ATMEGA2560 atmega2560)
 
-if(ARCH MATCHES atmega328p OR ARCH MATCHES atmega168p OR ARCH MATCHES atmega88p)
+if(ARCH MATCHES atmega328p OR ARCH MATCHES atmega168p)
   set(FUSE_NOTES "Setting up for ${ARCH}: \n\n\
        Fuses: EXTENDED = 0xFF, HIGH = 0xdf, LOW = 0xd2\n\n\
        Brownout detect level:          111   (disabled) \n\
@@ -15,7 +15,7 @@ if(ARCH MATCHES atmega328p OR ARCH MATCHES atmega168p OR ARCH MATCHES atmega88p)
        SPIEN:                          1     (enabled) \n\
        Watchdog (WDTON):               0     (disabled) \n\
        Save EEPROM (EESAVE):           0     (disabled) \n\
-       Boot section / size (BOOTZ):    11    (size=128[88p,168p]/256[328p])) \n\
+       Boot section / size (BOOTZ):    11    (size=128[168p]/256[328p])) \n\
        Boot Reset Vector (BOOTRST):    0     (disabled) \n\
        Divide Clock by 8 (CKDIV8):     0     (disabled) \n\
        Clock out B0 (CKOUT)            0     (disabled) \n\

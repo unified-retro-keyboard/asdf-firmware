@@ -1,0 +1,89 @@
+# Test key matrices, used by the host tests (test_asdf_keymap_defs.c).
+#
+# Row 0 column 0 of each matrix sends a marker code (PLAIN_MATRIX_1 etc.)
+# identifying the matrix, so tests can tell which matrix is in use.
+
+include: [test_asdf_keymap_defs.h, asdf_ascii.h]
+rows: TEST_NUM_ROWS
+cols: TEST_NUM_COLS
+maps:
+  test_PLAIN_matrix:
+    0: [$PLAIN_MATRIX_1, KEY_SHIFT, KEY_SHIFT, ~, KEY_CAPS, $ASCII_ESC, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [~, 'p', ';', '/', $ASCII_SPACE, 'z', 'a', 'q']
+    2: [~, $ASCII_COMMA, 'm', 'n', 'b', 'v', 'c', 'x']
+    3: [~, 'k', 'j', 'h', 'g', 'f', 'd', 's']
+    4: [~, 'i', 'u', 'y', 't', 'r', 'e', 'w']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'o', 'l', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', '0', '9', '8']
+    7: [KEY_SEND_ONCE(0x7F), '7', '6', '5', '4', '3', '2', '1']
+    8: &dip [KEY_MAPSEL(0), KEY_MAPSEL(1), KEY_MAPSEL(2), KEY_MAPSEL(3), ~, ~, KEY_STROBE_POLARITY, KEY_AUTOREPEAT]
+  test_SHIFT_matrix:
+    0: [$SHIFT_MATRIX_1, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $ASCII_VERT_BAR]
+    1: [~, 'P', '+', '?', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, '>', 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'O', 'L', '<']
+    6: [$ASCII_TILDE, $ASCII_RT_CURLY_BRACE, $ASCII_LT_CURLY_BRACE, '=', '*', '0', $ASCII_RT_PAREN, $ASCII_LT_PAREN]
+    7: [~, $ASCII_SINGLE_QUOTE, '&', '%', '$', '#', $ASCII_DOUBLE_QUOTE, '!']
+    8: *dip
+  test_CAPS_matrix:
+    0: [$CAPS_MATRIX_1, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [~, 'P', ';', '/', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, $ASCII_COMMA, 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'O', 'L', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', '0', '9', '8']
+    7: [~, '7', '6', '5', '4', '3', '2', '1']
+    8: *dip
+  test_CTRL_matrix:
+    0: [$CTRL_MATRIX_1, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, 0x1C]
+    1: [~, $ASCII_CTRL_P, ~, ~, $ASCII_SPACE, $ASCII_CTRL_Z, $ASCII_CTRL_A, $ASCII_CTRL_Q]
+    2: [~, $ASCII_COMMA, $ASCII_CTRL_M, $ASCII_CTRL_N, $ASCII_CTRL_B, $ASCII_CTRL_V, $ASCII_CTRL_C, $ASCII_CTRL_X]
+    3: [~, $ASCII_CTRL_K, $ASCII_CTRL_J, $ASCII_CTRL_H, $ASCII_CTRL_G, $ASCII_CTRL_F, $ASCII_CTRL_D, $ASCII_CTRL_S]
+    4: [~, $ASCII_CTRL_I, $ASCII_CTRL_U, $ASCII_CTRL_Y, $ASCII_CTRL_T, $ASCII_CTRL_R, $ASCII_CTRL_E, $ASCII_CTRL_W]
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, $ASCII_CTRL_O, $ASCII_CTRL_L]
+    6: [~, 0x1D, $ASCII_ESC]
+    7: []
+    8: *dip
+  test2_PLAIN_matrix:
+    0: [$PLAIN_MATRIX_2, KEY_SHIFT, KEY_SHIFT, ~, KEY_CAPS, $ASCII_ESC, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [~, 'p', ';', '/', $ASCII_SPACE, 'z', 'a', 'q']
+    2: [~, $ASCII_COMMA, 'm', 'n', 'b', 'v', 'c', 'x']
+    3: [~, 'k', 'j', 'h', 'g', 'f', 'd', 's']
+    4: [~, 'i', 'u', 'y', 't', 'r', 'e', 'w']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'o', 'l', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', '0', '9', '8']
+    7: [~, '7', '6', '5', '4', '3', '2', '1']
+    8: *dip
+  test2_SHIFT_matrix:
+    0: [$SHIFT_MATRIX_2, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $ASCII_VERT_BAR]
+    1: [~, 'P', '+', '?', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, '>', 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'O', 'L', '<']
+    6: [$ASCII_TILDE, $ASCII_RT_CURLY_BRACE, $ASCII_LT_CURLY_BRACE, '=', '*', '0', $ASCII_RT_PAREN, $ASCII_LT_PAREN]
+    7: [~, $ASCII_SINGLE_QUOTE, '&', '%', '$', '#', $ASCII_DOUBLE_QUOTE, '!']
+    8: *dip
+  test2_CAPS_matrix:
+    0: [$CAPS_MATRIX_2, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $ASCII_BACKSLASH]
+    1: [~, 'P', ';', '/', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, $ASCII_COMMA, 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, 'O', 'L', $ASCII_PERIOD]
+    6: [$ASCII_TILDE, $ASCII_RT_SQUARE_BRACE, $ASCII_LT_SQUARE_BRACE, '-', ':', '0', '9', '8']
+    7: [~, '7', '6', '5', '4', '3', '2', '1']
+    8: *dip
+  test2_CTRL_matrix:
+    0: [$CTRL_MATRIX_2, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, 0x1C]
+    1: [~, $ASCII_CTRL_P, ~, ~, $ASCII_SPACE, $ASCII_CTRL_Z, $ASCII_CTRL_A, $ASCII_CTRL_Q]
+    2: [~, $ASCII_COMMA, $ASCII_CTRL_M, $ASCII_CTRL_N, $ASCII_CTRL_B, $ASCII_CTRL_V, $ASCII_CTRL_C, $ASCII_CTRL_X]
+    3: [~, $ASCII_CTRL_K, $ASCII_CTRL_J, $ASCII_CTRL_H, $ASCII_CTRL_G, $ASCII_CTRL_F, $ASCII_CTRL_D, $ASCII_CTRL_S]
+    4: [~, $ASCII_CTRL_I, $ASCII_CTRL_U, $ASCII_CTRL_Y, $ASCII_CTRL_T, $ASCII_CTRL_R, $ASCII_CTRL_E, $ASCII_CTRL_W]
+    5: [KEY_REPEAT, KEY_TEST_HERE_IS, KEY_SHIFTLOCK_ON, $ASCII_CR, $ASCII_LF, $ASCII_CTRL_O, $ASCII_CTRL_L]
+    6: [~, 0x1D, $ASCII_ESC]
+    7: []
+    8: *dip

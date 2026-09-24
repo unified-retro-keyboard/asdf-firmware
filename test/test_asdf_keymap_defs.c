@@ -31,19 +31,8 @@
 #include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "asdf_keymap_setup.h"
+#include "test_keymaps.h"
 
-static const asdf_keycode_t test_PLAIN_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_PLAIN_MAP;
-static const asdf_keycode_t test_SHIFT_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_SHIFT_MAP;
-static const asdf_keycode_t test_CAPS_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CAPS_MAP;
-static const asdf_keycode_t test_CTRL_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST_CTRL_MAP;
-
-static const asdf_keycode_t test2_PLAIN_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST2_PLAIN_MAP;
-static const asdf_keycode_t test2_SHIFT_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST2_SHIFT_MAP;
-static const asdf_keycode_t test2_CAPS_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST2_CAPS_MAP;
-static const asdf_keycode_t test2_CTRL_matrix[TEST_NUM_ROWS][TEST_NUM_COLS] = ASDF_TEST2_CTRL_MAP;
-
-
-// Modifier maps of the "test" and "test2" keymaps, in modifier_index_t order.
 #define TEST_MAPS(prefix)                                                                          \
   .maps = { [MOD_PLAIN_MAP] = &prefix##_PLAIN_matrix[0][0],                                        \
             [MOD_SHIFT_MAP] = &prefix##_SHIFT_matrix[0][0],                                        \
@@ -108,7 +97,7 @@ const asdf_keymap_t test_vdevs_vcaps_keymap = {
   .outputs = vdevs_vcaps_outputs,
 };
 
-// Hook and platform tests
+// Each-scan action and platform tests
 
 static asdf_cols_t test_platform_read_row(void *user, uint8_t row)
 {
@@ -158,10 +147,6 @@ const asdf_platform_t test_alt_platform = {
   .reset = test_platform_reset,
 };
 
-static const asdf_hook_binding_t each_scan_hooks[] = {
-  { ASDF_HOOK_EACH_SCAN, test_hook_each_scan },
-};
-
 const asdf_keymap_t test_hooks_default_keymap = { TEST_MAPS(test2) };
 
 const asdf_keymap_t test_hooks_alt_platform_keymap = {
@@ -171,8 +156,7 @@ const asdf_keymap_t test_hooks_alt_platform_keymap = {
 
 const asdf_keymap_t test_hooks_each_scan_keymap = {
   TEST_MAPS(test2),
-  .num_hooks = NUM_ELEMENTS(each_scan_hooks),
-  .hooks = each_scan_hooks,
+  .each_scan = ACTION_TEST_EACH_SCAN,
 };
 
 

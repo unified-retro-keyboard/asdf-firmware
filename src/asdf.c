@@ -35,7 +35,7 @@
 #include "asdf_ascii.h"
 #include "asdf_ring.h"
 #include "asdf_platform.h"
-#include "asdf_hook.h"
+#include "asdf_actions.h"
 #include "asdf_keyboard.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
@@ -146,8 +146,9 @@ void asdf_send_code_r(asdf_t *kb, asdf_keycode_t code) {
 
 // PROCEDURE: asdf_next_code_r
 // INPUTS: (asdf_t *) kb - keyboard
-// OUTPUTS: (asdf_keycode_t) returns next value in buffer. If both buffers are
-// empty, the code ASDF_INVALID_CODE is returned.
+//         (asdf_keycode_t *) code - receives the code
+// OUTPUTS: returns TRUE (nonzero) if a code was taken from the buffers into
+// *code, FALSE (0) if none is ready.
 //
 // DESCRIPTION: Checks the message buffer, and returns a character
 // if present.  Otherwise, return the next code in the keycode
@@ -163,17 +164,15 @@ void asdf_send_code_r(asdf_t *kb, asdf_keycode_t code) {
 //
 // COMPLEXITY: 3
 //
-asdf_keycode_t asdf_next_code_r(asdf_t *kb) {
-    asdf_keycode_t code;
-
+uint8_t asdf_next_code_r(asdf_t *kb, asdf_keycode_t *code) {
     if (kb->output_wait_ms) {
-        code = ASDF_INVALID_CODE;
-    } else if (asdf_ring_get(&kb->messages, &code)) {
-        kb->output_wait_ms = kb->print_delay_ms;
-    } else if (!asdf_ring_get(&kb->keycodes, &code)) {
-        code = ASDF_INVALID_CODE;
+        return 0;
     }
-    return code;
+    if (asdf_ring_get(&kb->messages, code)) {
+        kb->output_wait_ms = kb->print_delay_ms;
+        return 1;
+    }
+    return asdf_ring_get(&kb->keycodes, code);
 }
 
 // PROCEDURE: asdf_tick_r
@@ -222,11 +221,8 @@ void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms) {
     asdf_tick_r(kb, elapsed);
 
     // send up to one code per elapsed tick, subject to message pacing
-    for (uint8_t n = elapsed; n; n--) {
-        asdf_keycode_t code = asdf_next_code_r(kb);
-        if (code >= ASDF_INVALID_CODE) {
-            break;
-        }
+    asdf_keycode_t code;
+    for (uint8_t n = elapsed; n && asdf_next_code_r(kb, &code); n--) {
         asdf_send_code_r(kb, code);
     }
 
@@ -251,168 +247,57 @@ void asdf_sync_lock_leds_r(asdf_t *kb) {
                           asdf_modifier_caps_locked_r(&kb->modifiers) ? V_SET_HI : V_SET_LO);
 }
 
-// PROCEDURE: asdf_lookup_keycode_r
+// PROCEDURE: asdf_lookup_key_r
 // INPUTS: (const asdf_t *) kb - keyboard; (uint8_t) row, col - key position
-// OUTPUTS: returns the keycode at the position in the keymap for the current
+// OUTPUTS: returns the key at the position in the keymap for the current
 //          modifier state.
 //
 // SCOPE: private
 //
 // COMPLEXITY: 1
 //
-static asdf_keycode_t asdf_lookup_keycode_r(const asdf_t *kb, uint8_t row, uint8_t col) {
-    return asdf_keymaps_get_code_r(&kb->keymap, row, col, asdf_modifier_index_r(&kb->modifiers));
+static asdf_key_t asdf_lookup_key_r(const asdf_t *kb, uint8_t row, uint8_t col) {
+    return asdf_keymaps_get_key_r(&kb->keymap, row, col, asdf_modifier_index_r(&kb->modifiers));
 }
 
-// PROCEDURE: asdf_activate_action
+// PROCEDURE: asdf_forget_repeat_key
 // INPUTS: (asdf_t *) kb - keyboard
-//         (action_t) keycode: an action key code
 // OUTPUTS: none
 //
-// DESCRIPTION: This routine is called when a key bound to an action code is
-// pressed, and maps the action code to a function call, or other action
-// appropriate for activation of the function.
-//
-// SIDE EFFECTS: All the actions may have side effects, depending on the function called.
-//
-// NOTES: The switch() could be implemented as an array of function pointers,
-// essentially a jump table. However, the switch statement will also be
-// implemented as a jump table, and may be more efficiently implemented as a
-// code jump table than an array of pointers stored in flash that would require
-// an additional flash-read operation.
+// DESCRIPTION: There is no longer a repeating key.
 //
 // SCOPE: private
 //
-// COMPLEXITY: 5 (+9 for the switch)
+// COMPLEXITY: 1
 //
-static void asdf_activate_action(asdf_t *kb, action_t keycode) {
-    // Contiguous groups of actions map arithmetically onto hooks, virtual
-    // outputs, and keymap select bits.
-    if (keycode >= ACTION_FN_1 && keycode <= ACTION_FN_10) {
-        asdf_hook_execute_r(&kb->hooks,
-                            (asdf_hook_id_t)(ASDF_HOOK_USER_1 + (keycode - ACTION_FN_1)));
-        return;
-    }
-    if (keycode >= ACTION_VOUT1 && keycode <= ACTION_VOUT6) {
-        asdf_virtual_activate_r(&kb->outputs,
-                                (asdf_virtual_dev_t)(VOUT1 + (keycode - ACTION_VOUT1)));
-        return;
-    }
-    if (keycode >= ACTION_VLED1 && keycode <= ACTION_VLED3) {
-        asdf_virtual_activate_r(&kb->outputs,
-                                (asdf_virtual_dev_t)(VLED1 + (keycode - ACTION_VLED1)));
-        return;
-    }
-    if (keycode >= ACTION_MAPSEL_0 && keycode <= ACTION_MAPSEL_3) {
-        asdf_keymaps_request_bit_r(&kb->keymap, (uint8_t)(1 << (keycode - ACTION_MAPSEL_0)), 1);
-        return;
-    }
-
-    switch (keycode) {
-    case ACTION_SHIFT:
-        asdf_modifier_shift_activate_r(&kb->modifiers);
-        break;
-    case ACTION_SHIFTLOCK_ON:
-        asdf_modifier_shiftlock_on_activate_r(&kb->modifiers);
-        break;
-    case ACTION_SHIFTLOCK_TOGGLE:
-        asdf_modifier_shiftlock_toggle_activate_r(&kb->modifiers);
-        break;
-    case ACTION_CAPS:
-        asdf_modifier_capslock_activate_r(&kb->modifiers);
-        break;
-    case ACTION_CTRL:
-        asdf_modifier_ctrl_activate_r(&kb->modifiers);
-        return;
-    case ACTION_REPEAT:
-        asdf_repeat_activate_r(&kb->repeat);
-        return;
-    case ACTION_STROBE_POLARITY_SELECT:
-        asdf_set_strobe_polarity_r(kb, 1);
-        return;
-    case ACTION_AUTOREPEAT_SELECT:
-        asdf_repeat_auto_on_r(&kb->repeat);
-        return;
-    case ACTION_NOTHING:
-    case ACTION_HERE_IS:
-        asdf_hook_execute_r(&kb->hooks, ASDF_HOOK_USER_1);
-        return;
-    default:
-        return;
-    }
-
-    // SHIFT, SHIFTLOCK, and CAPS changes drive the lock indicators.
-    asdf_sync_lock_leds_r(kb);
-}
-
-// PROCEDURE: asdf_deactivate_action
-// INPUTS: (asdf_t *) kb - keyboard
-//         (action_t) keycode: an action key code
-// OUTPUTS: none
-//
-// DESCRIPTION: This routine is called when a key bound to an action code is
-// released, and maps the action code to a function call, or other action
-// appropriate for deactivation of the function.
-//
-// SIDE EFFECTS: All the actions may have side effects, depending on the function called.
-//
-// SCOPE: private
-//
-// COMPLEXITY: 2 (+6 for the switch)
-//
-static void asdf_deactivate_action(asdf_t *kb, action_t keycode) {
-    if (keycode >= ACTION_MAPSEL_0 && keycode <= ACTION_MAPSEL_3) {
-        asdf_keymaps_request_bit_r(&kb->keymap, (uint8_t)(1 << (keycode - ACTION_MAPSEL_0)), 0);
-        return;
-    }
-
-    switch (keycode) {
-    case ACTION_SHIFT:
-        asdf_modifier_shift_deactivate_r(&kb->modifiers);
-        asdf_sync_lock_leds_r(kb);
-        break;
-    case ACTION_CTRL:
-        asdf_modifier_ctrl_deactivate_r(&kb->modifiers);
-        break;
-    case ACTION_REPEAT:
-        asdf_repeat_deactivate_r(&kb->repeat);
-        break;
-    case ACTION_STROBE_POLARITY_SELECT:
-        asdf_set_strobe_polarity_r(kb, 0);
-        break;
-    case ACTION_AUTOREPEAT_SELECT:
-        asdf_repeat_auto_off_r(&kb->repeat);
-        break;
-    case ACTION_NOTHING:
-    default:
-        break;
-    }
+static void asdf_forget_repeat_key(asdf_t *kb) {
+    kb->repeat_key = (asdf_key_t)KEY_NOTHING(0);
+    kb->repeat_armed = 0;
+    kb->last_key_row = NO_KEY_POSITION;
+    kb->last_key_col = NO_KEY_POSITION;
 }
 
 // PROCEDURE: asdf_activate_key
 // INPUTS: (asdf_t *) kb - keyboard
-//         (asdf_keycode_t) keycode - the code of the pressed key
+//         (asdf_key_t) key - the pressed key
 //         (uint8_t) row, col - the position of the pressed key
 // OUTPUTS: none
 //
-// DESCRIPTION: For an action code, perform the action. Otherwise queue the
-// code, and make the key the repeating key, restarting the repeat timer if it
-// is a different key from the last one.
-//
-// NOTES: ACTION_NOTHING (== ASDF_ACTION) is not treated as an action: its code
-// is queued.
+// DESCRIPTION: Performs the key's press action. If the action armed repeat
+// (asdf_arm_repeat_r), the key becomes the repeating key, restarting the
+// repeat timer if it is a different key from the last one.
 //
 // SCOPE: private
 //
 // COMPLEXITY: 3
 //
-static void asdf_activate_key(asdf_t *kb, asdf_keycode_t keycode, uint8_t row, uint8_t col) {
-    if (keycode > ASDF_ACTION) { // ASDF_ACTION = ASDF_NOTHING = no action.
-        asdf_activate_action(kb, (action_t)keycode);
-    } else {
-        asdf_put_code_r(kb, keycode);
+static void asdf_activate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t col) {
+    kb->repeat_armed = 0;
+    asdf_action_r(kb, key.press_fn, key.press_param);
+    if (kb->repeat_armed) {
+        kb->repeat_armed = 0;
+        kb->repeat_key = key;
         if (row != kb->last_key_row || col != kb->last_key_col) {
-            kb->last_key = keycode;
             kb->last_key_row = row;
             kb->last_key_col = col;
             asdf_repeat_reset_count_r(&kb->repeat);
@@ -420,26 +305,50 @@ static void asdf_activate_key(asdf_t *kb, asdf_keycode_t keycode, uint8_t row, u
     }
 }
 
+// PROCEDURE: asdf_arm_repeat_r
+// INPUTS: (asdf_t *) kb - keyboard
+// OUTPUTS: none
+//
+// DESCRIPTION: Called by a press action to make the key being pressed the
+// repeating key.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+void asdf_arm_repeat_r(asdf_t *kb) { kb->repeat_armed = 1; }
+
+// PROCEDURE: asdf_same_key
+// INPUTS: (asdf_key_t) a, b - keys to compare
+// OUTPUTS: returns TRUE (nonzero) if the keys have the same actions and
+//          parameters
+//
+// SCOPE: private
+//
+// COMPLEXITY: 1
+//
+static uint8_t asdf_same_key(asdf_key_t a, asdf_key_t b) {
+    return a.press_fn == b.press_fn && a.press_param == b.press_param &&
+           a.release_fn == b.release_fn && a.release_param == b.release_param;
+}
+
 // PROCEDURE: asdf_deactivate_key
 // INPUTS: (asdf_t *) kb - keyboard
-//         (asdf_keycode_t) keycode - the code of the released key
+//         (asdf_key_t) key - the released key
 //         (uint8_t) row, col - the position of the released key
 // OUTPUTS: none
 //
-// DESCRIPTION: For an action code, end the action. If the released key is the
+// DESCRIPTION: Performs the key's release action. If the released key is the
 // repeating key, there is no longer a repeating key.
 //
 // SCOPE: private
 //
-// COMPLEXITY: 3
+// COMPLEXITY: 2
 //
-static void asdf_deactivate_key(asdf_t *kb, asdf_keycode_t keycode, uint8_t row, uint8_t col) {
-    if (keycode > ASDF_ACTION) {
-        asdf_deactivate_action(kb, (action_t)keycode);
-    } else if (row == kb->last_key_row && col == kb->last_key_col) {
-        kb->last_key = ACTION_NOTHING;
-        kb->last_key_row = NO_KEY_POSITION;
-        kb->last_key_col = NO_KEY_POSITION;
+static void asdf_deactivate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t col) {
+    asdf_action_r(kb, key.release_fn, key.release_param);
+    if (row == kb->last_key_row && col == kb->last_key_col) {
+        asdf_forget_repeat_key(kb);
     }
 }
 
@@ -476,10 +385,10 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
     *debounce_count = ASDF_DEBOUNCE_TIME_MS;
     if (key_was_pressed) {
         kb->stable_rows[row] |= (asdf_cols_t)(1 << col);
-        asdf_activate_key(kb, asdf_lookup_keycode_r(kb, row, col), row, col);
+        asdf_activate_key(kb, asdf_lookup_key_r(kb, row, col), row, col);
     } else {
         kb->stable_rows[row] &= (asdf_cols_t) ~(1 << col);
-        asdf_deactivate_key(kb, asdf_lookup_keycode_r(kb, row, col), row, col);
+        asdf_deactivate_key(kb, asdf_lookup_key_r(kb, row, col), row, col);
     }
 }
 
@@ -489,9 +398,9 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
 //         down (stable pressed state)
 // OUTPUTS: none
 //
-// DESCRIPTION: If the key is the repeating key, and still produces the same
-// code under the current modifiers, advance the repeat timer and queue the
-// code again when it expires.
+// DESCRIPTION: If the key is the repeating key, and is still the same key
+// under the current modifiers, advance the repeat timer and run its press
+// action again when it expires.
 //
 // SCOPE: private
 //
@@ -499,11 +408,14 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
 //
 static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
                                          uint8_t elapsed) {
-    if (row == kb->last_key_row && col == kb->last_key_col &&
-        asdf_lookup_keycode_r(kb, row, col) == kb->last_key) {
-        if (asdf_repeat_advance_r(&kb->repeat, elapsed)) {
-            asdf_put_code_r(kb, kb->last_key);
-        }
+    if (row != kb->last_key_row || col != kb->last_key_col) {
+        return;
+    }
+
+    asdf_key_t key = asdf_lookup_key_r(kb, row, col);
+    if (asdf_same_key(key, kb->repeat_key) && asdf_repeat_advance_r(&kb->repeat, elapsed)) {
+        asdf_action_r(kb, key.press_fn, key.press_param);
+        kb->repeat_armed = 0; // already the repeating key
     }
 }
 
@@ -517,7 +429,8 @@ static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
 // matrix is scanned. For each row, read the columns and compare
 // with last stable state. For each changed key, call a key-change handler
 // function. For each stable pressed key, call a "continued press" handler
-// function. Finally, apply any keymap change requested during the scan.
+// function. The keymap's each-scan action, if any, runs first. Finally, apply
+// any keymap change requested during the scan.
 //
 // NOTES: 1) The keyboard state is stored as an array of words, with one word
 //           per row, and each bit in a word representing one key in the row.
@@ -534,7 +447,9 @@ static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
 static void asdf_scan_elapsed_r(asdf_t *kb, uint8_t elapsed) {
     const asdf_platform_t *scan_platform = kb->platform;
 
-    asdf_hook_execute_r(&kb->hooks, ASDF_HOOK_EACH_SCAN);
+    if (kb->keymap.each_scan) {
+        asdf_action_r(kb, kb->keymap.each_scan, 0);
+    }
     for (uint8_t row = 0;
          row < asdf_keymaps_num_rows_r(&kb->keymap, asdf_modifier_index_r(&kb->modifiers));
          row++) {
@@ -575,40 +490,14 @@ static void asdf_scan_elapsed_r(asdf_t *kb, uint8_t elapsed) {
 //
 void asdf_keyscan_r(asdf_t *kb) { asdf_scan_elapsed_r(kb, 1); }
 
-// PROCEDURE: asdf_is_configuration_action
-// INPUTS: (asdf_keycode_t) code - keycode to check
-// OUTPUTS: returns TRUE (nonzero) if code is a configuration action
-//
-// DESCRIPTION: Configuration actions set persistent keyboard configuration from
-// a held switch, such as a DIP switch: keymap selection, strobe polarity, and
-// autorepeat selection. They are the only actions re-applied on a keymap
-// switch.
-//
-// SCOPE: private
-//
-// COMPLEXITY: 2
-//
-static uint8_t asdf_is_configuration_action(asdf_keycode_t code) {
-    switch (code) {
-    case ACTION_MAPSEL_0:
-    case ACTION_MAPSEL_1:
-    case ACTION_MAPSEL_2:
-    case ACTION_MAPSEL_3:
-    case ACTION_STROBE_POLARITY_SELECT:
-    case ACTION_AUTOREPEAT_SELECT:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 // PROCEDURE: asdf_apply_configuration_r
 // INPUTS: (asdf_t *) kb - keyboard
 // OUTPUTS: none
 //
 // DESCRIPTION: Called after a keymap switch has reset the keyboard state.
-// Forgets the repeating key, then re-applies the configuration actions (see
-// asdf_is_configuration_action) of all held switches, so that settings such
+// Forgets the repeating key, then re-applies the press actions of held keys
+// that are configuration actions (see asdf_is_configuration_action), such as
+// DIP switches, so that settings such
 // as DIP switches persist across keymap changes. Other held keys are not
 // re-activated; they take effect again only when released and pressed.
 //
@@ -621,18 +510,16 @@ static uint8_t asdf_is_configuration_action(asdf_keycode_t code) {
 void asdf_apply_configuration_r(asdf_t *kb) {
     modifier_index_t mods = asdf_modifier_index_r(&kb->modifiers);
 
-    kb->last_key = ACTION_NOTHING;
-    kb->last_key_row = NO_KEY_POSITION;
-    kb->last_key_col = NO_KEY_POSITION;
+    asdf_forget_repeat_key(kb);
 
     for (uint8_t row = 0; row < asdf_keymaps_num_rows_r(&kb->keymap, mods); row++) {
         asdf_cols_t row_key_state = kb->stable_rows[row];
 
         for (uint8_t col = 0; col < asdf_keymaps_num_cols_r(&kb->keymap, mods); col++) {
             if (row_key_state & 1) {
-                asdf_keycode_t code = asdf_lookup_keycode_r(kb, row, col);
-                if (asdf_is_configuration_action(code)) {
-                    asdf_activate_action(kb, (action_t)code);
+                asdf_key_t key = asdf_lookup_key_r(kb, row, col);
+                if (asdf_is_configuration_action(key.press_fn)) {
+                    asdf_action_r(kb, key.press_fn, key.press_param);
                 }
             }
             row_key_state >>= 1;
@@ -647,7 +534,7 @@ void asdf_apply_configuration_r(asdf_t *kb) {
 //
 // DESCRIPTION: Initializes every part of the keyboard: empty output queues, no
 // keys pressed, debounce counters reloaded, and keymap 0 selected (which also
-// resets modifiers, repeat, hooks, and outputs). May be called again to reset
+// resets modifiers, repeat, the each-scan action, and outputs). May be called again to reset
 // the keyboard.
 //
 // NOTES: The key state is cleared before keymap selection, so that keys held
@@ -663,9 +550,7 @@ void asdf_init_r(asdf_t *kb, const asdf_platform_t *platform) {
     kb->print_delay_ms = 0;
     kb->output_wait_ms = 0;
 
-    kb->last_key = ACTION_NOTHING;
-    kb->last_key_row = NO_KEY_POSITION;
-    kb->last_key_col = NO_KEY_POSITION;
+    asdf_forget_repeat_key(kb);
     for (uint8_t row = 0; row < ASDF_MAX_ROWS; row++) {
         kb->stable_rows[row] = 0;
         for (uint8_t col = 0; col < ASDF_MAX_COLS; col++) {

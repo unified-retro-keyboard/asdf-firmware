@@ -34,15 +34,10 @@
 #include "asdf_keymap_ace1000.h"
 #include "asdf_keymap_ace1000_add_map.h"
 #include "asdf_keymap_apple2_add_map.h"
+#include "asdf_keymap_ace1000_maps.h"
 
-void ace1000_id_message(void) {
-  asdf_print("[Keymap: ace1000]\n");
-}
-
-static const asdf_hook_binding_t FLASH ace1000_hooks[] = {
-  { ACE1000_ID_MESSAGE_HOOK, ace1000_id_message },
-  { APPLESOFT_KEYBOARD_TEST_HOOK, ace1000_keyboard_test },
-};
+// Printed by the KEYMAP_ID key.
+static const char FLASH ace1000_id_message[] = "[Keymap: ace1000]\n";
 
 static const asdf_virtual_initializer_t FLASH ace1000_outputs[] = {
   // Assign power LED to virtual power LED, and initialize to ON
@@ -72,8 +67,7 @@ const asdf_keymap_t FLASH ace1000_keymap = {
   .cols = ACE1000_NUM_COLS,
   .print_delay_ms = ASDF_ACE1000_PRINT_SPEED,
   .flags = ASDF_KEYMAP_CAPS_ON,
-  .num_hooks = ASDF_NUM_ELEMENTS(ace1000_hooks),
-  .hooks = ace1000_hooks,
+  .id_message = ace1000_id_message,
   .num_outputs = ASDF_NUM_ELEMENTS(ace1000_outputs),
   .outputs = ace1000_outputs,
 };

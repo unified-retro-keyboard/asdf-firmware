@@ -30,17 +30,10 @@
 #include "asdf_modifiers.h"
 #include "asdf_print.h"
 #include "asdf_keymap_classic.h"
-#include "asdf_keymap_classic_add_map.h"
-#include "asdf_keymap_apple2_add_map.h"
+#include "asdf_keymap_classic_maps.h"
 
-void classic_id_message(void) {
-  asdf_print("[Keymap: classic]\n");
-}
-
-static const asdf_hook_binding_t FLASH classic_hooks[] = {
-  { CLASSIC_ID_MESSAGE_HOOK, classic_id_message },
-  { APPLESOFT_KEYBOARD_TEST_HOOK, applesoft_keyboard_test },
-};
+// Printed by the KEYMAP_ID key.
+static const char FLASH classic_id_message[] = "[Keymap: classic]\n";
 
 static const asdf_virtual_initializer_t FLASH classic_outputs[] = {
   // Assign power LED to virtual power LED, and initialize to ON
@@ -68,8 +61,7 @@ const asdf_keymap_t FLASH classic_keymap = {
   .rows = CLASSIC_NUM_ROWS,
   .cols = CLASSIC_NUM_COLS,
   .print_delay_ms = ASDF_CLASSIC_PRINT_SPEED,
-  .num_hooks = ASDF_NUM_ELEMENTS(classic_hooks),
-  .hooks = classic_hooks,
+  .id_message = classic_id_message,
   .num_outputs = ASDF_NUM_ELEMENTS(classic_outputs),
   .outputs = classic_outputs,
 };

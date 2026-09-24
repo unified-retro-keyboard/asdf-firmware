@@ -4,7 +4,7 @@
 
 Refactor the ASDF keyboard firmware into an allocation-free, instance-based
 library that can be embedded safely in larger programs while retaining a simple
-single-keyboard interface for hobbyists and Arduino-style environments.
+single-keyboard interface (the simple wrapper) for Arduino-style environments.
 
 The existing design remains the behavioral reference. The matrix scanner,
 keymaps, actions, and hardware support should evolve incrementally rather than
@@ -61,7 +61,7 @@ definitions may retain static storage duration.
 - Keep hardware policy in platform adapters.
 - Prefer typed interfaces over generic function-pointer registries.
 - Make time explicit and keep core operations nonblocking.
-- Preserve a beginner-friendly single-keyboard facade.
+- Provide a simple single-keyboard wrapper.
 - Change one subsystem at a time and retain behavioral tests throughout.
 - Measure flash, static RAM, and worst-case stack growth at every phase.
 
@@ -423,6 +423,25 @@ roughly fourfold (a 9 x 8 keymap with four modifier maps goes from 288 to
 may hold only one keymap, or be dropped under the AVR target policy; decide
 at this phase's size checkpoint.
 
+- Done as: `asdf_key_t` holds the press and release actions. The action table
+  (`asdf_action_table`) has 256 entries in flash, one per action number: a GCC
+  range designator sets every entry to `asdf_action_nothing`, then the built-in
+  (`ASDF_BUILTIN_ACTIONS`) and keymap-provided entries override it, so dispatch
+  needs no check. Built-in actions are numbered from 0 (`ACTION_NOTHING`, so an
+  all-zero key does nothing); keymap-provided actions start at
+  `ASDF_KEYMAP_ACTIONS` (0x80). The configuration test is
+  `asdf_is_configuration_action` on the press action number. Hooks are gone:
+  the keymap ID is a string in the descriptor, printed by the `KEYMAP_ID`
+  action, and `EACH_SCAN` became the descriptor's `each_scan` action. Key
+  matrices are written in YAML and generated into C at build time by
+  `src/asdf_keymap_gen.py` (dependencies managed by uv); the master keymap files
+  stay C and assign the named matrices. Intended corrections: a "nothing" key
+  no longer queues a code, and the Applesoft test key now works in
+  `apple2_caps` as it does in `apple2`. Flash grew about 4.5 KB (matrices 1.4
+  to 5.5 KB, plus the 512-byte table); RAM fell 25 bytes. The ATmega88P no
+  longer fits (over by 3.1 KB) and was dropped; the ATmega168P, ATmega640, and
+  ATmega1280 remain.
+
 Exit criteria:
 
 - Every keymap is expressed in press/release actions, with simavr traces
@@ -432,25 +451,28 @@ Exit criteria:
 - Per-target flash use is measured and each secondary target is kept or
   dropped explicitly.
 
-### Phase 9: Add the compatibility and hobbyist facade
+### Phase 9: Remove the compatibility layer; add the simple wrapper
 
-- Provide the existing `asdf_init()`, `asdf_keyscan()`, and
-  `asdf_next_code()` workflow as a thin optional wrapper around one explicitly
-  owned default instance.
-- Keep the default instance in the application/facade layer, not distributed
-  among core modules.
-- Add a minimal Arduino-compatible example with `begin()`, `poll()`,
-  `available()`, and `read()` semantics.
+- Remove `asdf_compat.c` and its argument-less API (`asdf_init()`,
+  `asdf_keyscan()`, `asdf_next_code()`, and the module wrappers). Only
+  `main.c` and the host tests use it; the core and keymaps already take the
+  keyboard explicitly.
+- Convert the host tests to the instance (`_r`) API, each on its own `asdf_t`.
+- Have `main.c` own its `asdf_t`, next to its `asdf_arch_t`.
+- Add a minimal Arduino-compatible simple wrapper and example with `begin()`,
+  `poll()`, `available()`, and `read()` semantics around one owned instance.
+  Keep it in the application layer, not in the core.
 - If a C++ wrapper is added, keep it header-light and implement behavior through
   the C99 core.
-- Document when to use the simple facade and when to use explicit instances.
+- Document when to use the simple wrapper and when to use explicit instances.
 
 Exit criteria:
 
-- A hobbyist can build a one-keyboard firmware without understanding contexts
-  or callbacks.
+- No argument-less wrappers or default keyboard remain in the core.
+- The firmware can be built for a single keyboard with the simple wrapper,
+  without understanding contexts or callbacks.
 - An embedding application can instantiate the core without linking the
-  singleton facade.
+  simple wrapper.
 
 ### Phase 10: Harden quality gates
 
@@ -477,8 +499,8 @@ During the transition:
 - Implement legacy functions through one compatibility-owned context whenever
   practical.
 - Convert tests to instance APIs before removing the underlying singleton.
-- Mark legacy APIs clearly, but do not remove them until Arduino/simple-firmware
-  examples use the facade successfully.
+- Mark legacy APIs clearly; Phase 9 removes them, together with converting
+  the tests and adding the simple wrapper.
 - Avoid compatibility macros that silently select a global context inside core
   modules; wrappers should make that ownership visible.
 
@@ -490,6 +512,9 @@ with component scarcity, and the ATmega88P now costs more than the ATmega328P.
 Secondary targets are supported only while they fit the instance-based core
 cleanly; a target that does not fit is dropped rather than given special-case
 code.
+
+The ATmega88P was dropped in Phase 8, when four-byte keys no longer fit its
+flash. The notes below record the constraints it imposed until then.
 
 The ATmega88P is the tightest secondary target. The v1.7.1 image uses 7,766
 bytes of its 8 KiB flash when initialized data is included, and 694 bytes of
@@ -545,9 +570,9 @@ from flash into SRAM. Inspect ELF sections and map files as part of AVR tests.
 surface tiny and use platform-provided critical sections around shared tick
 state.
 
-### Compatibility facade becoming permanent coupling
+### Simple wrapper becoming permanent coupling
 
-Build and test the core without the facade in CI so convenience wrappers cannot
+Build and test the core without the simple wrapper in CI so convenience wrappers cannot
 reintroduce hidden dependencies.
 
 ## Completion criteria
@@ -569,7 +594,7 @@ The refactor is complete when:
 - All AVR and ARM targets build cleanly.
 - ATmega328P and ATmega2560 flash, RAM, and stack margins remain acceptable and
   enforced, as do those of every secondary AVR target still supported.
-- The explicit-instance API and beginner facade are both documented and tested.
+- The explicit-instance API and the simple wrapper are both documented and tested.
 - The PIC32CM claims clearly distinguish build verification from hardware
   validation until hardware tests exist.
 

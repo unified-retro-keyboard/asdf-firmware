@@ -1,0 +1,57 @@
+# Key matrices for the apple2 keymaps. The master keymap files assign these
+# matrices to modifier states. See src/asdf_keymap_gen.py for the format.
+
+include: [asdf_keymap_apple2_add_map.h, asdf_keymap_actions.h, asdf_ascii.h, asdf_virtual.h]
+rows: ASDF_APPLE2_NUM_ROWS
+cols: ASDF_APPLE2_NUM_COLS
+maps:
+  apple_plain_matrix:
+    0: [KEY_CAPS, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $APPLE_RIGHT_ARROW]
+    1: [$ASCII_DEL, 'p', ';', '/', $ASCII_SPACE, 'z', 'a', 'q']
+    2: [~, $ASCII_COMMA, 'm', 'n', 'b', 'v', 'c', 'x']
+    3: [~, 'k', 'j', 'h', 'g', 'f', 'd', 's']
+    4: [~, 'i', 'u', 'y', 't', 'r', 'e', 'w']
+    5: [~, ~, ~, $ASCII_CR, KEY_REPEAT, 'o', 'l', $ASCII_PERIOD]
+    6: [~, ~, ~, '-', ':', $ASCII_ZERO, '9', '8']
+    7: [$APPLE_LEFT_ARROW, '7', '6', '5', '4', '3', '2', '1']
+    ASDF_ARCH_DIPSWITCH_ROW: &dip [KEY_MAPSEL(0), KEY_MAPSEL(1), KEY_MAPSEL(2), KEY_MAPSEL(3), ~, ~, KEY_STROBE_POLARITY, KEY_AUTOREPEAT]
+  apple_shift_matrix:
+    0: [KEY_CAPS, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $APPLE_RIGHT_ARROW]
+    1: [~, 'P', '+', '?', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, '<', 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [~, ~, ~, $ASCII_CR, KEY_REPEAT, 'O', 'L', '>']
+    6: [~, ~, KEY_VIRTUAL(APPLE_VIRTUAL_CLR_SCR), '=', '*', $ASCII_AT, $ASCII_RT_PAREN, $ASCII_LT_PAREN]
+    7: [$APPLE_LEFT_ARROW, $ASCII_SINGLE_QUOTE, '&', '%', '$', '#', $ASCII_DOUBLE_QUOTE, '!']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  apple_caps_shift_matrix:
+    0: [KEY_CAPS, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $APPLE_RIGHT_ARROW]
+    1: [~, $ASCII_AT, '+', '?', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, '<', 'M', '^', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [~, ~, ~, $ASCII_CR, KEY_REPEAT, 'O', 'L', '>']
+    6: [~, ~, KEY_VIRTUAL(APPLE_VIRTUAL_CLR_SCR), '=', '*', ~, $ASCII_RT_PAREN, $ASCII_LT_PAREN]
+    7: [$APPLE_LEFT_ARROW, $ASCII_SINGLE_QUOTE, '&', '%', '$', '#', $ASCII_DOUBLE_QUOTE, '!']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  apple_caps_matrix:
+    0: [KEY_CAPS, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $APPLE_RIGHT_ARROW]
+    1: [~, 'P', ';', '/', $ASCII_SPACE, 'Z', 'A', 'Q']
+    2: [~, $ASCII_COMMA, 'M', 'N', 'B', 'V', 'C', 'X']
+    3: [~, 'K', 'J', 'H', 'G', 'F', 'D', 'S']
+    4: [~, 'I', 'U', 'Y', 'T', 'R', 'E', 'W']
+    5: [~, ~, ~, $ASCII_CR, KEY_REPEAT, 'O', 'L', $ASCII_PERIOD]
+    6: [~, ~, ~, '-', ':', $ASCII_ZERO, '9', '8']
+    7: [$APPLE_LEFT_ARROW, '7', '6', '5', '4', '3', '2', '1']
+    ASDF_ARCH_DIPSWITCH_ROW: *dip
+  apple_ctrl_matrix:
+    0: [KEY_CAPS, KEY_SHIFT, KEY_SHIFT, ~, ~, $ASCII_ESC, KEY_CTRL, $APPLE_RIGHT_ARROW]
+    1: [~, $ASCII_CTRL_P, ~, $ASCII_BACKSLASH, $ASCII_SPACE, $ASCII_CTRL_Z, $ASCII_CTRL_A, $ASCII_CTRL_Q]
+    2: [~, $ASCII_LT_SQUARE_BRACE, $ASCII_CTRL_M, $ASCII_CTRL_N, $ASCII_CTRL_B, $ASCII_CTRL_V, $ASCII_CTRL_C, $ASCII_CTRL_X]
+    3: [~, $ASCII_CTRL_K, $ASCII_CTRL_J, $ASCII_CTRL_H, $ASCII_CTRL_G, $ASCII_CTRL_F, $ASCII_CTRL_D, $ASCII_CTRL_S]
+    4: [~, $ASCII_CTRL_I, $ASCII_CTRL_U, $ASCII_CTRL_Y, $ASCII_CTRL_T, $ASCII_CTRL_R, $ASCII_CTRL_E, $ASCII_CTRL_W]
+    5: [~, ~, ~, $ASCII_CR, KEY_REPEAT, $ASCII_CTRL_O, $ASCII_CTRL_L, $ASCII_RT_SQUARE_BRACE]
+    6: [~, ~, KEY_VIRTUAL(APPLE_VIRTUAL_RESET), $ASCII_UNDERSCORE, ~, KEY_KEYMAP_ID, $ASCII_RT_CURLY_BRACE, $ASCII_LT_CURLY_BRACE]
+    7: [$ASCII_DEL, $ASCII_GRAVE_ACCENT, $ASCII_CARET, ~, ~, KEY_APPLESOFT_KEYBOARD_TEST, $ASCII_TILDE, $ASCII_VERT_BAR]
+    ASDF_ARCH_DIPSWITCH_ROW: *dip

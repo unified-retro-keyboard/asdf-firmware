@@ -27,25 +27,17 @@
 #if !defined(ASDF_KEYMAP_ACE1000_ADD_MAP_H)
 #define ASDF_KEYMAP_ACE1000_ADD_MAP_H
 
-#include "asdf_keymap_defs_dipswitch.h"
 #include "asdf_arch.h"
 #include "asdf_keymap_ace1000.h"
 #include "asdf_modifiers.h"
 
 // Keycode matrices, one per modifier state, used by the ACE 1000 keymap
 // descriptors.
-typedef asdf_keycode_t ace1000_keycode_matrix_t[ACE1000_NUM_ROWS][ACE1000_NUM_COLS];
 
-extern const FLASH ace1000_keycode_matrix_t ace1000_plain_matrix;
-extern const FLASH ace1000_keycode_matrix_t ace1000_shift_matrix;
-extern const FLASH ace1000_keycode_matrix_t ace1000_caps_matrix;
-extern const FLASH ace1000_keycode_matrix_t ace1000_ctrl_matrix;
 
 
 // function prototypes
-void ace1000_keyboard_test(void);
 
-#define ASDF_ACE_DIP_SWITCHES ASDF_KEYMAP_DIP_SWITCHES
 
 // Key value definitions
 #define ACE_KEY_0	0x30

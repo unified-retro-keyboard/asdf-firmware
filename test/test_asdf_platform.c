@@ -26,9 +26,9 @@ static void scan(int ticks)
 
 static void send_pending_codes(void)
 {
-  asdf_keycode_t code;
+  uint16_t code;
   while (ASDF_INVALID_CODE != (code = asdf_next_code())) {
-    asdf_send_code(code);
+    asdf_send_code((asdf_keycode_t) code);
   }
 }
 

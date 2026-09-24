@@ -32,7 +32,6 @@
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
-#include "asdf_hook.h"
 #include "asdf_keymaps.h"
 #include "asdf_modifiers.h"
 #include "asdf_platform.h"
@@ -44,9 +43,10 @@ struct asdf_keyboard {
   // Key matrix scanner
   asdf_cols_t stable_rows[ASDF_MAX_ROWS];                    // debounced key state
   uint8_t debounce[ASDF_MAX_ROWS][ASDF_MAX_COLS];            // scans left to debounce
-  asdf_keycode_t last_key;                                   // last code-producing key
+  asdf_key_t repeat_key;                                     // the repeating key
   uint8_t last_key_row;                                      // ... and its position
   uint8_t last_key_col;
+  uint8_t repeat_armed; // set by a press action to make its key repeat
 
   // Output queues. System messages have priority over typed keycodes.
   asdf_ring_t keycodes;
@@ -57,7 +57,6 @@ struct asdf_keyboard {
   uint8_t output_wait_ms; // ticks before the next code may be output
 
   asdf_keymap_state_t keymap;
-  asdf_hook_state_t hooks;
   asdf_modifier_state_t modifiers;
   asdf_repeat_state_t repeat;
   asdf_virtual_state_t outputs;
@@ -95,9 +94,11 @@ void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms);
 void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms);
 
 // PROCEDURE: asdf_next_code_r
-// OUTPUTS: the next code to send (system messages first), or ASDF_INVALID_CODE
-// if none is queued or output is paused after a system message character.
-asdf_keycode_t asdf_next_code_r(asdf_t *kb);
+// INPUTS: (asdf_t *) kb, (asdf_keycode_t *) code - receives the code
+// OUTPUTS: returns TRUE (nonzero) and sets *code to the next code to send
+// (system messages first), or returns FALSE (0) if none is queued or output is
+// paused after a system message character.
+uint8_t asdf_next_code_r(asdf_t *kb, asdf_keycode_t *code);
 
 // PROCEDURE: asdf_send_code_r
 // DESCRIPTION: sends a code to the host through the keyboard's platform.
@@ -118,6 +119,12 @@ int asdf_putc_r(asdf_t *kb, char c);
 // DESCRIPTION: selects the platform the keyboard is scanned and sent through;
 // NULL restores the keyboard's base platform.
 void asdf_install_platform_r(asdf_t *kb, const asdf_platform_t *platform);
+
+// PROCEDURE: asdf_arm_repeat_r
+// DESCRIPTION: called by a press action to make the key being pressed the
+// repeating key: while it is held, its press action is run again at the
+// repeat rate.
+void asdf_arm_repeat_r(asdf_t *kb);
 
 // PROCEDURE: asdf_set_strobe_polarity_r
 // DESCRIPTION: sets the output strobe polarity through the keyboard's

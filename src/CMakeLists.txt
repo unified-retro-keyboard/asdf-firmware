@@ -41,12 +41,21 @@ configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.h.in  ${CMAKE_CURRENT_BINARY
 
 c_toolchain_flags()
 
+# Key matrices, generated from YAML into the build directory.
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
+asdf_generate_keymaps(keymaps_gen
+  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_classic_maps.yaml
+  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_apple2_maps.yaml
+  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_sol_maps.yaml
+  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_ace1000_maps.yaml
+  )
+
 list (APPEND SOURCES
   asdf.c
   ${CMAKE_CURRENT_BINARY_DIR}/asdf_arch.c
   ${CMAKE_CURRENT_BINARY_DIR}/asdf_keymap_setup.c
   asdf_ring.c
-  asdf_hook.c
+  asdf_actions.c
   asdf_keymaps.c
   asdf_modifiers.c
   asdf_physical.c
@@ -56,13 +65,14 @@ list (APPEND SOURCES
   asdf_print.c
   Keymaps/asdf_keymap_classic.c
   Keymaps/asdf_keymap_classic_caps.c
-  Keymaps/asdf_keymap_classic_add_map.c
   Keymaps/asdf_keymap_apple2.c
   Keymaps/asdf_keymap_apple2_caps.c
   Keymaps/asdf_keymap_apple2_add_map.c
   Keymaps/asdf_keymap_sol.c
   Keymaps/asdf_keymap_ace1000.c
   Keymaps/asdf_keymap_ace1000_add_map.c
+  Keymaps/asdf_keymap_actions.c
+  ${ASDF_GENERATED_KEYMAP_SOURCES}
   main.c
   )
 
@@ -107,6 +117,7 @@ target_compile_options(${PROJECT_EXECUTABLE_TARGET_NAME}
   PRIVATE
   ${CFLAGS}
   )
+add_dependencies(${PROJECT_EXECUTABLE_TARGET_NAME} keymaps_gen)
 
 if(ARCH_TYPE STREQUAL "ARM")
   target_include_directories(${PROJECT_EXECUTABLE_TARGET_NAME} PRIVATE
