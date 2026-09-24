@@ -62,6 +62,13 @@
 #define OSI_RW_PIN 10u
 
 // --- public API (mirrors asdf_arch_atmega2560.h) ---
+// PROCEDURE: asdf_arch_osi_read_row
+// INPUTS: (uint8_t) row - the row to read
+// OUTPUTS: returns the pressed columns of the row, for an OSI keyboard
+// DESCRIPTION: An alternative row reader for OSI keyboards. Not used by any
+// keymap yet.
+asdf_cols_t asdf_arch_osi_read_row(uint8_t row);
+
 // PROCEDURE: asdf_arch_init
 // Sets up all the hardware for the keyboard and the platform embedded in arch,
 // and starts the tick interrupt.

@@ -43,7 +43,8 @@
 // OUTPUTS: none
 //
 // DESCRIPTION: Calls the action's function from the action table. Every
-// action number has a table entry, so no check is needed.
+// action number has a table entry, so no check is needed. The entry is copied
+// out of flash, rather than cast from a data pointer.
 //
 // SCOPE: public
 //
@@ -51,8 +52,9 @@
 //
 void asdf_action_r(asdf_t *kb, uint8_t fn, uint8_t param)
 {
-  asdf_action_fn_t action = (asdf_action_fn_t) FLASH_READ_PTR(&asdf_action_table[fn]);
+  asdf_action_fn_t action;
 
+  FLASH_MEMCPY(&action, &asdf_action_table[fn], sizeof(action));
   action(kb, param);
 }
 

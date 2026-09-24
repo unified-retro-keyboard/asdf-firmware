@@ -15,6 +15,18 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+// newlib calls these by name; it declares none of them in its headers.
+void *_sbrk(ptrdiff_t incr);
+int _close(int file);
+int _fstat(int file, struct stat *st);
+int _isatty(int file);
+int _lseek(int file, int ptr, int dir);
+int _read(int file, char *ptr, int len);
+int _write(int file, char *ptr, int len);
+void _exit(int status);
+int _kill(int pid, int sig);
+int _getpid(void);
+
 extern char end; // first address past .bss / start of heap (linker script)
 static char *heap_end = &end;
 

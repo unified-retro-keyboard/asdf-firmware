@@ -52,6 +52,7 @@ target_compile_options(asdf_core
   PRIVATE
   ${C_FLAGS}
   )
+target_compile_options(asdf_core PRIVATE ${ASDF_STRICT_WARNING_FLAGS})
 add_dependencies(asdf_core test_keymaps_gen)
 
 target_include_directories(asdf_core

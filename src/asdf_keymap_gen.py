@@ -192,8 +192,8 @@ def matrix_rows(name, spec, num_rows, num_cols):
             raise KeymapError("%s: row %r is not a row number or C symbol" % (name, row))
         elif num_rows is not None and row >= num_rows:
             raise KeymapError("%s: row %d is beyond %d rows" % (name, row, num_rows))
-        if keys is None:
-            continue
+        if not keys:
+            continue  # an empty row does nothing, as rows left out do
         if not isinstance(keys, list):
             raise KeymapError("%s: row %s is not a list of keys" % (name, row))
         if num_cols is not None and len(keys) > num_cols:
