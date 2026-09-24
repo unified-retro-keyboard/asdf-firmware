@@ -13,6 +13,10 @@
 #include "asdf_repeat.h"
 #include "test_keymaps.h"
 #include "test_asdf_lib.h"
+#include "asdf_keyboard.h"
+
+// The keyboard under test.
+static asdf_t kb;
 
 #define A 'a'
 #define B 'b'
@@ -32,7 +36,7 @@ typedef struct {
 } coord_t;
 
 // The test key matrices (test_keymaps.h) of the keymap (index 0) that
-// asdf_init() selects are used to find key positions and expected codes. Keys
+// asdf_init_r(&kb) selects are used to find key positions and expected codes. Keys
 // are identified by test_key_value(): a code, or TEST_ACTION(fn).
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
@@ -42,11 +46,12 @@ void keyscan_delay(int32_t ticks);
 
 void setUp(void)
 {
-  asdf_init(&asdf_arch_platform);
+  asdf_init_r(&kb, &asdf_arch_platform);
 
-  // asdf_init() does not reset modifier state, and CAPS is a toggle that
+  // asdf_init_r(&kb) does not reset modifier state, and CAPS is a toggle that
   // tearDown() cannot release, so reset modifiers explicitly.
-  asdf_modifiers_init();
+  asdf_modifiers_init_r(&kb.modifiers);
+  asdf_sync_lock_leds_r(&kb);
 
   // initialize simulated key matrix
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
@@ -104,7 +109,7 @@ uint16_t ctrl(uint16_t code)
 void keyscan_delay(int32_t ticks)
 {
   for (; ticks; ticks--) {
-    asdf_keyscan();
+    asdf_keyscan_r(&kb);
   }
 }
 
@@ -148,7 +153,7 @@ void pressing_a_gives_nothing_before_debounce(void)
 
   // no keypress after only ASDF_DEBOUNCE_TIME_MS -1  ticks (not yet debounced):
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS - 1);
-  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 // pressing 'A' gives 'a'
@@ -158,14 +163,14 @@ void pressing_a_gives_a(void)
 
   // no keypress after only ASDF_DEBOUNCE_TIME_MS -1  ticks (not yet debounced):
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS - 1);
-  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 
   // allow the key to finish debounce
   keyscan_delay(1);
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (int32_t) test_next_code(&kb));
 
   // no more codes in the buffer.
-  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32(ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 // pressing SHIFT+A gives 'A'
@@ -173,7 +178,7 @@ void pressing_shift_a_gives_shifted_a(void)
 {
   press(TEST_ACTION(ACTION_SHIFT));
   press(key_a);
-  TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (int32_t) test_next_code(&kb));
 }
 
 // pressing CAPS+A gives 'A'
@@ -183,7 +188,7 @@ void pressing_caps_a_gives_caps_a(void)
   release(TEST_ACTION(ACTION_CAPS));
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (int32_t) test_next_code(&kb));
 }
 
 // pressing CTRL+A gives 0x01 (Ctrl-A)
@@ -191,7 +196,7 @@ void pressing_ctrl_a_gives_ctrl_a(void)
 {
   press(TEST_ACTION(ACTION_CTRL));
   press(key_a);
-  TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (int32_t) test_next_code(&kb));
 }
 
 // pressing REPT+A repeats 'a'
@@ -200,17 +205,17 @@ void pressing_rept_a_repeats_a(void)
   press(TEST_ACTION(ACTION_REPEAT));
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -221,17 +226,17 @@ void pressing_shift_rept_a_repeats_shifted_a(void)
   press(TEST_ACTION(ACTION_SHIFT));
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) shifted(key_a), (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -243,18 +248,18 @@ void pressing_caps_rept_a_repeats_caps_a(void)
 
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (uint32_t) test_next_code(&kb));
 
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) caps(key_a), (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 // pressing REPT+CTRL+A repeats CTRL-A
@@ -264,18 +269,18 @@ void pressing_ctrl_rept_a_repeats_ctrl_a(void)
   press(TEST_ACTION(ACTION_CTRL));
 
   press(key_a);
-  TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) test_next_code(&kb));
 
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) ctrl(key_a), (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 // pressing and holding 'A' autorepeats 'A'
@@ -283,14 +288,14 @@ void holding_a_autorepeats_a(void)
 {
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(ASDF_AUTOREPEAT_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -299,21 +304,21 @@ void holding_a_autorepeats_slow_then_fast(void)
 {
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(ASDF_AUTOREPEAT_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -329,13 +334,13 @@ void pressing_a_then_b_before_debounce_gives_a_then_b(void)
   press(key_b);
 
   // first get back A
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // next get back B
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
 
   // and then verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -349,11 +354,11 @@ void test_key_sequence_nkro(void)
   }
 
   for (int i = 0; i < (int32_t) strlen(test_string); i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) test_string[i], (int32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) test_string[i], (int32_t) test_next_code(&kb));
   }
 
   // and then verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -371,11 +376,11 @@ void test_key_sequence_nkro_simultaneous_debounce(void)
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS);
 
   for (int i = 0; i < (int32_t) strlen(test_string); i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) test_string[i], (int32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) test_string[i], (int32_t) test_next_code(&kb));
   }
 
   // and then verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -394,16 +399,16 @@ void holding_a_briefly_then_holding_b_gives_a_and_repeats_b(void)
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   // should get "a" back, then "b"
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
 
   // now get back NUM_REEPEATS repetitions of "b"
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
   }
 
   // and then verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 
@@ -412,40 +417,40 @@ void holding_a_then_holding_b_autorepeats_a_then_autorepeats_b(void)
 {
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for AUTOREPEAT delay
   keyscan_delay(ASDF_AUTOREPEAT_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   // empty the buffer to make room for 'B'
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
   }
 
   // now press "b" while "a" is autorepeating:
 
   press(key_b);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
 
   // hold "a" for autorepeat delay
   keyscan_delay(ASDF_AUTOREPEAT_TIME_MS);
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   // empty the buffer to make room for 'B'
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 // Pressing and holding 'A' then holding 'B' with repeat key held repeats 'A' then 'B'
@@ -454,32 +459,32 @@ void repeating_with_a_then_adding_b_repeats_a_then_repeats_b(void)
   press(TEST_ACTION(ACTION_REPEAT));
   press(key_a);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   // empty the buffer to make room for 'B'
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_a, (uint32_t) test_next_code(&kb));
   }
 
   // now press "b" while "a" is autorepeating:
 
   press(key_b);
 
-  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
 
   // hold "a" for NUM_REPEATS repeat cycles:
   keyscan_delay(NUM_REPEATS * ASDF_REPEAT_TIME_MS);
 
   // empty the buffer to make room for 'B'
   for (int i = 0; i < NUM_REPEATS; i++) {
-    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT32((int32_t) key_b, (uint32_t) test_next_code(&kb));
   }
 
   // and verify there are no more codes in buffer:
-  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT32((int32_t) ASDF_INVALID_CODE, (int32_t) test_next_code(&kb));
 }
 
 

@@ -29,7 +29,7 @@
 
 // All modifier state is held in the caller's asdf_modifier_state_t. These
 // functions change only that state; driving the SHIFTLOCK and CAPSLOCK
-// indicator LEDs is left to the caller (see asdf_compat.c), using
+// indicator LEDs is left to the caller (see asdf_sync_lock_leds_r), using
 // asdf_modifier_shift_locked_r() and asdf_modifier_caps_locked_r().
 
 // This table maps the active modifiers (a bitmap of ASDF_MODIFIERS_*_MASK) to

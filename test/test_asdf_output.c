@@ -12,6 +12,11 @@
 #include "unity.h"
 #include "asdf.h"
 #include "asdf_arch_test.h"
+#include "asdf_keyboard.h"
+#include "test_asdf_lib.h"
+
+// The keyboard under test.
+static asdf_t kb;
 
 asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
@@ -21,7 +26,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_init(&asdf_arch_platform);
+  asdf_init_r(&kb, &asdf_arch_platform);
 }
 
 void tearDown(void) {}
@@ -31,23 +36,23 @@ void tearDown(void) {}
 void test_message_buffer_has_priority_over_keycodes(void)
 {
   // Queue a keycode first, then a message byte.
-  asdf_put_code('k');
-  asdf_putc('m', NULL);
+  asdf_put_code_r(&kb, 'k');
+  asdf_putc_r(&kb, 'm');
 
-  TEST_ASSERT_EQUAL_INT('m', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT('k', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  TEST_ASSERT_EQUAL_INT('m', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT('k', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
 
 // Ensure the firmware's newline handling converts LF to CRLF when buffering
 // system messages.
 void test_putc_translates_newline_to_crlf(void)
 {
-  asdf_putc('\n', NULL);
+  asdf_putc_r(&kb, '\n');
 
-  TEST_ASSERT_EQUAL_INT('\r', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT('\n', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  TEST_ASSERT_EQUAL_INT('\r', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT('\n', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
 
 // After a message byte, output pauses for the print delay, counted in ticks;
@@ -56,34 +61,34 @@ void test_print_delay_paces_output_after_messages(void)
 {
   const uint8_t delay = 77;
 
-  asdf_set_print_delay(delay);
-  asdf_putc('x', NULL);
-  asdf_put_code('y');
-  asdf_put_code('z');
+  kb.print_delay_ms = delay;
+  asdf_putc_r(&kb, 'x');
+  asdf_put_code_r(&kb, 'y');
+  asdf_put_code_r(&kb, 'z');
 
-  TEST_ASSERT_EQUAL_INT('x', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  TEST_ASSERT_EQUAL_INT('x', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 
-  asdf_tick(delay - 1);
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  asdf_tick_r(&kb, delay - 1);
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 
-  asdf_tick(1);
-  TEST_ASSERT_EQUAL_INT('y', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT('z', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  asdf_tick_r(&kb, 1);
+  TEST_ASSERT_EQUAL_INT('y', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT('z', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
 
 // Ticks elapsed beyond the pause are not carried over.
 void test_print_delay_does_not_underflow(void)
 {
-  asdf_set_print_delay(5);
-  asdf_putc('x', NULL);
-  asdf_putc('y', NULL);
+  kb.print_delay_ms = 5;
+  asdf_putc_r(&kb, 'x');
+  asdf_putc_r(&kb, 'y');
 
-  TEST_ASSERT_EQUAL_INT('x', asdf_next_code());
-  asdf_tick(200);
-  TEST_ASSERT_EQUAL_INT('y', asdf_next_code());
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, asdf_next_code());
+  TEST_ASSERT_EQUAL_INT('x', test_next_code(&kb));
+  asdf_tick_r(&kb, 200);
+  TEST_ASSERT_EQUAL_INT('y', test_next_code(&kb));
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
 
 int main(void)

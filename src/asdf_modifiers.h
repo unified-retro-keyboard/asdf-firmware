@@ -97,46 +97,6 @@ uint8_t asdf_modifier_shift_locked_r(const asdf_modifier_state_t *mods);
 uint8_t asdf_modifier_caps_locked_r(const asdf_modifier_state_t *mods);
 modifier_index_t asdf_modifier_index_r(const asdf_modifier_state_t *mods);
 
-// Single-keyboard API, operating on the default modifier state (asdf_compat.c).
-// These also drive the SHIFTLOCK (VSHIFT_LED) and CAPSLOCK (VCAPS_LED)
-// indicators when the corresponding state changes.
-
-// PROCEDURE: asdf_modifier_shift_activate
-// DESCRIPTION: sets SHIFT state to ON
-void asdf_modifier_shift_activate(void);
-
-// PROCEDURE: asdf_modifier_shiftlock_on_activate
-// DESCRIPTION: sets SHIFTLOCK state to ON
-void asdf_modifier_shiftlock_on_activate(void);
-
-// PROCEDURE: asdf_modifier_shiftlock_toggle_activate
-// DESCRIPTION: Toggles SHIFTLOCK state.
-void asdf_modifier_shiftlock_toggle_activate(void);
-
-// PROCEDURE: asdf_modifier_capslock_activate
-// DESCRIPTION: Toggles CAPSLOCK state
-void asdf_modifier_capslock_activate(void);
-
-// PROCEDURE: asdf_modifier_ctrl_activate
-// DESCRIPTION: Turns on CTRL mode
-void asdf_modifier_ctrl_activate(void);
-
-// PROCEDURE: asdf_modifier_shift_deactivate
-// DESCRIPTION: Turns off SHIFT and SHIFTLOCK.
-void asdf_modifier_shift_deactivate(void);
-
-// PROCEDURE: asdf_modifier_ctrl_deactivate
-// DESCRIPTION: Turns off CTRL mode
-void asdf_modifier_ctrl_deactivate(void);
-
-// PROCEDURE: asdf_modifiers_init
-// DESCRIPTION: Initialize the modifier key state variables to OFF state
-void asdf_modifiers_init(void);
-
-// PROCEDURE: asdf_modifier_index
-// OUTPUTS: returns uint8_t index into key map, based on modifier key status
-modifier_index_t asdf_modifier_index(void);
-
 #endif // !defined (ASDF_MODIFIERS_H)
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

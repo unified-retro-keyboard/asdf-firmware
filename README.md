@@ -186,7 +186,9 @@ OSCHF internal-oscillator maximum; the PL10 flash is single-cycle, so no wait
 states are needed). Building them requires `arm-none-eabi-gcc`.
 
 The firmware is designed to run from ROM on a slow vintage processor, with a
-small RAM footprint, and is not re-entrant. It is designed to compile on small
+small RAM footprint. All of a keyboard's changeable state is held in one
+keyboard object (`asdf_t`), so the core keeps no hidden state and any number of
+keyboards can run independently. It is designed to compile on small
 architectures, or to be hand-translated to assembly on small processors, or to
 an HDL for a CPLD or FPGA.
 
@@ -196,31 +198,52 @@ performance benefit was not there for 8-bit values.
 
 To port to a new processor architecture, you may use the atmega2560 files as an
 example, and create a pair of architecture-specific .c and .h files for the new
-hardware, exporting the following functions:
+hardware. They define a hardware state object, `asdf_arch_t`, which embeds the
+keyboard's platform (`asdf_platform_t`, in `src/asdf_platform.h`), and:
 
-- asdf_arch_init: initializes the CPU and hardware
+- `asdf_arch_init(arch)`: initializes the CPU and hardware, fills in the
+  platform, and starts a 1 ms tick interrupt.
 
-- asdf_arch_read_row: given a row number, output the row to the matrix, and read
-  all the columns on that row asdf_arch_send_code
+- `asdf_arch_tick(arch)`: returns the number of 1 ms ticks since the last call.
 
-- asdf_arch_send_code: given a key code, output the code to the computer, via
-  serial, parallel, I2C, whatever is appropriate.
+- `ASDF_ARCH_TICK_ISR` and `asdf_arch_count_tick(arch)`: the tick interrupt
+  vector, and the function it calls to count a tick. The application (main.c)
+  defines the interrupt, since it owns the hardware state.
 
-- asdf_arch_tick: true once every 1ms. This tests a flag set in an interrupt
-  routine that is triggered every 1ms. The function return value is polled and a
-  keyscan initiated when true. An alternative, if you have an RTOS, or even just
-  a scheduler, would be to schedule the keyscan every 1 ms, rather than poll. In
-  that case, this function is not needed, and the "superloop" in main.c would
-  contain a call to the scheduler.
+The platform's operations are what the keyboard needs from the hardware:
 
-- asdf_arch_XXXX_set: The hardware provides a number of physical resources, such
-  as TTL or tri-state outputs, which can be used to drive LEDs, TTL logic output
-  lines, etc. These are driven by a virtual output layer. The virtual layer
-  requires a function to set the state of the physical resources. One function
-  is provided for each such resource. For example, if a TTL output is called
-  OUT1, then the function asdf_arch_out1_set() must be defined. For now, the
-  required devices are:
-- LED1, LED2, LED3 (LED outputs)
-- OUT1, OUT2, OUT3 (TTL outputs)
-- OUT1\_OPEN\_HI, OUT2\_OPEN\_HI, OUT3\_OPEN\_HI (Open collector outputs)
-- OUT1\_OPEN\_LO, OUT2\_OPEN\_LO, OUT3\_OPEN\_LO (Open emitter outputs)
+- `read_row`: output a row to the matrix, and read all the columns on that row.
+
+- `send_code`: output a code to the computer, via serial, parallel, I2C, or
+  whatever is appropriate.
+
+- `set_output`: drive one of the physical outputs (LED1-3, OUT1-3, and the
+  open-collector and open-emitter variants of OUT1-3) from the virtual output
+  layer.
+
+- `set_strobe_polarity`, `pulse_delay_short`, and `reset`: set the output strobe
+  polarity, wait for a short output pulse (a few microseconds), and return the
+  output configuration to its defaults when a keymap is selected.
+
+## Using the keyboard in your own program
+
+There are two ways to run the keyboard from an application:
+
+- **The simple wrapper** (`src/asdf_simple.h`), for a program with a single
+  keyboard that delivers the codes itself (USB, serial, and so on). It owns the
+  hardware, the keyboard, and the tick interrupt, and has four calls:
+
+        asdf_begin();
+        while (1) {
+          asdf_poll();
+          while (asdf_available()) {
+            send_somewhere(asdf_read());
+          }
+        }
+
+- **Keyboard objects** (`src/asdf_keyboard.h`), for anything else: more than one
+  keyboard, a custom platform, or code sent through the platform. The
+  application owns each `asdf_t` and its hardware, and calls the `_r` functions:
+  `asdf_init_r()` once, then `asdf_process_r()` (which sends codes through the
+  platform) or `asdf_update_r()` (which leaves them queued for
+  `asdf_next_code_r()`) with the elapsed ticks. `src/main.c` is an example.

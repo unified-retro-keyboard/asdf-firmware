@@ -465,6 +465,18 @@ Exit criteria:
 - If a C++ wrapper is added, keep it header-light and implement behavior through
   the C99 core.
 - Document when to use the simple wrapper and when to use explicit instances.
+- Done as: `asdf_compat.c` and every argument-less declaration are removed.
+  `main.c` owns its `asdf_t`; the host tests each own one (or just the module
+  state they test) and use the `_r` API. `asdf_update_r()` runs the keyboard
+  without sending, leaving codes for `asdf_next_code_r()`. The simple wrapper
+  (`src/asdf_simple.[ch]`) owns the hardware, the keyboard, and the tick
+  interrupt, and provides `asdf_begin()`, `asdf_poll()`, `asdf_available()`,
+  and `asdf_read()`; the application delivers the codes. It is tested on the
+  host (the test adapter now has the firmware adapters' `asdf_arch_t` API) and
+  compiled, but not linked, in every firmware build. The README describes both
+  ways to run the keyboard. Not done: an Arduino library layout
+  (`library.properties`, `examples/`). On AVR that also needs a tick source
+  that does not take over Timer 0, which the Arduino core uses for `millis()`.
 
 Exit criteria:
 

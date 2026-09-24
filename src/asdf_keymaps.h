@@ -109,51 +109,6 @@ void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index);
 void asdf_keymaps_select_r(asdf_t *kb, uint8_t index);
 void asdf_keymaps_apply_request_r(asdf_t *kb);
 
-// Single-keyboard API, operating on the default keyboard (asdf_compat.c).
-
-// PROCEDURE: asdf_keymaps_add_map
-// DESCRIPTION: Sets the key matrix used for one modifier state.
-void asdf_keymaps_add_map(const asdf_key_t *matrix, modifier_index_t modifier_index,
-                          uint8_t num_rows, uint8_t num_cols);
-
-// PROCEDURE: asdf_keymaps_apply_request
-// DESCRIPTION: Switch to the keymap requested by the keymap select actions, if
-// it differs from the current keymap and exists. Called at the end of each scan.
-void asdf_keymaps_apply_request(void);
-
-// PROCEDURE: asdf_keymaps_num_rows, asdf_keymaps_num_cols
-// OUTPUTS: number of rows (columns) in the keymap for the current modifier state
-uint8_t asdf_keymaps_num_rows(void);
-uint8_t asdf_keymaps_num_cols(void);
-
-// PROCEDURE: asdf_keymaps_select
-// INPUTS: (uint8_t) index - index of the keymap number to select
-// DESCRIPTION: Switch to the keymap if it exists and differs from the current
-// keymap.
-void asdf_keymaps_select(uint8_t index);
-
-// PROCEDURE: asdf_keymaps_map_select_N_set, asdf_keymaps_map_select_N_clear
-// DESCRIPTION: Set or clear bit N of the requested keymap number (DIP switch
-// actions). The request is applied at the end of the scan.
-void asdf_keymaps_map_select_0_clear(void);
-void asdf_keymaps_map_select_0_set(void);
-void asdf_keymaps_map_select_1_clear(void);
-void asdf_keymaps_map_select_1_set(void);
-void asdf_keymaps_map_select_2_clear(void);
-void asdf_keymaps_map_select_2_set(void);
-void asdf_keymaps_map_select_3_clear(void);
-void asdf_keymaps_map_select_3_set(void);
-
-// PROCEDURE: asdf_keymaps_init
-// DESCRIPTION: Select keymap 0.
-void asdf_keymaps_init(void);
-
-// PROCEDURE: asdf_keymaps_get_key
-// INPUTS: (uint8_t) row, col - key position; (uint8_t) modifier_index
-// OUTPUTS: the key at that position for that modifier state, or a key that
-// does nothing if any index is out of range.
-asdf_key_t asdf_keymaps_get_key(uint8_t row, uint8_t col, uint8_t modifier_index);
-
 #endif /* !defined (ASDF_KEYMAPS_H) */
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

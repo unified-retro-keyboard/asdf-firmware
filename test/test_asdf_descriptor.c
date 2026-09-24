@@ -16,6 +16,10 @@
 #include "asdf_platform.h"
 #include "test_asdf_lib.h"
 #include "test_asdf_keymap_defs.h"
+#include "asdf_keyboard.h"
+
+// The keyboard under test.
+static asdf_t kb;
 
 // emulates the arch row reader, to see that the platform's read_row is called.
 asdf_cols_t asdf_arch_read_row(uint8_t row)
@@ -27,9 +31,9 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 void setUp(void)
 {
   test_hook_clear();
-  asdf_init(&asdf_arch_platform);
+  asdf_init_r(&kb, &asdf_arch_platform);
 
-  asdf_keymaps_select(ASDF_TEST_DEFAULT_SCANNER_MAP);
+  asdf_keymaps_select_r(&kb, ASDF_TEST_DEFAULT_SCANNER_MAP);
 }
 
 void tearDown(void) {}
@@ -37,7 +41,7 @@ void tearDown(void) {}
 
 void test_default_platform_is_arch_platform(void)
 {
-  const asdf_platform_t *p = asdf_current_platform();
+  const asdf_platform_t *p = kb.platform;
 
   TEST_ASSERT_EQUAL_PTR(&asdf_arch_platform, p);
   TEST_ASSERT_EQUAL_INT((int) asdf_arch_read_row(100), (int) p->read_row(p->user, 100));
@@ -45,21 +49,21 @@ void test_default_platform_is_arch_platform(void)
 
 void test_keymap_can_install_platform(void)
 {
-  asdf_keymaps_select(ASDF_TEST_ALTERNATE_SCANNER_MAP);
-  const asdf_platform_t *p = asdf_current_platform();
+  asdf_keymaps_select_r(&kb, ASDF_TEST_ALTERNATE_SCANNER_MAP);
+  const asdf_platform_t *p = kb.platform;
 
   TEST_ASSERT_EQUAL_PTR(&test_alt_platform, p);
   TEST_ASSERT_EQUAL_INT((int) test_hook_read_row(100), (int) p->read_row(p->user, 100));
 
-  asdf_send_code(0x42);
+  asdf_send_code_r(&kb, 0x42);
   TEST_ASSERT_EQUAL_INT(0x42, (int) test_hook_readback());
 }
 
 void test_keymap_switch_restores_arch_platform(void)
 {
-  asdf_keymaps_select(ASDF_TEST_ALTERNATE_SCANNER_MAP);
-  asdf_keymaps_select(ASDF_TEST_DEFAULT_SCANNER_MAP);
-  TEST_ASSERT_EQUAL_PTR(&asdf_arch_platform, asdf_current_platform());
+  asdf_keymaps_select_r(&kb, ASDF_TEST_ALTERNATE_SCANNER_MAP);
+  asdf_keymaps_select_r(&kb, ASDF_TEST_DEFAULT_SCANNER_MAP);
+  TEST_ASSERT_EQUAL_PTR(&asdf_arch_platform, kb.platform);
 }
 
 #define NUM_SCAN_TEST_REPS 101
@@ -68,10 +72,10 @@ void test_each_scan_action_runs_each_scan(void)
 {
 
   test_hook_clear();
-  asdf_keymaps_select(ASDF_TEST_EACH_SCAN_MAP);
+  asdf_keymaps_select_r(&kb, ASDF_TEST_EACH_SCAN_MAP);
   TEST_ASSERT_EQUAL_INT(0, test_hook_readback());
   for (int i = 0; i < NUM_SCAN_TEST_REPS; i++) {
-    asdf_keyscan();
+    asdf_keyscan_r(&kb);
   }
   TEST_ASSERT_EQUAL_INT(NUM_SCAN_TEST_REPS, test_hook_readback());
 }

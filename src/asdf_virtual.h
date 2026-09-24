@@ -91,32 +91,6 @@ void asdf_virtual_sync_r(asdf_virtual_state_t *virt);
 // DESCRIPTION: Advances long pulses, ending those whose time has expired.
 void asdf_virtual_tick_r(asdf_virtual_state_t *virt, uint8_t elapsed);
 
-// Single-keyboard API, operating on the default virtual output state
-// (asdf_compat.c). The single-keyboard physical output functions operate on
-// the physical state embedded in it.
-
-// PROCEDURE: asdf_virtual_action
-// DESCRIPTION: apply function to the physical resources of virtual_out.
-void asdf_virtual_action(asdf_virtual_dev_t virtual_out, asdf_virtual_function_t function);
-
-// PROCEDURE: asdf_virtual_activate
-// DESCRIPTION: apply virtual_out's assigned function to its physical resources.
-void asdf_virtual_activate(asdf_virtual_dev_t virtual_out);
-
-// PROCEDURE: asdf_virtual_assign
-// DESCRIPTION: assign physical_out to virtual_out, with a function and an
-// initial value.
-void asdf_virtual_assign(asdf_virtual_dev_t virtual_out, asdf_physical_dev_t physical_out,
-                         asdf_virtual_function_t function, uint8_t initial_value);
-
-// PROCEDURE: asdf_virtual_init
-// DESCRIPTION: initialize the virtual and physical outputs.
-void asdf_virtual_init(void);
-
-// PROCEDURE: asdf_virtual_sync
-// DESCRIPTION: drive every physical output to its shadow value.
-void asdf_virtual_sync(void);
-
 #endif /* !defined (ASDF_VIRTUAL_H) */
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

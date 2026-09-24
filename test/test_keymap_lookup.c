@@ -5,8 +5,12 @@
 #include "test_asdf_lib.h"
 #include "asdf_modifiers.h"
 #include "asdf_arch.h"
+#include "asdf_keyboard.h"
 
-// Tests in this file focus on validating that test_get_code()
+// The keyboard under test.
+static asdf_t kb;
+
+// Tests in this file focus on validating that test_get_code(&kb)
 // returns the correct values for the active modifier map, regardless of the
 // dimensions of other modifier maps or previously selected keyboards.
 
@@ -50,36 +54,36 @@ static void load_keymap(const asdf_key_t *plain_matrix,
                         uint8_t shift_rows,
                         uint8_t shift_cols)
 {
-    asdf_init(&asdf_arch_platform);
+    asdf_init_r(&kb, &asdf_arch_platform);
 
     // Clear modifier entries so default keymaps do not leak into the tests.
-    asdf_keymaps_add_map(NULL, MOD_PLAIN_MAP, 0, 0);
-    asdf_keymaps_add_map(NULL, MOD_SHIFT_MAP, 0, 0);
+    asdf_keymaps_add_map_r(&kb.keymap, NULL, MOD_PLAIN_MAP, 0, 0);
+    asdf_keymaps_add_map_r(&kb.keymap, NULL, MOD_SHIFT_MAP, 0, 0);
 
     if (plain_matrix) {
-        asdf_keymaps_add_map(plain_matrix, MOD_PLAIN_MAP, plain_rows, plain_cols);
+        asdf_keymaps_add_map_r(&kb.keymap, plain_matrix, MOD_PLAIN_MAP, plain_rows, plain_cols);
     }
 
     if (shift_matrix) {
-        asdf_keymaps_add_map(shift_matrix, MOD_SHIFT_MAP, shift_rows, shift_cols);
+        asdf_keymaps_add_map_r(&kb.keymap, shift_matrix, MOD_SHIFT_MAP, shift_rows, shift_cols);
     }
 }
 
 void setUp(void)
 {
-    asdf_arch_init();
+    asdf_arch_test_reset();
 }
 
 void tearDown(void) {}
 
 static void expect_shift_lookup(uint8_t row, uint8_t col, uint16_t expected)
 {
-    TEST_ASSERT_EQUAL_INT(expected, test_get_code(row, col, MOD_SHIFT_MAP));
+    TEST_ASSERT_EQUAL_INT(expected, test_get_code(&kb, row, col, MOD_SHIFT_MAP));
 }
 
 static void expect_plain_lookup(uint8_t row, uint8_t col, uint16_t expected)
 {
-    TEST_ASSERT_EQUAL_INT(expected, test_get_code(row, col, MOD_PLAIN_MAP));
+    TEST_ASSERT_EQUAL_INT(expected, test_get_code(&kb, row, col, MOD_PLAIN_MAP));
 }
 
 void test_plain_and_shift_maps_can_have_independent_sizes(void)
