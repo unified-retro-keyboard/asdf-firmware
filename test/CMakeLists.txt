@@ -6,6 +6,17 @@ include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
 
 asdf_generate_keymaps(test_keymaps_gen ${CMAKE_CURRENT_SOURCE_DIR}/test_keymaps.yaml)
 
+# With ASDF_SANITIZE set (CMake option or environment variable), the host tests
+# run under AddressSanitizer and UndefinedBehaviorSanitizer, and any finding
+# fails the test.
+option(ASDF_SANITIZE "Build host tests with ASan and UBSan" OFF)
+if(ASDF_SANITIZE OR "$ENV{ASDF_SANITIZE}")
+  set(ASDF_SANITIZE_FLAGS -fsanitize=address,undefined -fno-sanitize-recover=all
+    -fno-omit-frame-pointer)
+  add_compile_options(${ASDF_SANITIZE_FLAGS})
+  add_link_options(${ASDF_SANITIZE_FLAGS})
+endif()
+
 # Match the firmware's unsigned char (set by -funsigned-char on AVR, the default
 # on ARM) so host tests see the same char semantics.
 list(APPEND C_FLAGS
