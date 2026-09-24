@@ -57,7 +57,7 @@
  * Set up the hardware and the keyboard.
  *
  * Initializes the architecture (including the 1 ms tick interrupt), then the
- * keyboard, with empty output queues and keymap 0 selected. Discards any code
+ * keyboard, with empty output queues and the first keymap selected. Discards any code
  * held by asdf_available(). Call once before any other function here; calling
  * it again resets the keyboard. Drives the keyboard's outputs and LEDs to
  * their initial values through the platform.

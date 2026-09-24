@@ -279,14 +279,33 @@ void asdf_keymaps_select(asdf_t *kb, uint8_t index) {
 }
 
 /**
- * Select keymap 0.
+ * Select the first keymap.
  *
- * Switches to keymap 0, configuring the keyboard; does nothing if keymap 0
- * does not exist.
+ * Resets the keymap-dependent state, then switches to the lowest-numbered
+ * keymap that exists, configuring the keyboard. With no keymaps at all, the
+ * keyboard is left reset, with no key matrices and keymap number 0.
  *
  * @param kb  Keyboard to configure.
+ *
+ * Keymap 0 exists by convention, but is not assumed: the registry is searched
+ * from 0 upward.
+ *
+ * Complexity: 4
  */
-void asdf_keymaps_init(asdf_t *kb) { asdf_keymaps_switch(kb, 0); }
+void asdf_keymaps_init(asdf_t *kb) {
+    uint8_t index = 0;
+
+    asdf_keymaps_reset(kb);
+    kb->keymap.current = 0;
+    kb->keymap.requested = 0;
+
+    while (!asdf_keymap_valid(index) && index < UINT8_MAX) {
+        index++;
+    }
+    if (asdf_keymap_valid(index)) {
+        asdf_keymaps_switch(kb, index);
+    }
+}
 
 /**
  * Set or clear bits of the requested keymap number.

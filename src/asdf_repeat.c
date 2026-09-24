@@ -104,18 +104,18 @@ void asdf_repeat_auto_on(asdf_repeat_state_t *repeat)
  *
  * @param repeat  Repeat state to update.
  *
- * The timer is left alone when it is already due within the repeat interval
- * and a mode other than REPEAT_OFF is running, to avoid visible stutter. In
- * that case the mode is left unchanged too: if it was REPEAT_AUTO, it stays
- * REPEAT_AUTO while REPEAT is held.
+ * The timer is reloaded with the repeat interval only if it is further off
+ * than that, or if no timer is running (REPEAT_OFF), so a key that is already
+ * repeating does not stutter.
  *
  * Complexity: 3
  */
 void asdf_repeat_activate(asdf_repeat_state_t *repeat)
 {
   if (repeat->timer > REPEAT_ON || REPEAT_OFF == repeat->mode) {
-    repeat->timer = repeat->mode = REPEAT_ON;
+    repeat->timer = REPEAT_ON;
   }
+  repeat->mode = REPEAT_ON;
 }
 
 /**

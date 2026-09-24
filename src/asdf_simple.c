@@ -56,7 +56,7 @@ ASDF_ARCH_TICK_ISR
  *
  * Discards any held code, initializes the architecture (which starts the tick
  * interrupt), then initializes the keyboard on the architecture's platform,
- * selecting keymap 0.
+ * selecting the first keymap.
  */
 void asdf_begin(void)
 {

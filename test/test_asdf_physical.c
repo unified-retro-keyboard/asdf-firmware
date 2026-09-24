@@ -129,6 +129,38 @@ void no_platform_tracks_shadow_only(void)
   TEST_ASSERT_EQUAL_INT(1, phys.shadow[PHYSICAL_LED1]);
 }
 
+// Each emulated output setter records its own device, so tests can tell the
+// outputs apart.
+void emulated_output_setters_are_distinct(void)
+{
+  static const struct {
+    void (*set)(uint8_t value);
+    asdf_physical_dev_t dev;
+  } setters[] = {
+    { asdf_arch_out1_set, PHYSICAL_OUT1 },
+    { asdf_arch_out1_open_hi_set, PHYSICAL_OUT1_OPEN_HI },
+    { asdf_arch_out1_open_lo_set, PHYSICAL_OUT1_OPEN_LO },
+    { asdf_arch_out2_set, PHYSICAL_OUT2 },
+    { asdf_arch_out2_open_hi_set, PHYSICAL_OUT2_OPEN_HI },
+    { asdf_arch_out2_open_lo_set, PHYSICAL_OUT2_OPEN_LO },
+    { asdf_arch_out3_set, PHYSICAL_OUT3 },
+    { asdf_arch_out3_open_hi_set, PHYSICAL_OUT3_OPEN_HI },
+    { asdf_arch_out3_open_lo_set, PHYSICAL_OUT3_OPEN_LO },
+    { asdf_arch_led1_set, PHYSICAL_LED1 },
+    { asdf_arch_led2_set, PHYSICAL_LED2 },
+    { asdf_arch_led3_set, PHYSICAL_LED3 },
+  };
+
+  for (unsigned i = 0; i < sizeof(setters) / sizeof(setters[0]); i++) {
+    asdf_arch_test_reset();
+    setters[i].set(1);
+    for (int dev = PHYSICAL_OUT1; dev < ASDF_PHYSICAL_NUM_RESOURCES; dev++) {
+      TEST_ASSERT_EQUAL_INT(dev == (int) setters[i].dev,
+                            asdf_arch_check_output((asdf_physical_dev_t) dev));
+    }
+  }
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -140,5 +172,6 @@ int main(void)
   RUN_TEST(invalid_devices_are_ignored);
   RUN_TEST(independent_physical_states);
   RUN_TEST(no_platform_tracks_shadow_only);
+  RUN_TEST(emulated_output_setters_are_distinct);
   return UNITY_END();
 }

@@ -55,7 +55,7 @@ typedef enum {
  * the repeat interval (REPEAT_ON), so a held key repeats first after the
  * current mode's delay and then at the repeat rate.
  *
- * Pressing REPEAT (asdf_repeat_activate()) usually switches to REPEAT_ON;
+ * Pressing REPEAT (asdf_repeat_activate()) switches to REPEAT_ON;
  * releasing it (asdf_repeat_deactivate()) restores the base mode and
  * restarts the timer. Changing the base mode while REPEAT_ON is in effect takes
  * effect when REPEAT is released.
@@ -142,11 +142,9 @@ uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat);
 /**
  * REPEAT pressed: switch to REPEAT_ON.
  *
- * If the mode is not REPEAT_OFF and the timer is already due within the
- * repeat interval, the timer and mode are left unchanged, so a key that is
- * already repeating does not stutter; a mode of REPEAT_AUTO then stays in
- * effect while REPEAT is held. Otherwise the mode becomes REPEAT_ON and the
- * timer reloads with the repeat interval. Writes only @p repeat.
+ * The mode becomes REPEAT_ON. The timer reloads with the repeat interval,
+ * unless it is already due within that interval (a key that is already
+ * repeating keeps its timing, so it does not stutter). Writes only @p repeat.
  *
  * @param repeat  Repeat state to update.
  */
