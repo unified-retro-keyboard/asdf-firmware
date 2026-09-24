@@ -31,3 +31,26 @@ function(asdf_generate_keymaps target)
   add_custom_target(${target} DEPENDS ${outputs})
   set(ASDF_GENERATED_KEYMAP_SOURCES ${sources} PARENT_SCOPE)
 endfunction()
+
+# Keymap registry helpers: from a keymap list (keymap_list.cmake), make the
+# initializers and declarations for asdf_keymap_setup.c.in, and a report.
+function(create_keymap_table keymaps keymap_table)
+  # one "[number] = &name_keymap" initializer per keymap, comma separated
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n  [\\2] = &\\1_keymap" OUTPUT_VARIABLE temp_list)
+  list(JOIN temp_list "," temp_string)
+  set(${keymap_table} "${temp_string}" PARENT_SCOPE)
+endfunction(create_keymap_table)
+
+function(create_keymap_declarations keymaps keymap_decl)
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nextern const asdf_keymap_t \\1_keymap" OUTPUT_VARIABLE temp_list)
+  # we can keep the ';' cmake list separators as the C statement separators.
+  # However, we need to append an extra ';' at the end.
+  string(APPEND temp_list ";")
+  set(${keymap_decl} "${temp_list}" PARENT_SCOPE)
+endfunction(create_keymap_declarations)
+
+function(create_keymap_report keymaps keymap_report)
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nkeymap [\\2]: \\1" OUTPUT_VARIABLE temp_list)
+  string(REPLACE ";" "" temp_list2 "${temp_list}")
+  set(${keymap_report} "${temp_list2}" PARENT_SCOPE)
+endfunction(create_keymap_report)

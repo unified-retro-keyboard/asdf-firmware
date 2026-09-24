@@ -223,6 +223,9 @@ void asdf_arch_test_reset(void);
 // need independent hardware for each keyboard use fake_platform_t instead.
 extern const asdf_platform_t asdf_arch_platform;
 
+// The DIP switch row of the production keymaps, as on the firmware targets.
+#define ASDF_ARCH_DIPSWITCH_ROW 8
+
 // The instance API of the firmware adapters, over the emulated hardware, so
 // that code written for them (such as the simple wrapper) runs on the host.
 // asdf_arch_test_tick_isr() stands in for the tick interrupt.

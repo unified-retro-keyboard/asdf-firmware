@@ -1,26 +1,6 @@
 message("C compiler: ${CMAKE_C_COMPILER}")
 
-function(create_keymap_table keymaps keymap_table)
-  # one "[number] = &name_keymap" initializer per keymap, comma separated
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\n  [\\2] = &\\1_keymap" OUTPUT_VARIABLE temp_list)
-  list(JOIN temp_list "," temp_string)
-  set(${keymap_table} "${temp_string}" PARENT_SCOPE)
-endfunction(create_keymap_table)
-
-function(create_keymap_declarations keymaps keymap_decl)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nextern const asdf_keymap_t \\1_keymap" OUTPUT_VARIABLE temp_list)
-  # we can keep the ';' cmake list separators as the C statement separators.
-  # However, we need to append an extra ';' at the end.
-  string(APPEND temp_list ";")
-  set(${keymap_decl} "${temp_list}" PARENT_SCOPE)
-endfunction(create_keymap_declarations)
-
-function(create_keymap_report keymaps keymap_report)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nkeymap [\\2]: \\1" OUTPUT_VARIABLE temp_list)
-  string(REPLACE ";" "" temp_list2 "${temp_list}")
-  set(${keymap_report} "${temp_list2}" PARENT_SCOPE)
-endfunction(create_keymap_report)
-
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
 include(../keymap_list.cmake)
 
 create_keymap_table("${keymap_list}" keymap_table)
@@ -42,13 +22,9 @@ configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.h.in  ${CMAKE_CURRENT_BINARY
 c_toolchain_flags()
 
 # Key matrices, generated from YAML into the build directory.
-include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
-asdf_generate_keymaps(keymaps_gen
-  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_classic_maps.yaml
-  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_apple2_maps.yaml
-  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_sol_maps.yaml
-  ${PROJECT_SRC_DIR}/Keymaps/asdf_keymap_ace1000_maps.yaml
-  )
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_sources.cmake)
+list(TRANSFORM ASDF_KEYMAP_YAML PREPEND ${PROJECT_SRC_DIR}/ OUTPUT_VARIABLE keymap_yaml)
+asdf_generate_keymaps(keymaps_gen ${keymap_yaml})
 
 list (APPEND SOURCES
   asdf.c
@@ -62,15 +38,7 @@ list (APPEND SOURCES
   asdf_repeat.c
   asdf_virtual.c
   asdf_print.c
-  Keymaps/asdf_keymap_classic.c
-  Keymaps/asdf_keymap_classic_caps.c
-  Keymaps/asdf_keymap_apple2.c
-  Keymaps/asdf_keymap_apple2_caps.c
-  Keymaps/asdf_keymap_apple2_add_map.c
-  Keymaps/asdf_keymap_sol.c
-  Keymaps/asdf_keymap_ace1000.c
-  Keymaps/asdf_keymap_ace1000_add_map.c
-  Keymaps/asdf_keymap_actions.c
+  ${ASDF_KEYMAP_SOURCES}
   ${ASDF_GENERATED_KEYMAP_SOURCES}
   main.c
   )

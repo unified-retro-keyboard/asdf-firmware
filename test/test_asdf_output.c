@@ -91,6 +91,22 @@ void test_print_delay_does_not_underflow(void)
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
 
+// Codes that do not fit in a full queue are dropped and counted.
+void test_full_queues_count_dropped_codes(void)
+{
+  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_codes_r(&kb));
+  for (int i = 0; i < ASDF_KEYCODE_BUFFER_SIZE + 3; i++) {
+    asdf_put_code_r(&kb, 'x');
+  }
+  TEST_ASSERT_EQUAL_INT(3, asdf_dropped_codes_r(&kb));
+
+  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_messages_r(&kb));
+  for (int i = 0; i < ASDF_MESSAGE_BUFFER_SIZE + 2; i++) {
+    asdf_putc_r(&kb, 'y');
+  }
+  TEST_ASSERT_EQUAL_INT(2, asdf_dropped_messages_r(&kb));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -98,5 +114,6 @@ int main(void)
   RUN_TEST(test_putc_translates_newline_to_crlf);
   RUN_TEST(test_print_delay_paces_output_after_messages);
   RUN_TEST(test_print_delay_does_not_underflow);
+  RUN_TEST(test_full_queues_count_dropped_codes);
   return UNITY_END();
 }

@@ -81,9 +81,9 @@ void asdf_virtual_init_r(asdf_virtual_state_t *virt, const struct asdf_platform 
 void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                            asdf_virtual_function_t function);
 void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out);
-void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
-                           asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
-                           uint8_t initial_value);
+uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                              asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
+                              uint8_t initial_value);
 void asdf_virtual_sync_r(asdf_virtual_state_t *virt);
 
 // PROCEDURE: asdf_virtual_tick_r

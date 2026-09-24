@@ -192,10 +192,11 @@ void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virt
 //              device when activated by a keypress.
 //         (uint8_t) initial_value - the initial state of the physical resource.
 //
-// OUTPUTS: none
+// OUTPUTS: returns TRUE (nonzero) if the physical output was assigned, FALSE
+//          (0) if not
 //
 // DESCRIPTION: map the virtual output specified by virtual_out to
-// physical_out, if both arguments are valid. Ignore if not valid.
+// physical_out, if both arguments are valid.
 //
 // SIDE EFFECTS: see above.
 //
@@ -206,17 +207,19 @@ void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virt
 //
 // COMPLEXITY: 3
 //
-void asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
-                           asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
-                           uint8_t initial_value)
+uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                              asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
+                              uint8_t initial_value)
 {
   if (valid_virtual_device(virtual_out)) {
     asdf_physical_dev_t tail = virt->physical_device[virtual_out];
     if (asdf_physical_allocate_r(&virt->physical, physical_out, tail, initial_value)) {
       virt->physical_device[virtual_out] = physical_out;
       virt->function[virtual_out] = function;
+      return 1;
     }
   }
+  return 0;
 }
 
 // PROCEDURE: asdf_virtual_init_r
