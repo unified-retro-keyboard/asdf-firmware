@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_classic_caps.c
-//
-// The keymap descriptor, outputs, and ID message for the ALL CAPS "classic"
-// ADM 3A style keymap. The key matrices are in asdf_keymap_classic_maps.yaml.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymap_classic_caps.c
+ *
+ * The keymap descriptor, outputs, and ID message for the ALL CAPS "classic"
+ * ADM 3A style keymap. The key matrices are in asdf_keymap_classic_maps.yaml.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software

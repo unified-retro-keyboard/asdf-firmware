@@ -1,15 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_pl10_q64.c
-//
-// PIC32CM6408PL10064 (64-pin, "2560-class") arch implementation. The scan/read
-// and output logic reproduces asdf_arch_atmega2560.c; only the pin-I/O
-// primitives change (Harmony-style PORT_REGS->GROUP[g].PORT_* registers via the
-// helpers in asdf_arch_pic32cm_common.h). Shared clock/tick/delay live in
-// asdf_arch_pic32cm_common.c.
+/**
+ * @file asdf_arch_pic32cm_pl10_q64.c
+ *
+ * PIC32CM6408PL10064 (64-pin, "2560-class") arch implementation. The scan/read
+ * and output logic reproduces asdf_arch_atmega2560.c; only the pin-I/O
+ * primitives change (Harmony-style PORT_REGS->GROUP[g].PORT_* registers via the
+ * helpers in asdf_arch_pic32cm_common.h). Shared clock/tick/delay live in
+ * asdf_arch_pic32cm_common.c.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #include "asdf_arch.h"
 #include "asdf_config.h" // ASDF_DEFAULT_DATA_POLARITY, ASDF_PULSE_DELAY_SHORT_US

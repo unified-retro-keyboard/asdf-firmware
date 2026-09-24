@@ -56,7 +56,7 @@ static uint32_t next_random(uint32_t *state)
 static void runner_init(fuzz_runner_t *r, uint32_t seed)
 {
   fake_platform_init(&r->hw);
-  asdf_init_r(&r->kb, &r->hw.platform);
+  asdf_init(&r->kb, &r->hw.platform);
   r->rng = seed;
   r->codes = 0;
   r->code_hash = 2166136261u;
@@ -67,7 +67,7 @@ static void runner_init(fuzz_runner_t *r, uint32_t seed)
 static void take_code(fuzz_runner_t *r)
 {
   asdf_keycode_t code;
-  if (asdf_next_code_r(&r->kb, &code)) {
+  if (asdf_next_code(&r->kb, &code)) {
     r->codes++;
     r->code_hash = (r->code_hash ^ code) * 16777619u;
   }
@@ -103,7 +103,7 @@ static void check_invariants(const asdf_t *kb)
   TEST_ASSERT_FALSE(kb->repeat_armed); // only set during a press action
 
   TEST_ASSERT_TRUE(asdf_keymap_valid(kb->keymap.current));
-  TEST_ASSERT_TRUE(asdf_modifier_index_r(&kb->modifiers) < ASDF_MOD_NUM_MODIFIERS);
+  TEST_ASSERT_TRUE(asdf_modifier_index(&kb->modifiers) < ASDF_MOD_NUM_MODIFIERS);
   TEST_ASSERT_TRUE(kb->output_wait_ms <= kb->print_delay_ms);
 
   for (uint8_t v = 0; v < ASDF_VIRTUAL_NUM_RESOURCES; v++) {
@@ -137,7 +137,7 @@ static void runner_step(fuzz_runner_t *r)
     }
     case 2: {
       // a long gap, sometimes beyond the 255-tick limit
-      asdf_update_r(&r->kb, (uint16_t) ((roll >> 8) % 400));
+      asdf_update(&r->kb, (uint16_t) ((roll >> 8) % 400));
       break;
     }
     case 3:
@@ -145,7 +145,7 @@ static void runner_step(fuzz_runner_t *r)
       break;
     default:
       // ordinary time passing: one to three ticks
-      asdf_update_r(&r->kb, (uint16_t) (1 + ((roll >> 8) % 3)));
+      asdf_update(&r->kb, (uint16_t) (1 + ((roll >> 8) % 3)));
       break;
   }
   check_invariants(&r->kb);

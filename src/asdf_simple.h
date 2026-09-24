@@ -1,14 +1,37 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_simple.h
-//
-// The simple wrapper: the keyboard firmware for a single keyboard, in four
-// calls.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_simple.h
+ *
+ * The keyboard firmware for a single keyboard, in four calls.
+ *
+ * The wrapper owns the hardware state, the keyboard, and the tick interrupt,
+ * so the application needs no knowledge of keyboard objects or platforms. The
+ * application delivers the codes itself (USB, serial, a parallel port, and so
+ * on); the keyboard still scans the matrix and drives its LEDs and outputs
+ * through the architecture's platform.
+ *
+ * Because it defines the tick interrupt, the wrapper cannot be linked with
+ * main.c. An application needing more than one keyboard, or its own platform,
+ * uses asdf_t and the functions in asdf_keyboard.h directly, as main.c
+ * does.
+ *
+ * @code
+ * #include "asdf_simple.h"
+ *
+ * asdf_begin();
+ * while (1) {
+ *     asdf_poll();
+ *     while (asdf_available()) {
+ *         send_somewhere(asdf_read());
+ *     }
+ * }
+ * @endcode
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -29,34 +52,6 @@
 
 #include <stdint.h>
 #include "asdf.h"
-
-/**
- * @file
- * The keyboard firmware for a single keyboard, in four calls.
- *
- * The wrapper owns the hardware state, the keyboard, and the tick interrupt,
- * so the application needs no knowledge of keyboard objects or platforms. The
- * application delivers the codes itself (USB, serial, a parallel port, and so
- * on); the keyboard still scans the matrix and drives its LEDs and outputs
- * through the architecture's platform.
- *
- * Because it defines the tick interrupt, the wrapper cannot be linked with
- * main.c. An application needing more than one keyboard, or its own platform,
- * uses asdf_t and the _r functions in asdf_keyboard.h directly, as main.c
- * does.
- *
- * @code
- * #include "asdf_simple.h"
- *
- * asdf_begin();
- * while (1) {
- *     asdf_poll();
- *     while (asdf_available()) {
- *         send_somewhere(asdf_read());
- *     }
- * }
- * @endcode
- */
 
 /**
  * Set up the hardware and the keyboard.

@@ -19,7 +19,7 @@ uint16_t test_key_value(asdf_key_t key)
 uint16_t test_next_code(asdf_t *kb)
 {
   asdf_keycode_t code;
-  return asdf_next_code_r(kb, &code) ? code : ASDF_INVALID_CODE;
+  return asdf_next_code(kb, &code) ? code : ASDF_INVALID_CODE;
 }
 
 uint32_t max(uint8_t first, uint8_t second)

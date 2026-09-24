@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymaps.h
-//
-// Keymap descriptors, and the keymap state of a keyboard: key lookup in the
-// current keymap, and keymap selection.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymaps.h
+ *
+ * Keymap descriptors, and the keymap state of a keyboard: key lookup in the
+ * current keymap, and keymap selection.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -38,7 +39,7 @@
 #include "asdf_platform.h"
 
 /**
- * Keymap select bit masks, for asdf_keymaps_request_bit_r().
+ * Keymap select bit masks, for asdf_keymaps_request_bit().
  *
  * ASDF_KEYMAP_BIT_n is the mask of bit n of the requested keymap number. The
  * keymap select actions (KEY_MAPSEL(n), usually on DIP switches) set and clear
@@ -118,22 +119,22 @@ typedef struct {
   const asdf_key_t *maps[ASDF_MOD_NUM_MODIFIERS];
   uint8_t rows;
   uint8_t cols;
-  uint8_t print_delay_ms; // delay between system message characters
-  uint8_t flags;          // ASDF_KEYMAP_* flags
-  uint8_t each_scan;      // action at the start of each scan (param 0), or ACTION_NOTHING
+  uint8_t print_delay_ms; ///< delay between system message characters
+  uint8_t flags;          ///< ASDF_KEYMAP_* flags
+  uint8_t each_scan;      ///< action at the start of each scan (param 0), or ACTION_NOTHING
   uint8_t num_outputs;
-  const char *id_message;                    // flash string, or NULL
-  const asdf_virtual_initializer_t *outputs; // num_outputs entries, in flash
-  const asdf_platform_t *platform;           // NULL for the architecture's platform
+  const char *id_message;                    ///< flash string, or NULL
+  const asdf_virtual_initializer_t *outputs; ///< num_outputs entries, in flash
+  const asdf_platform_t *platform;           ///< NULL for the architecture's platform
 } asdf_keymap_t;
 
 /**
  * Keymap state of one keyboard: the matrices in use for each modifier state,
  * the each-scan action, and the current and requested keymap numbers.
  *
- * Invariants, after asdf_keymaps_init_r() has selected a keymap:
+ * Invariants, after asdf_keymaps_init() has selected a keymap:
  * - current changes only to a keymap that exists (asdf_keymap_valid()); it is
- *   valid once asdf_keymaps_init_r() has run, provided keymap 0 exists
+ *   valid once asdf_keymaps_init() has run, provided keymap 0 exists
  * - maps and each_scan hold the current keymap's descriptor; a modifier map
  *   the descriptor could not supply is empty (NULL, 0 x 0), so every lookup in
  *   it returns a key that does nothing
@@ -144,11 +145,11 @@ typedef struct {
  */
 typedef struct {
   asdf_keycode_map_t maps[ASDF_MOD_NUM_MODIFIERS];
-  uint8_t each_scan; // action at the start of each scan, or ACTION_NOTHING
-  uint8_t errors;    // descriptor entries of the current keymap that could not
-                     // be applied (see asdf_keymaps_apply_r); saturates
-  uint8_t current;   // keymap now in use
-  uint8_t requested; // keymap requested by the keymap select actions
+  uint8_t each_scan; ///< action at the start of each scan, or ACTION_NOTHING
+  uint8_t errors;    ///< descriptor entries of the current keymap that could not
+                     // be applied (see asdf_keymaps_apply); saturates
+  uint8_t current;   ///< keymap now in use
+  uint8_t requested; ///< keymap requested by the keymap select actions
 } asdf_keymap_state_t;
 
 /**
@@ -165,7 +166,7 @@ typedef struct {
  * @return 1 if the matrix was set; 0 if @p modifier_index, @p num_rows, or
  *         @p num_cols is out of range.
  */
-uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
+uint8_t asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
                                modifier_index_t modifier_index, uint8_t num_rows,
                                uint8_t num_cols);
 
@@ -178,7 +179,7 @@ uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *ma
  * @param modifier_index  Modifier state.
  * @return Rows of that matrix; 0 if @p modifier_index is out of range.
  */
-uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
+uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index);
 
 /**
@@ -190,7 +191,7 @@ uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
  * @param modifier_index  Modifier state.
  * @return Columns of that matrix; 0 if @p modifier_index is out of range.
  */
-uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
+uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index);
 
 /**
@@ -206,7 +207,7 @@ uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
  *         that does nothing (KEY_NOTHING) if @p modifier_index, @p row, or
  *         @p col is out of range, or no matrix is set.
  */
-asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
+asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
                                   uint8_t modifier_index);
 
 /**
@@ -214,23 +215,23 @@ asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row
  *
  * Called by the keymap select actions (DIP switches). Changes only the
  * requested keymap number; the request takes effect at the end of the scan, in
- * asdf_keymaps_apply_request_r().
+ * asdf_keymaps_apply_request().
  *
  * @param keymap  Keymap state to modify.
  * @param bit     Mask of the bits to change, normally one ASDF_KEYMAP_BIT_n.
  * @param set     Nonzero to set the bits, 0 to clear them.
  */
-void asdf_keymaps_request_bit_r(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set);
+void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set);
 
 /**
  * Select keymap 0.
  *
- * Called by asdf_init_r(). Resets and configures the keyboard as
- * asdf_keymaps_switch_r() does. Does nothing if keymap 0 does not exist.
+ * Called by asdf_init(). Resets and configures the keyboard as
+ * asdf_keymaps_switch() does. Does nothing if keymap 0 does not exist.
  *
  * @param kb  Keyboard to configure.
  */
-void asdf_keymaps_init_r(asdf_t *kb);
+void asdf_keymaps_init(asdf_t *kb);
 
 /**
  * Switch to a keymap, resetting and reconfiguring the keyboard.
@@ -253,18 +254,18 @@ void asdf_keymaps_init_r(asdf_t *kb);
  * @param kb     Keyboard to configure.
  * @param index  Keymap number.
  */
-void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index);
+void asdf_keymaps_switch(asdf_t *kb, uint8_t index);
 
 /**
  * Switch to a keymap if it differs from the current keymap.
  *
- * Side effects as for asdf_keymaps_switch_r(). Does nothing if @p index is
+ * Side effects as for asdf_keymaps_switch(). Does nothing if @p index is
  * the current keymap; a keymap that does not exist is ignored.
  *
  * @param kb     Keyboard to configure.
  * @param index  Keymap number.
  */
-void asdf_keymaps_select_r(asdf_t *kb, uint8_t index);
+void asdf_keymaps_select(asdf_t *kb, uint8_t index);
 
 /**
  * Switch to the requested keymap if it differs from the current keymap.
@@ -272,12 +273,12 @@ void asdf_keymaps_select_r(asdf_t *kb, uint8_t index);
  * Called at the end of each scan, so a keymap never changes part-way through a
  * scan, and DIP switch bits that change in the same scan select the final
  * keymap directly rather than passing through intermediate keymaps. Side
- * effects as for asdf_keymaps_switch_r(). A request for a keymap that does not
+ * effects as for asdf_keymaps_switch(). A request for a keymap that does not
  * exist is ignored.
  *
  * @param kb  Keyboard to configure.
  */
-void asdf_keymaps_apply_request_r(asdf_t *kb);
+void asdf_keymaps_apply_request(asdf_t *kb);
 
 #endif /* !defined (ASDF_KEYMAPS_H) */
 

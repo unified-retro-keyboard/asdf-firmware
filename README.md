@@ -252,7 +252,7 @@ There are two ways to run the keyboard from an application:
 
 - **Keyboard objects** (`src/asdf_keyboard.h`), for anything else: more than one
   keyboard, a custom platform, or code sent through the platform. The
-  application owns each `asdf_t` and its hardware, and calls the `_r` functions:
-  `asdf_init_r()` once, then `asdf_process_r()` (which sends codes through the
-  platform) or `asdf_update_r()` (which leaves them queued for
-  `asdf_next_code_r()`) with the elapsed ticks. `src/main.c` is an example.
+  application owns each `asdf_t` and its hardware, and passes it to each call:
+  `asdf_init()` once, then `asdf_process()` (which sends codes through the
+  platform) or `asdf_update()` (which leaves them queued for
+  `asdf_next_code()`) with the elapsed ticks. `src/main.c` is an example.

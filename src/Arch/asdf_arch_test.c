@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unfified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_arch_test.c
-//
-// Emulated hardware for the host unit tests. Outputs are recorded in arrays,
-// each with a pulse detector, and sent codes are latched for the tests to check.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_arch_test.c
+ *
+ * Emulated hardware for the host unit tests. Outputs are recorded in arrays,
+ * each with a pulse detector, and sent codes are latched for the tests to check.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software

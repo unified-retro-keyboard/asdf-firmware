@@ -1,19 +1,21 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
+/**
+ * @file asdf_config.h
+ *
+ * This file gathers configuration parameters related to the user-detectable
+ * keyboard experience. For example, put key debounce times, repeat rates,
+ * buffer sized, baud rates, etc. here. Details such as processor clock speed,
+ * etc. should go in the architecture-dependent files. System details such as
+ * number of buffer handles, etc. should go with the appropriate module, but
+ * certain buffer sized may go here if they can affect the user experience (such
+ * as how long a macro can be).
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
-//  Universal Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_config.h
-//
-// This file gathers configuration parameters related to the user-detectable
-// keyboard experience. For example, put key debounce times, repeat rates,
-// buffer sized, baud rates, etc. here. Details such as processor clock speed,
-// etc. should go in the architecture-dependent files. System details such as
-// number of buffer handles, etc. should go with the appropriate module, but
-// certain buffer sized may go here if they can affect the user experience (such
-// as how long a macro can be).
-//
-// Copyright 2019 David Fenyes
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later

@@ -1,13 +1,14 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_classic.h
-//
-// Matrix size, outputs, and print delay for the "classic" keymaps.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymap_classic.h
+ *
+ * Matrix size, outputs, and print delay for the "classic" keymaps.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software

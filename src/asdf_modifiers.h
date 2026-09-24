@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
-//
-//  Unfified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_modifiers.h
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_modifiers.h
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -89,7 +90,7 @@ typedef enum {
  *
  * Each function operates only on the state passed to it and does not drive
  * the indicator LEDs; the caller syncs the SHIFTLOCK and CAPSLOCK LEDs from
- * asdf_modifier_shift_locked_r() and asdf_modifier_caps_locked_r().
+ * asdf_modifier_shift_locked() and asdf_modifier_caps_locked().
  *
  * SHIFT and SHIFTLOCK share the shift field. Pressing SHIFT clears SHIFTLOCK
  * at once (the SHIFT map stays selected while SHIFT is held), and releasing
@@ -100,11 +101,11 @@ typedef enum {
  *
  * CAPSLOCK toggles on each press and ignores release. CTRL is on while held.
  *
- * Invariants, after asdf_modifiers_init_r() and any sequence of operations:
+ * Invariants, after asdf_modifiers_init() and any sequence of operations:
  * - shift is a shift_state_t (0 to 3)
  * - caps is CAPS_OFF_ST or CAPS_LOCKED_ST
  * - ctrl is CTRL_OFF_ST or CTRL_ON_ST
- * - asdf_modifier_index_r() returns a value < ASDF_MOD_NUM_MODIFIERS
+ * - asdf_modifier_index() returns a value < ASDF_MOD_NUM_MODIFIERS
  *
  * @code
  * #include "asdf_modifiers.h"
@@ -112,15 +113,15 @@ typedef enum {
  * asdf_modifier_state_t mods;
  * modifier_index_t map;
  *
- * asdf_modifiers_init_r(&mods);
- * asdf_modifier_shift_activate_r(&mods);    // SHIFT pressed
- * map = asdf_modifier_index_r(&mods);       // MOD_SHIFT_MAP
+ * asdf_modifiers_init(&mods);
+ * asdf_modifier_shift_activate(&mods);    // SHIFT pressed
+ * map = asdf_modifier_index(&mods);       // MOD_SHIFT_MAP
  * @endcode
  */
 typedef struct {
-  uint8_t shift; // shift_state_t: SHIFT and SHIFTLOCK bits
-  uint8_t caps;  // caps_state_t
-  uint8_t ctrl;  // ctrl_state_t
+  uint8_t shift; ///< shift_state_t: SHIFT and SHIFTLOCK bits
+  uint8_t caps;  ///< caps_state_t
+  uint8_t ctrl;  ///< ctrl_state_t
 } asdf_modifier_state_t;
 
 /**
@@ -130,7 +131,7 @@ typedef struct {
  *
  * @param mods  Modifier state to initialize.
  */
-void asdf_modifiers_init_r(asdf_modifier_state_t *mods);
+void asdf_modifiers_init(asdf_modifier_state_t *mods);
 
 /**
  * SHIFT pressed: set SHIFT on and clear SHIFTLOCK.
@@ -140,7 +141,7 @@ void asdf_modifiers_init_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_shift_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shift_activate(asdf_modifier_state_t *mods);
 
 /**
  * SHIFTLOCK pressed (ACTION_SHIFTLOCK_ON): set SHIFTLOCK on.
@@ -150,7 +151,7 @@ void asdf_modifier_shift_activate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_shiftlock_on_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shiftlock_on_activate(asdf_modifier_state_t *mods);
 
 /**
  * SHIFTLOCK pressed (ACTION_SHIFTLOCK_TOGGLE): toggle SHIFTLOCK.
@@ -159,7 +160,7 @@ void asdf_modifier_shiftlock_on_activate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_shiftlock_toggle_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shiftlock_toggle_activate(asdf_modifier_state_t *mods);
 
 /**
  * SHIFT released: set both SHIFT and SHIFTLOCK off.
@@ -168,7 +169,7 @@ void asdf_modifier_shiftlock_toggle_activate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_shift_deactivate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_shift_deactivate(asdf_modifier_state_t *mods);
 
 /**
  * CAPSLOCK pressed: toggle CAPSLOCK.
@@ -178,7 +179,7 @@ void asdf_modifier_shift_deactivate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_capslock_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_capslock_activate(asdf_modifier_state_t *mods);
 
 /**
  * CTRL pressed: set CTRL on.
@@ -187,7 +188,7 @@ void asdf_modifier_capslock_activate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_ctrl_activate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_ctrl_activate(asdf_modifier_state_t *mods);
 
 /**
  * CTRL released: set CTRL off.
@@ -196,7 +197,7 @@ void asdf_modifier_ctrl_activate_r(asdf_modifier_state_t *mods);
  *
  * @param mods  Modifier state to update.
  */
-void asdf_modifier_ctrl_deactivate_r(asdf_modifier_state_t *mods);
+void asdf_modifier_ctrl_deactivate(asdf_modifier_state_t *mods);
 
 /**
  * Whether SHIFTLOCK is on, for driving the SHIFTLOCK LED.
@@ -206,7 +207,7 @@ void asdf_modifier_ctrl_deactivate_r(asdf_modifier_state_t *mods);
  * @param mods  Modifier state to query.
  * @return 1 if SHIFTLOCK is on, else 0.
  */
-uint8_t asdf_modifier_shift_locked_r(const asdf_modifier_state_t *mods);
+uint8_t asdf_modifier_shift_locked(const asdf_modifier_state_t *mods);
 
 /**
  * Whether CAPSLOCK is on, for driving the CAPSLOCK LED.
@@ -216,7 +217,7 @@ uint8_t asdf_modifier_shift_locked_r(const asdf_modifier_state_t *mods);
  * @param mods  Modifier state to query.
  * @return 1 if CAPSLOCK is on, else 0.
  */
-uint8_t asdf_modifier_caps_locked_r(const asdf_modifier_state_t *mods);
+uint8_t asdf_modifier_caps_locked(const asdf_modifier_state_t *mods);
 
 /**
  * Keymap selected by the active modifiers.
@@ -230,7 +231,7 @@ uint8_t asdf_modifier_caps_locked_r(const asdf_modifier_state_t *mods);
  *         CTRL is on; else MOD_SHIFT_MAP if SHIFT or SHIFTLOCK is on; else
  *         MOD_CAPS_MAP if CAPSLOCK is on; else MOD_PLAIN_MAP.
  */
-modifier_index_t asdf_modifier_index_r(const asdf_modifier_state_t *mods);
+modifier_index_t asdf_modifier_index(const asdf_modifier_state_t *mods);
 
 #endif // !defined (ASDF_MODIFIERS_H)
 

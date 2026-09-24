@@ -1,19 +1,20 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_actions.h
-//
-// Keys and key actions. Each key in a keymap matrix is an asdf_key_t: an
-// action performed when the key is pressed, and one performed when it is
-// released. An action is a function number, indexing the action table, and a
-// parameter passed to the function. Sending a code is an action whose
-// parameter is the code, so a key can send any code 0x00-0xFF. A press action
-// can make its key autorepeat by calling asdf_arm_repeat_r(); of the built-in
-// actions, only ACTION_SEND_REPEATABLE_CODE does.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_actions.h
+ *
+ * Keys and key actions. Each key in a keymap matrix is an asdf_key_t: an
+ * action performed when the key is pressed, and one performed when it is
+ * released. An action is a function number, indexing the action table, and a
+ * parameter passed to the function. Sending a code is an action whose
+ * parameter is the code, so a key can send any code 0x00-0xFF. A press action
+ * can make its key autorepeat by calling asdf_arm_repeat(); of the built-in
+ * actions, only ACTION_SEND_REPEATABLE_CODE does.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -43,10 +44,10 @@
  * nothing.
  */
 typedef struct {
-  uint8_t press_fn;      // action table index
-  uint8_t press_param;   // passed to the press action
-  uint8_t release_fn;    // action table index
-  uint8_t release_param; // passed to the release action
+  uint8_t press_fn;      ///< action table index
+  uint8_t press_param;   ///< passed to the press action
+  uint8_t release_fn;    ///< action table index
+  uint8_t release_param; ///< passed to the release action
 } asdf_key_t;
 
 /** An action function: acts on the keyboard, with the key's parameter. */
@@ -60,25 +61,25 @@ typedef void (*asdf_action_fn_t)(asdf_t *kb, uint8_t param);
  */
 typedef enum {
   ACTION_NOTHING = 0,
-  ACTION_SEND_CODE,            // queue the code param
-  ACTION_SEND_REPEATABLE_CODE, // queue the code param; the key autorepeats
-  ACTION_SHIFT,            // SHIFT pressed
-  ACTION_SHIFT_RELEASE,    // SHIFT released
-  ACTION_SHIFTLOCK_ON,     // turn SHIFT lock on
-  ACTION_SHIFTLOCK_TOGGLE, // toggle SHIFT lock
-  ACTION_CAPS,             // toggle CAPS lock
-  ACTION_CTRL,             // CTRL pressed
-  ACTION_CTRL_RELEASE,     // CTRL released
-  ACTION_REPEAT,           // REPEAT pressed
-  ACTION_REPEAT_RELEASE,   // REPEAT released
-  ACTION_MAPSEL_SET,       // set keymap select bit param (configuration)
-  ACTION_MAPSEL_CLEAR,     // clear keymap select bit param
-  ACTION_STROBE_POSITIVE,  // positive output strobe (configuration)
-  ACTION_STROBE_NEGATIVE,  // negative output strobe
-  ACTION_AUTOREPEAT_ON,    // enable autorepeat (configuration)
-  ACTION_AUTOREPEAT_OFF,   // disable autorepeat
-  ACTION_VIRTUAL,          // activate virtual output param
-  ACTION_KEYMAP_ID,        // print the keymap's ID message
+  ACTION_SEND_CODE,            ///< queue the code param
+  ACTION_SEND_REPEATABLE_CODE, ///< queue the code param; the key autorepeats
+  ACTION_SHIFT,            ///< SHIFT pressed
+  ACTION_SHIFT_RELEASE,    ///< SHIFT released
+  ACTION_SHIFTLOCK_ON,     ///< turn SHIFT lock on
+  ACTION_SHIFTLOCK_TOGGLE, ///< toggle SHIFT lock
+  ACTION_CAPS,             ///< toggle CAPS lock
+  ACTION_CTRL,             ///< CTRL pressed
+  ACTION_CTRL_RELEASE,     ///< CTRL released
+  ACTION_REPEAT,           ///< REPEAT pressed
+  ACTION_REPEAT_RELEASE,   ///< REPEAT released
+  ACTION_MAPSEL_SET,       ///< set keymap select bit param (configuration)
+  ACTION_MAPSEL_CLEAR,     ///< clear keymap select bit param
+  ACTION_STROBE_POSITIVE,  ///< positive output strobe (configuration)
+  ACTION_STROBE_NEGATIVE,  ///< negative output strobe
+  ACTION_AUTOREPEAT_ON,    ///< enable autorepeat (configuration)
+  ACTION_AUTOREPEAT_OFF,   ///< disable autorepeat
+  ACTION_VIRTUAL,          ///< activate virtual output param
+  ACTION_KEYMAP_ID,        ///< print the keymap's ID message
   ASDF_NUM_BUILTIN_ACTIONS
 } asdf_action_t;
 
@@ -157,7 +158,7 @@ void asdf_action_send_code(asdf_t *kb, uint8_t code);
  *
  * Queues @p code on the keyboard's keycode queue (a full queue drops and
  * counts it), and makes the key being pressed the repeating key
- * (asdf_arm_repeat_r()).
+ * (asdf_arm_repeat()).
  *
  * @param kb     Keyboard to act on.
  * @param code   Code to queue.
@@ -239,7 +240,7 @@ void asdf_action_ctrl_release(asdf_t *kb, uint8_t param);
  * REPEAT pressed.
  *
  * Activates REPEAT in the keyboard's repeat state (see
- * asdf_repeat_activate_r()).
+ * asdf_repeat_activate()).
  *
  * @param kb     Keyboard to act on.
  * @param param  Ignored.
@@ -250,7 +251,7 @@ void asdf_action_repeat(asdf_t *kb, uint8_t param);
  * REPEAT released.
  *
  * Deactivates REPEAT in the keyboard's repeat state (see
- * asdf_repeat_deactivate_r()).
+ * asdf_repeat_deactivate()).
  *
  * @param kb     Keyboard to act on.
  * @param param  Ignored.
@@ -404,7 +405,7 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param);
  * @param fn     Action number, indexing asdf_action_table.
  * @param param  Parameter passed to the action.
  */
-void asdf_action_r(asdf_t *kb, uint8_t fn, uint8_t param);
+void asdf_action(asdf_t *kb, uint8_t fn, uint8_t param);
 
 /**
  * Whether an action sets persistent keyboard configuration.

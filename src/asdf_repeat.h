@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unfified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_repeat.h
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_repeat.h
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the Free
@@ -38,9 +39,9 @@
  * The base mode is never REPEAT_ON, which would repeat every key at once.
  */
 typedef enum {
-  REPEAT_OFF = 0,                        // no repeat
-  REPEAT_ON = ASDF_REPEAT_TIME_MS,       // currently repeating
-  REPEAT_AUTO = ASDF_AUTOREPEAT_TIME_MS, // wait for autorepeat delay, then start repeating
+  REPEAT_OFF = 0,                        ///< no repeat
+  REPEAT_ON = ASDF_REPEAT_TIME_MS,       ///< currently repeating
+  REPEAT_AUTO = ASDF_AUTOREPEAT_TIME_MS, ///< wait for autorepeat delay, then start repeating
 } asdf_repeat_mode_t;
 
 /**
@@ -48,41 +49,41 @@ typedef enum {
  * repeating.
  *
  * Each function operates only on the state passed to it. The caller resets
- * the timer with asdf_repeat_reset_count_r() when a new key becomes the
- * repeating key, then advances it with asdf_repeat_advance_r() while that key
+ * the timer with asdf_repeat_reset_count() when a new key becomes the
+ * repeating key, then advances it with asdf_repeat_advance() while that key
  * is held. When the timer expires the key repeats, and the timer reloads with
  * the repeat interval (REPEAT_ON), so a held key repeats first after the
  * current mode's delay and then at the repeat rate.
  *
- * Pressing REPEAT (asdf_repeat_activate_r()) usually switches to REPEAT_ON;
- * releasing it (asdf_repeat_deactivate_r()) restores the base mode and
+ * Pressing REPEAT (asdf_repeat_activate()) usually switches to REPEAT_ON;
+ * releasing it (asdf_repeat_deactivate()) restores the base mode and
  * restarts the timer. Changing the base mode while REPEAT_ON is in effect takes
  * effect when REPEAT is released.
  *
- * Invariants, after asdf_repeat_init_r() and any sequence of operations:
+ * Invariants, after asdf_repeat_init() and any sequence of operations:
  * - timer is 0 exactly when mode is REPEAT_OFF
  * - base_mode is REPEAT_OFF or REPEAT_AUTO, when ASDF_DEFAULT_REPEAT_STATE
  *   is one of those
- * - asdf_repeat_advance_r() reports at most one repeat per call
+ * - asdf_repeat_advance() reports at most one repeat per call
  *
  * @code
  * #include "asdf_repeat.h"
  *
  * asdf_repeat_state_t repeat;
  *
- * asdf_repeat_init_r(&repeat);        // base mode ASDF_DEFAULT_REPEAT_STATE
- * asdf_repeat_reset_count_r(&repeat); // a new key is pressed
+ * asdf_repeat_init(&repeat);        // base mode ASDF_DEFAULT_REPEAT_STATE
+ * asdf_repeat_reset_count(&repeat); // a new key is pressed
  *
  * // on each scan while the key is held, with elapsed_ms since the last scan:
- * if (asdf_repeat_advance_r(&repeat, elapsed_ms)) {
+ * if (asdf_repeat_advance(&repeat, elapsed_ms)) {
  *     // send the key's code again
  * }
  * @endcode
  */
 typedef struct {
-  asdf_repeat_mode_t mode;      // current repeat mode
-  asdf_repeat_mode_t base_mode; // mode restored when a key or REPEAT is released
-  uint16_t timer;               // counts down to the next repeat event
+  asdf_repeat_mode_t mode;      ///< current repeat mode
+  asdf_repeat_mode_t base_mode; ///< mode restored when a key or REPEAT is released
+  uint16_t timer;               ///< counts down to the next repeat event
 } asdf_repeat_state_t;
 
 /**
@@ -92,7 +93,7 @@ typedef struct {
  *
  * @param repeat  Repeat state to initialize.
  */
-void asdf_repeat_init_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_init(asdf_repeat_state_t *repeat);
 
 /**
  * Start a new repeat cycle for a newly pressed key.
@@ -103,7 +104,7 @@ void asdf_repeat_init_r(asdf_repeat_state_t *repeat);
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_reset_count(asdf_repeat_state_t *repeat);
 
 /**
  * Turn autorepeat off by setting the base mode to REPEAT_OFF.
@@ -114,7 +115,7 @@ void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat);
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_auto_off(asdf_repeat_state_t *repeat);
 
 /**
  * Turn autorepeat on by setting the base mode to REPEAT_AUTO.
@@ -126,7 +127,7 @@ void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat);
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_auto_on(asdf_repeat_state_t *repeat);
 
 /**
  * Whether autorepeat is enabled.
@@ -136,7 +137,7 @@ void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat);
  * @param repeat  Repeat state to query.
  * @return 1 if the base mode is REPEAT_AUTO, else 0.
  */
-uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat);
+uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat);
 
 /**
  * REPEAT pressed: switch to REPEAT_ON.
@@ -149,7 +150,7 @@ uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat);
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_activate_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_activate(asdf_repeat_state_t *repeat);
 
 /**
  * REPEAT released: restore the base mode and restart the timer with it.
@@ -159,10 +160,10 @@ void asdf_repeat_activate_r(asdf_repeat_state_t *repeat);
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat);
+void asdf_repeat_deactivate(asdf_repeat_state_t *repeat);
 
 /**
- * Advance the repeat timer by one tick; same as asdf_repeat_advance_r() with
+ * Advance the repeat timer by one tick; same as asdf_repeat_advance() with
  * an @p elapsed of 1.
  *
  * Counts down and may reload the timer in @p repeat.
@@ -170,7 +171,7 @@ void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat);
  * @param repeat  Repeat state to update.
  * @return 1 when the current key should repeat, else 0.
  */
-uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat);
+uint8_t asdf_repeat(asdf_repeat_state_t *repeat);
 
 /**
  * Advance the repeat timer by @p elapsed ticks.
@@ -184,7 +185,7 @@ uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat);
  * @param elapsed  Ticks (ms) since the last call.
  * @return 1 when the current key should repeat, else 0.
  */
-uint8_t asdf_repeat_advance_r(asdf_repeat_state_t *repeat, uint8_t elapsed);
+uint8_t asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed);
 
 #endif // !defined (ASDF_REPEAT_H)
 

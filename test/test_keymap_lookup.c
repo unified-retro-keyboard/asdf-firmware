@@ -54,18 +54,18 @@ static void load_keymap(const asdf_key_t *plain_matrix,
                         uint8_t shift_rows,
                         uint8_t shift_cols)
 {
-    asdf_init_r(&kb, &asdf_arch_platform);
+    asdf_init(&kb, &asdf_arch_platform);
 
     // Clear modifier entries so default keymaps do not leak into the tests.
-    asdf_keymaps_add_map_r(&kb.keymap, NULL, MOD_PLAIN_MAP, 0, 0);
-    asdf_keymaps_add_map_r(&kb.keymap, NULL, MOD_SHIFT_MAP, 0, 0);
+    asdf_keymaps_add_map(&kb.keymap, NULL, MOD_PLAIN_MAP, 0, 0);
+    asdf_keymaps_add_map(&kb.keymap, NULL, MOD_SHIFT_MAP, 0, 0);
 
     if (plain_matrix) {
-        asdf_keymaps_add_map_r(&kb.keymap, plain_matrix, MOD_PLAIN_MAP, plain_rows, plain_cols);
+        asdf_keymaps_add_map(&kb.keymap, plain_matrix, MOD_PLAIN_MAP, plain_rows, plain_cols);
     }
 
     if (shift_matrix) {
-        asdf_keymaps_add_map_r(&kb.keymap, shift_matrix, MOD_SHIFT_MAP, shift_rows, shift_cols);
+        asdf_keymaps_add_map(&kb.keymap, shift_matrix, MOD_SHIFT_MAP, shift_rows, shift_cols);
     }
 }
 

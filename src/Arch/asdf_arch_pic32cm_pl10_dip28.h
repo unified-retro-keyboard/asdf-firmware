@@ -1,17 +1,17 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_pl10_dip28.h
-//
-// Architecture-specific definitions for the PIC32CM6408PL10028 (SPDIP-28),
-// "328p-class" variant: a 4-bit encoded row value driving an external 74LS138
-// decoder, and a serial shift-register column read (COLCLK/COLMODE). The public
-// API and scan/read logic mirror asdf_arch_atmega328p; only the pin-I/O
-// primitives, clock/tick, and toolchain differ. Shared ARM mechanics live in
-// asdf_arch_pic32cm_common.{c,h}. The external support chips (74LS138, column
-// shift register) are retained from the 328P board.
+/**
+ * @file asdf_arch_pic32cm_pl10_dip28.h
+ *
+ * Architecture-specific definitions for the PIC32CM6408PL10028 (SPDIP-28),
+ * "328p-class" variant: a 4-bit encoded row value driving an external 74LS138
+ * decoder, and a serial shift-register column read (COLCLK/COLMODE). The public
+ * API and scan/read logic mirror asdf_arch_atmega328p; only the pin-I/O
+ * primitives, clock/tick, and toolchain differ. Shared ARM mechanics live in
+ * asdf_arch_pic32cm_common.{c,h}. The external support chips (74LS138, column
+ * shift register) are retained from the 328P board.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #if !defined(ASDF_ARCH_H)
 #define ASDF_ARCH_H

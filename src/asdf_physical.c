@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_physical.c
-//
-// This file contains code to manage physical resources and serves as an API
-// between the virtual layer and the architecture specific code.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_physical.c
+ *
+ * This file contains code to manage physical resources and serves as an API
+ * between the virtual layer and the architecture specific code.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -38,9 +39,9 @@
 //
 // Outputs are allocated through the next[] links, a singly linked list per
 // owner in one table. next[PHYSICAL_NO_OUT] heads the list of available
-// outputs; asdf_physical_allocate_r() unlinks an output from it and links the
+// outputs; asdf_physical_allocate() unlinks an output from it and links the
 // output in front of a virtual output's list. Every list ends at
-// PHYSICAL_NO_OUT. Outputs are never freed individually: asdf_physical_init_r()
+// PHYSICAL_NO_OUT. Outputs are never freed individually: asdf_physical_init()
 // returns them all to the available list.
 //
 // The shadow registers, the links, and the platform are held in the caller's
@@ -109,7 +110,7 @@ static void physical_write(asdf_physical_state_t *phys, asdf_physical_dev_t devi
  *
  * Complexity: 2
  */
-void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+void asdf_physical_set(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                          uint8_t value)
 {
   if (physical_index_valid(physical_out)) {
@@ -120,27 +121,27 @@ void asdf_physical_set_r(asdf_physical_state_t *phys, asdf_physical_dev_t physic
 /**
  * Set an output high (1).
  *
- * Side effects as asdf_physical_set_r().
+ * Side effects as asdf_physical_set().
  *
  * @param phys          Physical output state.
  * @param physical_out  Output to set.
  */
-void asdf_physical_on_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+void asdf_physical_on(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
-  asdf_physical_set_r(phys, physical_out, 1);
+  asdf_physical_set(phys, physical_out, 1);
 }
 
 /**
  * Set an output low (0).
  *
- * Side effects as asdf_physical_set_r().
+ * Side effects as asdf_physical_set().
  *
  * @param phys          Physical output state.
  * @param physical_out  Output to clear.
  */
-void asdf_physical_off_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+void asdf_physical_off(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
-  asdf_physical_set_r(phys, physical_out, 0);
+  asdf_physical_set(phys, physical_out, 0);
 }
 
 /**
@@ -154,7 +155,7 @@ void asdf_physical_off_r(asdf_physical_state_t *phys, asdf_physical_dev_t physic
  *
  * Complexity: 2
  */
-void asdf_physical_assert_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+void asdf_physical_assert(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
   if (physical_index_valid(physical_out)) {
     physical_write(phys, physical_out, phys->shadow[physical_out]);
@@ -173,7 +174,7 @@ void asdf_physical_assert_r(asdf_physical_state_t *phys, asdf_physical_dev_t phy
  *
  * Complexity: 2
  */
-void asdf_physical_toggle_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
+void asdf_physical_toggle(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
   if (physical_index_valid(physical_out)) {
     physical_write(phys, physical_out, !phys->shadow[physical_out]);
@@ -221,7 +222,7 @@ static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state
  *
  * Complexity: 2
  */
-asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phys,
+asdf_physical_dev_t asdf_physical_next_device(const asdf_physical_state_t *phys,
                                                 asdf_physical_dev_t device)
 {
   return physical_index_valid(device) ? phys->next[device] : PHYSICAL_NO_OUT;
@@ -246,7 +247,7 @@ asdf_physical_dev_t asdf_physical_next_device_r(const asdf_physical_state_t *phy
  *
  * Complexity: 4
  */
-uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+uint8_t asdf_physical_allocate(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
                                  asdf_physical_dev_t tail, uint8_t initial_value)
 {
   if (!valid_physical_device(physical_out) || !physical_index_valid(tail)) {
@@ -277,7 +278,7 @@ uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_
  *
  * Complexity: 2
  */
-void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys)
+void asdf_physical_pulse_delay_short(const asdf_physical_state_t *phys)
 {
   const asdf_platform_t *platform = phys->platform;
 
@@ -300,7 +301,7 @@ void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys)
  *
  * Complexity: 2
  */
-void asdf_physical_init_r(asdf_physical_state_t *phys, const asdf_platform_t *platform)
+void asdf_physical_init(asdf_physical_state_t *phys, const asdf_platform_t *platform)
 {
   phys->platform = platform;
 

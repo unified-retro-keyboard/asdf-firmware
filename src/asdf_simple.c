@@ -1,15 +1,16 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_simple.c
-//
-// The simple wrapper (see asdf_simple.h). It owns one set of hardware and one
-// keyboard, and defines the tick interrupt, so it cannot be linked with
-// main.c, which owns its own.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_simple.c
+ *
+ * The simple wrapper (see asdf_simple.h). It owns one set of hardware and one
+ * keyboard, and defines the tick interrupt, so it cannot be linked with
+ * main.c, which owns its own.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -61,7 +62,7 @@ void asdf_begin(void)
 {
   code_pending = 0;
   asdf_arch_init(&arch);
-  asdf_init_r(&keyboard, &arch.platform);
+  asdf_init(&keyboard, &arch.platform);
 }
 
 /**
@@ -71,7 +72,7 @@ void asdf_begin(void)
  * keyboard, which advances its timers and scans the key matrix once. Codes
  * generated are queued on the keyboard for asdf_available().
  */
-void asdf_poll(void) { asdf_update_r(&keyboard, asdf_arch_tick(&arch)); }
+void asdf_poll(void) { asdf_update(&keyboard, asdf_arch_tick(&arch)); }
 
 /**
  * Report whether a code is ready to read.
@@ -87,7 +88,7 @@ void asdf_poll(void) { asdf_update_r(&keyboard, asdf_arch_tick(&arch)); }
 uint8_t asdf_available(void)
 {
   if (!code_pending) {
-    code_pending = asdf_next_code_r(&keyboard, &pending_code);
+    code_pending = asdf_next_code(&keyboard, &pending_code);
   }
   return code_pending;
 }

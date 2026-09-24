@@ -1,17 +1,18 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_virtual.c
-//
-// This file contains code that maps "virtual" LEDs and outputs referenced by
-// the code to actual LEDs and outputs in hardware. This keeps keymap-specific
-// details out of the architecture-dependent files, and provides a flexible way
-// for the keymap definitions to specify the LED and output functions for
-// different keymaps or keyboard layouts.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_virtual.c
+ *
+ * This file contains code that maps "virtual" LEDs and outputs referenced by
+ * the code to actual LEDs and outputs in hardware. This keeps keymap-specific
+ * details out of the architecture-dependent files, and provides a flexible way
+ * for the keymap definitions to specify the LED and output functions for
+ * different keymaps or keyboard layouts.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -85,7 +86,7 @@ static uint8_t valid_virtual_device(asdf_virtual_dev_t device)
  *                empty list.
  * @param op      Operation to apply.
  *
- * The list is followed through asdf_physical_next_device_r() until it reaches
+ * The list is followed through asdf_physical_next_device() until it reaches
  * PHYSICAL_NO_OUT.
  *
  * Complexity: 3
@@ -95,12 +96,12 @@ static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
 {
   while (PHYSICAL_NO_OUT != device) {
     switch (op) {
-      case MAP_ON: asdf_physical_on_r(phys, device); break;
-      case MAP_OFF: asdf_physical_off_r(phys, device); break;
+      case MAP_ON: asdf_physical_on(phys, device); break;
+      case MAP_OFF: asdf_physical_off(phys, device); break;
       case MAP_TOGGLE:
-      default: asdf_physical_toggle_r(phys, device); break;
+      default: asdf_physical_toggle(phys, device); break;
     }
-    device = asdf_physical_next_device_r(phys, device);
+    device = asdf_physical_next_device(phys, device);
   }
 }
 
@@ -116,11 +117,11 @@ static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
  * @param function     Function to apply.
  *
  * The virtual output heads a linked list of physical outputs, walked by
- * virtual_map(). A long pulse is ended by asdf_virtual_tick_r().
+ * virtual_map(). A long pulse is ended by asdf_virtual_tick().
  *
  * Complexity: 4
  */
-void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+void asdf_virtual_action(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                            asdf_virtual_function_t function)
 {
   if (!virtual_index_valid(virtual_out)) {
@@ -133,7 +134,7 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
   switch (function) {
 
     case V_PULSE_LONG: {
-      // Start the pulse; asdf_virtual_tick_r() ends it. A pulse already in
+      // Start the pulse; asdf_virtual_tick() ends it. A pulse already in
       // progress is not restarted.
       if (!virt->pulse_ticks[virtual_out]) {
         virtual_map(phys, device_list, MAP_TOGGLE);
@@ -143,7 +144,7 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
     }
     case V_PULSE_SHORT: {
       virtual_map(phys, device_list, MAP_TOGGLE);
-      asdf_physical_pulse_delay_short_r(phys);
+      asdf_physical_pulse_delay_short(phys);
       virtual_map(phys, device_list, MAP_TOGGLE);
       break;
     }
@@ -167,7 +168,7 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
 /**
  * Apply a virtual output's assigned function to its physical outputs.
  *
- * Side effects as asdf_virtual_action_r(). Out-of-range virtual outputs are
+ * Side effects as asdf_virtual_action(). Out-of-range virtual outputs are
  * ignored.
  *
  * @param virt         Virtual output state.
@@ -175,10 +176,10 @@ void asdf_virtual_action_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
  *
  * Complexity: 2
  */
-void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out)
+void asdf_virtual_activate(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out)
 {
   if (virtual_index_valid(virtual_out)) {
-    asdf_virtual_action_r(virt, virtual_out, virt->function[virtual_out]);
+    asdf_virtual_action(virt, virtual_out, virt->function[virtual_out]);
   }
 }
 
@@ -198,18 +199,18 @@ void asdf_virtual_activate_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virt
  * @return 1 if assigned; 0 if either output is invalid or @p physical_out is
  *         already assigned, with the state unchanged.
  *
- * The shadow values are driven to the outputs by asdf_virtual_sync_r() only
+ * The shadow values are driven to the outputs by asdf_virtual_sync() only
  * after all assignments are made.
  *
  * Complexity: 3
  */
-uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+uint8_t asdf_virtual_assign(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
                               asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
                               uint8_t initial_value)
 {
   if (valid_virtual_device(virtual_out)) {
     asdf_physical_dev_t tail = virt->physical_device[virtual_out];
-    if (asdf_physical_allocate_r(&virt->physical, physical_out, tail, initial_value)) {
+    if (asdf_physical_allocate(&virt->physical, physical_out, tail, initial_value)) {
       virt->physical_device[virtual_out] = physical_out;
       virt->function[virtual_out] = function;
       return 1;
@@ -230,9 +231,9 @@ uint8_t asdf_virtual_assign_r(asdf_virtual_state_t *virt, asdf_virtual_dev_t vir
  *
  * Complexity: 2
  */
-void asdf_virtual_init_r(asdf_virtual_state_t *virt, const asdf_platform_t *platform)
+void asdf_virtual_init(asdf_virtual_state_t *virt, const asdf_platform_t *platform)
 {
-  asdf_physical_init_r(&virt->physical, platform);
+  asdf_physical_init(&virt->physical, platform);
 
   for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
     virt->function[i] = V_NOFUNC;
@@ -250,10 +251,10 @@ void asdf_virtual_init_r(asdf_virtual_state_t *virt, const asdf_platform_t *plat
  *
  * Complexity: 2
  */
-void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
+void asdf_virtual_sync(asdf_virtual_state_t *virt)
 {
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
-    asdf_physical_assert_r(&virt->physical, (asdf_physical_dev_t) i);
+    asdf_physical_assert(&virt->physical, (asdf_physical_dev_t) i);
   }
 }
 
@@ -269,7 +270,7 @@ void asdf_virtual_sync_r(asdf_virtual_state_t *virt)
  *
  * Complexity: 4
  */
-void asdf_virtual_tick_r(asdf_virtual_state_t *virt, uint8_t elapsed)
+void asdf_virtual_tick(asdf_virtual_state_t *virt, uint8_t elapsed)
 {
   for (uint8_t i = 0; i < ASDF_VIRTUAL_NUM_RESOURCES; i++) {
     if (virt->pulse_ticks[i]) {

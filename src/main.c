@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// main.c
-//
-// The main program for a single keyboard: initializes the hardware and the
-// keyboard, then runs the keyboard from the 1 ms tick in a superloop.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file main.c
+ *
+ * The main program for a single keyboard: initializes the hardware and the
+ * keyboard, then runs the keyboard from the 1 ms tick in a superloop.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -70,13 +71,13 @@ int main(void)
 {
   // initialize the hardware, then the keyboard logic:
   asdf_arch_init(&arch);
-  asdf_init_r(&keyboard, &arch.platform);
+  asdf_init(&keyboard, &arch.platform);
 
   while (1) {
     uint8_t elapsed_ms = asdf_arch_tick(&arch);
 
     if (elapsed_ms) {
-      asdf_process_r(&keyboard, elapsed_ms);
+      asdf_process(&keyboard, elapsed_ms);
     }
   }
 }
