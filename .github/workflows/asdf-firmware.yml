@@ -85,6 +85,11 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Run host unit tests
         run: bash ./make-targets.sh -t test
+      - name: Run host unit tests under ASan and UBSan
+        run: |
+          cmake -S . -B build-test-sanitize -DARCH=test -DASDF_SANITIZE=ON
+          cmake --build build-test-sanitize -j
+          ctest --test-dir build-test-sanitize --output-on-failure
 
   build_arm:
     runs-on: ubuntu-latest
