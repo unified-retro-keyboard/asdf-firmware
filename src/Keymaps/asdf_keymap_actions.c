@@ -29,10 +29,11 @@
 #include "asdf_keymap_actions.h"
 
 // Every entry is first set to asdf_action_nothing (a GCC range designator),
-// then the used entries are overridden, so the override warning is disabled
-// for the table.
+// then the used entries are overridden, so the override warning, and the
+// pedantic warning for the range designator, are disabled for the table.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Woverride-init"
+#pragma GCC diagnostic ignored "-Wpedantic"
 const asdf_action_fn_t FLASH asdf_action_table[ASDF_NUM_ACTION_SLOTS] = {
   [0 ... ASDF_NUM_ACTION_SLOTS - 1] = asdf_action_nothing,
   ASDF_BUILTIN_ACTIONS,

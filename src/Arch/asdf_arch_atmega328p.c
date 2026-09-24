@@ -84,7 +84,7 @@ static inline void set_bit(volatile uint8_t *port, uint8_t bit)
 //
 static inline void clear_bit(volatile uint8_t *port, uint8_t bit)
 {
-  *port &= ~(1 << bit);
+  *port &= (uint8_t) ~(1u << bit);
 }
 
 // PROCEDURE: arch_timer0_config
@@ -619,7 +619,7 @@ static void asdf_arch_init_column_control(void)
 //
 static void asdf_arch_init_row_outputs(void)
 {
-  ASDF_ROW_PORT &= ~ASDF_ROW_MASK;
+  ASDF_ROW_PORT &= (uint8_t) ~ASDF_ROW_MASK;
   ASDF_ROW_DDR |= ASDF_ROW_MASK;
 }
 
@@ -650,8 +650,8 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
   asdf_cols_t cols = 0;
 
   // first, output the new row value:
-  ASDF_ROW_PORT = (ASDF_ROW_PORT & ~ASDF_ROW_MASK) 
-    | ((row & ASDF_ROW_MASK) << ASDF_ROW_OFFSET);
+  ASDF_ROW_PORT = (uint8_t) ((ASDF_ROW_PORT & ~ASDF_ROW_MASK)
+                             | ((row & ASDF_ROW_MASK) << ASDF_ROW_OFFSET));
 
 
   // read in the columns.  Set LOAD mode and pulse clock.
@@ -745,8 +745,9 @@ static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
-    asdf_arch_output_handler_t handler =
-      (asdf_arch_output_handler_t) FLASH_READ_PTR(&output_handlers[output]);
+    // copied out of flash, rather than cast from a data pointer
+    asdf_arch_output_handler_t handler;
+    FLASH_MEMCPY(&handler, &output_handlers[output], sizeof(handler));
     handler(value);
   }
 }

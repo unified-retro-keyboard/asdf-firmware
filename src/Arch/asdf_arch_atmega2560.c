@@ -88,7 +88,7 @@ static inline void set_bit(volatile uint8_t *port, uint8_t bit)
 //
 static inline void clear_bit(volatile uint8_t *port, uint8_t bit)
 {
-  *port &= ~(1 << bit);
+  *port &= (uint8_t) ~(1u << bit);
 }
 
 // PROCEDURE: arch_timer0_config
@@ -655,7 +655,7 @@ static void asdf_arch_init_row_outputs(void)
 //
 static asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
-  uint32_t rows = ~(1L << row);
+  uint32_t rows = ~((uint32_t) 1 << row);
 
   ASDF_LOROW_PORT = (uint8_t)(rows & 0xff);
   _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US);
@@ -781,8 +781,9 @@ static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
-    asdf_arch_output_handler_t handler =
-      (asdf_arch_output_handler_t) FLASH_READ_PTR(&output_handlers[output]);
+    // copied out of flash, rather than cast from a data pointer
+    asdf_arch_output_handler_t handler;
+    FLASH_MEMCPY(&handler, &output_handlers[output], sizeof(handler));
     handler(value);
   }
 }

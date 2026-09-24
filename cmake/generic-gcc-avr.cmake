@@ -79,6 +79,7 @@ function(c_toolchain_flags)
         -fpack-struct
         -fshort-enums
         ${ASDF_WARNING_FLAGS}
+        ${ASDF_STRICT_WARNING_FLAGS}
     )
 
     if(CMAKE_C_COMPILER_VERSION GREATER_EQUAL "11.3")

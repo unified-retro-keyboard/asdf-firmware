@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+# Warnings are errors in CI (see cmake/asdf_warnings.cmake).
+env:
+  ASDF_WERROR: 1
+
 jobs:
   build_firmware:
     runs-on: ubuntu-latest

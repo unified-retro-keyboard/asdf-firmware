@@ -388,6 +388,13 @@ static inline void asdf_arch_count_tick(asdf_arch_t *arch)
   }
 }
 
+// PROCEDURE: asdf_arch_osi_read_row
+// INPUTS: (uint8_t) row - the row to read
+// OUTPUTS: returns the pressed columns of the row, for an OSI keyboard
+// DESCRIPTION: An alternative row reader for OSI keyboards. Not used by any
+// keymap yet.
+asdf_cols_t asdf_arch_osi_read_row(uint8_t row);
+
 // PROCEDURE: asdf_arch_tick
 // INPUTS: (asdf_arch_t *) arch
 // OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at

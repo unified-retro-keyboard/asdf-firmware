@@ -35,5 +35,6 @@ function(c_toolchain_flags)
     -std=gnu99
     -ffunction-sections -fdata-sections
     ${ASDF_WARNING_FLAGS}
+    ${ASDF_STRICT_WARNING_FLAGS}
     PARENT_SCOPE)
 endfunction(c_toolchain_flags)

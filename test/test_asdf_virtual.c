@@ -202,7 +202,7 @@ void test_activate_triple_output(void)
 
 uint8_t *output_array(void)
 {
-  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = {};
+  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = { 0 };
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     outputs[i] = asdf_arch_check_output(i);
     printf("output %d: %d\n", i, outputs[i]);
@@ -212,7 +212,7 @@ uint8_t *output_array(void)
 
 uint8_t *all_set_array(void)
 {
-  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = {};
+  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = { 0 };
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     outputs[i] = 1;
   }
@@ -221,7 +221,7 @@ uint8_t *all_set_array(void)
 
 uint8_t *all_zero_array(void)
 {
-  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = {};
+  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = { 0 };
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     outputs[i] = 0;
   }
@@ -230,7 +230,7 @@ uint8_t *all_zero_array(void)
 
 uint8_t *single_zero_array(asdf_physical_dev_t set_element)
 {
-  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = {};
+  static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES] = { 0 };
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     outputs[i] = 1;
   }

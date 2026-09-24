@@ -519,7 +519,7 @@ uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device)
 //
 // COMPLEXITY: 2
 //
-void asdf_arch_pulse_delay(void)
+static void asdf_arch_pulse_delay(void)
 {
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     pulses[i] = pulse_detect(pulses[i], PULSE_EVENT_DELAY);
