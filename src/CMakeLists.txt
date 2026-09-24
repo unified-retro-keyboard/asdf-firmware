@@ -60,7 +60,6 @@ list (APPEND SOURCES
   asdf_modifiers.c
   asdf_physical.c
   asdf_repeat.c
-  asdf_compat.c
   asdf_virtual.c
   asdf_print.c
   Keymaps/asdf_keymap_classic.c
@@ -143,6 +142,27 @@ if(ARCH_TYPE STREQUAL "ARM")
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_TARGET_NAME}.hex
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_TARGET_NAME}.bin
     DESTINATION dist)
+endif()
+
+# The simple wrapper (asdf_simple.c) is not part of this firmware: main.c owns
+# the keyboard and the tick interrupt. Compile it anyway, to check that it
+# builds for the architecture.
+add_library(asdf_simple_check OBJECT asdf_simple.c)
+add_dependencies(asdf_simple_check keymaps_gen)
+target_include_directories(asdf_simple_check PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Keymaps)
+target_compile_options(asdf_simple_check PRIVATE ${CFLAGS})
+if(DEFINED AVR_MCU)
+  # the AVR toolchain sets the device per target (add_avr_executable)
+  target_compile_options(asdf_simple_check PRIVATE -mmcu=${AVR_MCU})
+endif()
+if(ARCH_TYPE STREQUAL "ARM")
+  target_include_directories(asdf_simple_check PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/third_party/cmsis
+    ${CMAKE_SOURCE_DIR}/src/Arch)
+  target_compile_definitions(asdf_simple_check PRIVATE ${PART_DEFINE})
 endif()
 
 #target_link_libraries(${PROJECT_EXECUTABLE_TARGET_NAME}

@@ -77,19 +77,6 @@ uint8_t asdf_physical_allocate_r(asdf_physical_state_t *phys, asdf_physical_dev_
                                  asdf_physical_dev_t tail, uint8_t initial_value);
 void asdf_physical_pulse_delay_short_r(const asdf_physical_state_t *phys);
 
-// Single-keyboard API, operating on the default physical output state
-// (asdf_compat.c).
-
-void asdf_physical_init(void);
-void asdf_physical_set(asdf_physical_dev_t physical_out, uint8_t value);
-void asdf_physical_on(asdf_physical_dev_t physical_out);
-void asdf_physical_off(asdf_physical_dev_t physical_out);
-void asdf_physical_assert(asdf_physical_dev_t physical_out);
-void asdf_physical_toggle(asdf_physical_dev_t physical_out);
-asdf_physical_dev_t asdf_physical_next_device(asdf_physical_dev_t device);
-uint8_t asdf_physical_allocate(asdf_physical_dev_t physical_out, asdf_physical_dev_t tail,
-                               uint8_t initial_value);
-
 #endif /* !defined (ASDF_PHYSICAL_H) */
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

@@ -43,7 +43,6 @@ add_library(asdf_core
   ${PROJECT_SRC_DIR}/asdf_modifiers.c
   ${PROJECT_SRC_DIR}/asdf_physical.c
   ${PROJECT_SRC_DIR}/asdf_repeat.c
-  ${PROJECT_SRC_DIR}/asdf_compat.c
   ${PROJECT_SRC_DIR}/asdf_virtual.c
   ${PROJECT_SRC_DIR}/asdf_print.c
   ${PROJECT_SRC_DIR}/Arch/asdf_arch_test.c
@@ -132,3 +131,5 @@ setup_test(test_asdf_descriptor)
 setup_test(test_keymap_lookup)
 setup_test(test_asdf)
 setup_test(test_asdf_characterization)
+setup_test(test_asdf_simple)
+target_sources(test_asdf_simple PRIVATE ${PROJECT_SRC_DIR}/asdf_simple.c)

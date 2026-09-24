@@ -13,6 +13,11 @@
 #include "asdf_keymaps.h"
 #include "test_asdf_keymap_defs.h"
 #include "asdf_repeat.h"
+#include "asdf_keyboard.h"
+#include "test_asdf_lib.h"
+
+// The keyboard under test.
+static asdf_t kb;
 
 #define DIP_ROW_INDEX (TEST_NUM_ROWS - 1)
 #define STROBE_COL 6
@@ -23,7 +28,7 @@ static uint32_t key_matrix[TEST_NUM_ROWS];
 static void keyscan_delay(int32_t ticks)
 {
   while (ticks--) {
-    asdf_keyscan();
+    asdf_keyscan_r(&kb);
   }
 }
 
@@ -54,7 +59,7 @@ static void release_dip(uint8_t col)
 
 void setUp(void)
 {
-  asdf_init(&asdf_arch_platform);
+  asdf_init_r(&kb, &asdf_arch_platform);
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
@@ -75,33 +80,33 @@ void test_dip_strobe_action_toggles_polarity(void)
 
 void test_dip_autorepeat_action_toggles_mode(void)
 {
-  asdf_repeat_auto_off();
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled());
+  asdf_repeat_auto_off_r(&kb.repeat);
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
 
   press_dip(AUTOREPEAT_COL);
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled());
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
 
   release_dip(AUTOREPEAT_COL);
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled());
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
 }
 
 void test_keymap_switch_reapplies_dip_actions(void)
 {
-  asdf_repeat_auto_off();
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled());
+  asdf_repeat_auto_off_r(&kb.repeat);
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
   TEST_ASSERT_FALSE(asdf_arch_is_strobe_positive());
 
   press_dip(STROBE_COL);
   press_dip(AUTOREPEAT_COL);
 
   TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled());
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
 
   // Switching keymaps should reapply any dip-action state
-  asdf_keymaps_select(ASDF_TEST_CAPS_MAP_INDEX);
+  asdf_keymaps_select_r(&kb, ASDF_TEST_CAPS_MAP_INDEX);
 
   TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled());
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
 
   release_dip(STROBE_COL);
   release_dip(AUTOREPEAT_COL);

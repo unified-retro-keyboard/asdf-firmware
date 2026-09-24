@@ -1,12 +1,17 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
 //
-// Tests for the flash string printer. Verify that asdf_print() feeds the
+// Tests for the flash string printer. Verify that asdf_print_r() feeds the
 // message buffer (via asdf_putc) and preserves newline translation.
 
 #include "unity.h"
 #include "asdf.h"
 #include "asdf_print.h"
 #include "asdf_arch_test.h"
+#include "asdf_keyboard.h"
+#include "test_asdf_lib.h"
+
+// The keyboard under test.
+static asdf_t kb;
 
 asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
@@ -16,7 +21,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_init(&asdf_arch_platform);
+  asdf_init_r(&kb, &asdf_arch_platform);
 }
 
 void tearDown(void) {}
@@ -24,38 +29,38 @@ void tearDown(void) {}
 static void expect_string(const char *expected)
 {
   for (const char *p = expected; *p; ++p) {
-    TEST_ASSERT_EQUAL_INT((int) *p, (int) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT((int) *p, (int) test_next_code(&kb));
   }
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) test_next_code(&kb));
 }
 
 void test_asdf_print_queues_literal(void)
 {
-  asdf_print("[Keymap: test] 100%");
+  asdf_print_r(&kb, "[Keymap: test] 100%");
   expect_string("[Keymap: test] 100%");
 }
 
 void test_asdf_print_flash_reads_given_string(void)
 {
   static const char FLASH message[] = "stored";
-  asdf_print_flash(message);
+  asdf_print_flash_r(&kb, message);
   expect_string("stored");
 }
 
 void test_asdf_print_empty_string_queues_nothing(void)
 {
-  asdf_print("");
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) asdf_next_code());
+  asdf_print_r(&kb, "");
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) test_next_code(&kb));
 }
 
 void test_asdf_print_translates_newlines(void)
 {
-  asdf_print("Line1\nLine2");
+  asdf_print_r(&kb, "Line1\nLine2");
   const char *expected = "Line1\r\nLine2";
   for (const char *p = expected; *p; ++p) {
-    TEST_ASSERT_EQUAL_INT((int) *p, (int) asdf_next_code());
+    TEST_ASSERT_EQUAL_INT((int) *p, (int) test_next_code(&kb));
   }
-  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) asdf_next_code());
+  TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, (int) test_next_code(&kb));
 }
 
 int main(void)

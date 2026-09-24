@@ -7,8 +7,8 @@
 //
 // The keyboard object. An asdf_t holds all of the changeable state of one
 // keyboard, so any number of keyboards can be run independently. The "_r"
-// functions operate on the keyboard passed to them. The argument-less
-// functions in asdf.h operate on one default keyboard (asdf_compat.c).
+// functions operate on the keyboard passed to them. There is no default
+// keyboard: the application owns each asdf_t.
 //
 // Copyright 2019 David Fenyes
 //
@@ -86,6 +86,13 @@ void asdf_keyscan_r(asdf_t *kb);
 // send up to one code per tick, and scan the key matrix once with debounce and
 // repeat advanced by the elapsed ticks. Never blocks.
 void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms);
+
+// PROCEDURE: asdf_update_r
+// INPUTS: (asdf_t *) kb, (uint16_t) elapsed_ms - ticks elapsed since the last
+//         call
+// DESCRIPTION: Like asdf_process_r(), but sends nothing: advances the timers
+// and scans once, leaving codes queued for asdf_next_code_r(). Never blocks.
+void asdf_update_r(asdf_t *kb, uint16_t elapsed_ms);
 
 // PROCEDURE: asdf_tick_r
 // INPUTS: (asdf_t *) kb, (uint8_t) elapsed_ms - ticks elapsed

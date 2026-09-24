@@ -210,18 +210,45 @@ asdf_keycode_t asdf_arch_get_sent_code(void);
 // OUTPUTS: returns TRUE if a code was sent, FALSE otherwise.
 uint8_t asdf_arch_was_code_sent(void);
 
-// PROCEDURE: asdf_arch_init
+// PROCEDURE: asdf_arch_test_reset
 // INPUTS: none
 // OUTPUTS: none
 // DESCRIPTION: resets the emulated hardware: outputs low, pulse detectors in
 // their initial state, no code sent, and negative strobe polarity. The
 // platform's reset operation does the same.
-void asdf_arch_init(void);
+void asdf_arch_test_reset(void);
 
 // The platform of the emulated hardware. Its operations act on the emulation
 // above, which is shared by every keyboard that uses this platform; tests that
 // need independent hardware for each keyboard use fake_platform_t instead.
 extern const asdf_platform_t asdf_arch_platform;
+
+// The instance API of the firmware adapters, over the emulated hardware, so
+// that code written for them (such as the simple wrapper) runs on the host.
+// asdf_arch_test_tick_isr() stands in for the tick interrupt.
+typedef struct {
+  asdf_platform_t platform; // a copy of asdf_arch_platform
+  volatile uint8_t ticks;   // ticks counted by the interrupt, not yet collected
+} asdf_arch_t;
+
+#define ASDF_ARCH_TICK_ISR void asdf_arch_test_tick_isr(void)
+void asdf_arch_test_tick_isr(void);
+
+static inline void asdf_arch_count_tick(asdf_arch_t *arch)
+{
+  if (arch->ticks < UINT8_MAX) {
+    arch->ticks++;
+  }
+}
+
+// PROCEDURE: asdf_arch_init
+// INPUTS: (asdf_arch_t *) arch
+// DESCRIPTION: resets the emulated hardware and sets up arch.
+void asdf_arch_init(asdf_arch_t *arch);
+
+// PROCEDURE: asdf_arch_tick
+// OUTPUTS: returns the ticks counted since the last call, and clears the count.
+uint8_t asdf_arch_tick(asdf_arch_t *arch);
 
 
 

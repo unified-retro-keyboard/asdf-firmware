@@ -76,18 +76,6 @@ uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat);
 // DESCRIPTION: Advances the repeat timer by elapsed ticks.
 uint8_t asdf_repeat_advance_r(asdf_repeat_state_t *repeat, uint8_t elapsed);
 
-// Single-keyboard API, operating on the default repeat state (asdf_compat.c).
-// See the corresponding _r functions in asdf_repeat.c.
-
-void asdf_repeat_init(void);
-void asdf_repeat_reset_count(void);
-void asdf_repeat_auto_off(void);
-void asdf_repeat_auto_on(void);
-uint8_t asdf_repeat_is_autorepeat_enabled(void);
-void asdf_repeat_activate(void);
-void asdf_repeat_deactivate(void);
-uint8_t asdf_repeat(void);
-
 #endif // !defined (ASDF_REPEAT_H)
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

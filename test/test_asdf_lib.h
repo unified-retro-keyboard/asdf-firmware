@@ -10,9 +10,13 @@
 #define TEST_ACTION(fn) (0x100u + (fn))
 uint16_t test_key_value(asdf_key_t key);
 
-// The value (see test_key_value) of the key at a position in the default
-// keyboard's keymap.
-#define test_get_code(row, col, modifier) test_key_value(asdf_keymaps_get_key((row), (col), (modifier)))
+// The value (see test_key_value) of the key at a position in a keyboard's
+// keymap.
+#define test_get_code(kb, row, col, modifier)                                                     \
+  test_key_value(asdf_keymaps_get_key_r(&(kb)->keymap, (row), (col), (modifier)))
+
+// The next code ready to send from kb, or ASDF_INVALID_CODE if none is ready.
+uint16_t test_next_code(asdf_t *kb);
 
 uint32_t max(uint8_t first, uint8_t second);
 void test_hook_clear(void);

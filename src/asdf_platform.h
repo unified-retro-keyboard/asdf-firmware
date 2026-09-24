@@ -69,19 +69,6 @@ typedef struct asdf_platform {
   asdf_platform_reset_t reset;
 } asdf_platform_t;
 
-// PROCEDURE: asdf_install_platform
-// INPUTS: (const asdf_platform_t *) new_platform - platform to use, or NULL for
-//         the platform given to asdf_init()
-// OUTPUTS: none
-// DESCRIPTION: Selects the platform through which the key matrix is read,
-// codes are sent, and outputs are driven. A keymap switch restores the
-// platform given to asdf_init().
-void asdf_install_platform(const asdf_platform_t *new_platform);
-
-// PROCEDURE: asdf_current_platform
-// OUTPUTS: returns the platform currently in use
-const asdf_platform_t *asdf_current_platform(void);
-
 #endif /* !defined (ASDF_PLATFORM_H) */
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

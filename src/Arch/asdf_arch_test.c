@@ -571,7 +571,7 @@ uint8_t asdf_arch_is_strobe_positive(void)
 }
 
 
-// PROCEDURE: asdf_arch_init
+// PROCEDURE: asdf_arch_test_reset
 // INPUTS: none
 // OUTPUTS: none
 //
@@ -583,7 +583,7 @@ uint8_t asdf_arch_is_strobe_positive(void)
 //
 // COMPLEXITY: 1
 //
-void asdf_arch_init(void)
+void asdf_arch_test_reset(void)
 {
   for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     outputs[i] = 0;
@@ -653,7 +653,7 @@ static void arch_platform_pulse_delay_short(void *user)
 static void arch_platform_reset(void *user)
 {
   (void) user;
-  asdf_arch_init();
+  asdf_arch_test_reset();
 }
 
 const asdf_platform_t asdf_arch_platform = {
@@ -665,6 +665,24 @@ const asdf_platform_t asdf_arch_platform = {
   .pulse_delay_short = arch_platform_pulse_delay_short,
   .reset = arch_platform_reset,
 };
+
+// PROCEDURE: asdf_arch_init, asdf_arch_tick
+// DESCRIPTION: the firmware adapters' instance API over the emulated hardware
+// (see asdf_arch_test.h). There is no timer: tests count ticks by calling the
+// tick interrupt handler.
+void asdf_arch_init(asdf_arch_t *arch)
+{
+  asdf_arch_test_reset();
+  arch->platform = asdf_arch_platform;
+  arch->ticks = 0;
+}
+
+uint8_t asdf_arch_tick(asdf_arch_t *arch)
+{
+  uint8_t ticks = arch->ticks;
+  arch->ticks = 0;
+  return ticks;
+}
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

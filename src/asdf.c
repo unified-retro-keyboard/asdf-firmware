@@ -46,8 +46,7 @@
 #include <stdio.h>
 
 // All keyboard state is held in the asdf_t passed to each function (see
-// asdf_keyboard.h). The argument-less API in asdf.h operates on the default
-// keyboard in asdf_compat.c.
+// asdf_keyboard.h).
 
 // Position of no key, for last_key_row/last_key_col when no key is repeating.
 #define NO_KEY_POSITION 0xff
@@ -204,8 +203,8 @@ void asdf_tick_r(asdf_t *kb, uint8_t elapsed_ms) {
 // longer than a tick.
 //
 // NOTES: Never blocks. Callers on a 1 ms tick call this with the ticks counted
-// since the last call (see the platform adapter's asdf_arch_tick()). Elapsed times above 255 ticks are
-// treated as 255.
+// since the last call (see the platform adapter's asdf_arch_tick()). Elapsed
+// times above 255 ticks are treated as 255.
 //
 // SCOPE: public
 //
@@ -227,6 +226,30 @@ void asdf_process_r(asdf_t *kb, uint16_t elapsed_ms) {
     }
 
     asdf_scan_elapsed_r(kb, elapsed);
+}
+
+// PROCEDURE: asdf_update_r
+// INPUTS: (asdf_t *) kb - keyboard
+//         (uint16_t) elapsed_ms - ticks (ms) elapsed since the last call
+// OUTPUTS: none
+//
+// DESCRIPTION: Like asdf_process_r(), but sends nothing: advances the timers
+// and scans the key matrix, leaving codes queued for the caller to take with
+// asdf_next_code_r(). For applications that deliver codes themselves.
+//
+// NOTES: Never blocks. Elapsed times above 255 ticks are treated as 255.
+//
+// SCOPE: public
+//
+// COMPLEXITY: 2
+//
+void asdf_update_r(asdf_t *kb, uint16_t elapsed_ms) {
+    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? UINT8_MAX : (uint8_t)elapsed_ms;
+
+    if (elapsed) {
+        asdf_tick_r(kb, elapsed);
+        asdf_scan_elapsed_r(kb, elapsed);
+    }
 }
 
 // PROCEDURE: asdf_sync_lock_leds_r

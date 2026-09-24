@@ -4,6 +4,7 @@
 #include "asdf_physical.h"
 #include "asdf_keymaps.h"
 #include "asdf_arch.h"
+#include "asdf_keyboard.h"
 #include "test_asdf_lib.h"
 
 uint32_t hook_register;
@@ -13,6 +14,12 @@ uint16_t test_key_value(asdf_key_t key)
   return (ACTION_SEND_CODE == key.press_fn || ACTION_SEND_REPEATABLE_CODE == key.press_fn)
            ? key.press_param
            : (uint16_t) TEST_ACTION(key.press_fn);
+}
+
+uint16_t test_next_code(asdf_t *kb)
+{
+  asdf_keycode_t code;
+  return asdf_next_code_r(kb, &code) ? code : ASDF_INVALID_CODE;
 }
 
 uint32_t max(uint8_t first, uint8_t second)
