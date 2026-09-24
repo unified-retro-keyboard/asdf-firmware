@@ -2,7 +2,7 @@
 #
 # Report flash and RAM use of built firmware targets.
 #
-# usage: size-report.sh [-b BASELINE_CSV] [TARGET...]
+# usage: size-report.sh [-b BASELINE_CSV] [-c CEILINGS_CSV] [TARGET...]
 #
 # With no TARGET, reports every avr and arm_m0+ target in targets.csv whose ELF
 # has been built (build-<target>/src/asdf-v<version>-<target>.elf); targets
@@ -18,21 +18,28 @@
 #   ram      : data + bss (static use, excluding reserved)
 #
 # With -b, each row is followed by its change from the matching row of the
-# baseline file (a previous report). The report never fails on growth.
+# baseline file (a previous report). The baseline comparison never fails.
+#
+# With -c, each target's flash and ram are checked against its budget in the
+# ceilings file (target,flash,ram; lines starting with # are comments). The
+# script exits 1 if any target is over its budget. A built target with no
+# budget is reported but does not fail.
 
 ROOT="$(dirname "${BASH_SOURCE[0]}")"
 source "$ROOT/version.sh"
 VERSION="$(asdf_version "$ROOT/CMakeLists.txt")"
 BASELINE=""
+CEILINGS=""
 
 usage() {
-    echo "usage: $0 [-b BASELINE_CSV] [TARGET...]" >&2
+    echo "usage: $0 [-b BASELINE_CSV] [-c CEILINGS_CSV] [TARGET...]" >&2
     exit 2
 }
 
-while getopts "b:h" opt; do
+while getopts "b:c:h" opt; do
     case $opt in
         b) BASELINE="$OPTARG" ;;
+        c) CEILINGS="$OPTARG" ;;
         *) usage ;;
     esac
 done
@@ -83,21 +90,38 @@ report() {
     done < <(firmware_targets)
 }
 
+REPORT="$(report "$@")"
+
 if [[ -z $BASELINE ]]; then
-    report "$@"
-    exit 0
+    echo "$REPORT"
+else
+    [[ -f $BASELINE ]] || { echo "baseline not found: $BASELINE" >&2; exit 2; }
+    echo "$REPORT" | awk -F, -v OFS=, '
+        NR == FNR { if (FNR > 1) base[$1] = $0; next }
+        FNR == 1  { print; next }
+        {
+            print
+            if (!($1 in base)) { print "  (no baseline)"; next }
+            split(base[$1], b, ",")
+            line = "  delta"
+            for (i = 2; i <= NF; i++) line = line OFS sprintf("%+d", $i - b[i])
+            print line
+        }' "$BASELINE" -
 fi
 
-[[ -f $BASELINE ]] || { echo "baseline not found: $BASELINE" >&2; exit 2; }
+[[ -z $CEILINGS ]] && exit 0
+[[ -f $CEILINGS ]] || { echo "ceilings not found: $CEILINGS" >&2; exit 2; }
 
-report "$@" | awk -F, -v OFS=, '
-    NR == FNR { if (FNR > 1) base[$1] = $0; next }
-    FNR == 1  { print; next }
+# report columns: 1 target, 6 flash, 7 ram; ceilings columns: target,flash,ram
+echo "$REPORT" | awk -F, '
+    NR == FNR {
+        if ($0 ~ /^#/ || $1 == "target" || NF < 3) next
+        flash[$1] = $2; ram[$1] = $3; next
+    }
+    FNR == 1 { next }
     {
-        print
-        if (!($1 in base)) { print "  (no baseline)"; next }
-        split(base[$1], b, ",")
-        line = "  delta"
-        for (i = 2; i <= NF; i++) line = line OFS sprintf("%+d", $i - b[i])
-        print line
-    }' "$BASELINE" -
+        if (!($1 in flash)) { print $1 ": no size budget" > "/dev/stderr"; next }
+        if ($6 > flash[$1]) { print $1 ": flash " $6 " over budget " flash[$1] > "/dev/stderr"; over = 1 }
+        if ($7 > ram[$1])   { print $1 ": ram " $7 " over budget " ram[$1] > "/dev/stderr"; over = 1 }
+    }
+    END { exit over }' "$CEILINGS" -

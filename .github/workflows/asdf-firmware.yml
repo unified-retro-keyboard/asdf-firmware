@@ -50,8 +50,8 @@ jobs:
             exit 1
           fi
       - run: /bin/bash ./make-targets.sh -a avr -i -s
-      - name: Report firmware sizes against baseline
-        run: /bin/bash ./size-report.sh -b test/size-baseline.csv
+      - name: Report firmware sizes against baseline and check size budgets
+        run: /bin/bash ./size-report.sh -b test/size-baseline.csv -c test/size-ceilings.csv
       - name: Upload built ELFs
         uses: actions/upload-artifact@v4
         with:
@@ -103,8 +103,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Build PIC32CM PL10 firmware (build-verified, no hardware/emulator validation yet)
         run: bash ./make-targets.sh -a arm_m0+
-      - name: Report firmware sizes against baseline
-        run: bash ./size-report.sh -b test/size-baseline.csv
+      - name: Report firmware sizes against baseline and check size budgets
+        run: bash ./size-report.sh -b test/size-baseline.csv -c test/size-ceilings.csv
 
   integration_test:
     needs: build_firmware

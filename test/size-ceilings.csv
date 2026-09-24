@@ -1,0 +1,14 @@
+# Size budgets for each firmware target, checked by size-report.sh -c.
+#
+# flash: text + data; ram: data + bss (static use, excluding the ARM
+# heap/stack reservation). Each budget is about 5% above the size when it
+# was set, rounded up, so growth is noticed. Raise a budget deliberately,
+# in the commit that needs it.
+target,flash,ram
+atmega328p,12288,480
+atmega168p,12288,480
+atmega2560,12544,480
+atmega1280,12544,480
+atmega640,12544,480
+pic32cm_pl10_q64,13056,544
+pic32cm_pl10_dip28,12800,544
