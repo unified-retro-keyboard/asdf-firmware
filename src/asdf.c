@@ -560,8 +560,9 @@ void asdf_apply_configuration(asdf_t *kb) {
  *
  * Empties the output queues and ends any message pause, forgets all key state
  * (no keys pressed, no repeating key, debounce counters reloaded), installs
- * @p platform, and selects keymap 0, which also resets modifiers, repeat, the
- * each-scan action, and virtual outputs, and applies keymap 0's descriptor.
+ * @p platform, and selects the first keymap (asdf_keymaps_init()), which also
+ * resets modifiers, repeat, the each-scan action, and virtual outputs, and
+ * applies that keymap's descriptor.
  *
  * @param kb        Keyboard to initialize.
  * @param platform  Its hardware; must not be NULL.

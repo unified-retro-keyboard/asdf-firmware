@@ -268,15 +268,12 @@ void asdf_arch_out1_open_hi_set(uint8_t value)
 /**
  * Emulates setting OUT1 as an open-emitter output.
  *
- * Records the value on PHYSICAL_OUT1_OPEN_HI and advances its pulse detector.
+ * Records the value on PHYSICAL_OUT1_OPEN_LO and advances its pulse detector.
  *
  * @param value  Value written to the output.
- *
- * Records on PHYSICAL_OUT1_OPEN_HI rather than on this output's own device,
- * so a test cannot tell this output from OUT1's open-collector output.
  */
 void asdf_arch_out1_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{set_output(PHYSICAL_OUT1_OPEN_LO, value);
 }
 
 /**
@@ -295,29 +292,23 @@ void asdf_arch_out2_set(uint8_t value)
 /**
  * Emulates setting OUT2 as an open-collector output.
  *
- * Records the value on PHYSICAL_OUT1_OPEN_HI and advances its pulse detector.
+ * Records the value on PHYSICAL_OUT2_OPEN_HI and advances its pulse detector.
  *
  * @param value  Value written to the output.
- *
- * Records on PHYSICAL_OUT1_OPEN_HI rather than on this output's own device,
- * so a test cannot tell this output from OUT1's open-collector output.
  */
 void asdf_arch_out2_open_hi_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{set_output(PHYSICAL_OUT2_OPEN_HI, value);
 }
 
 /**
  * Emulates setting OUT2 as an open-emitter output.
  *
- * Records the value on PHYSICAL_OUT1_OPEN_HI and advances its pulse detector.
+ * Records the value on PHYSICAL_OUT2_OPEN_LO and advances its pulse detector.
  *
  * @param value  Value written to the output.
- *
- * Records on PHYSICAL_OUT1_OPEN_HI rather than on this output's own device,
- * so a test cannot tell this output from OUT1's open-collector output.
  */
 void asdf_arch_out2_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{set_output(PHYSICAL_OUT2_OPEN_LO, value);
 }
 
 /**
@@ -335,29 +326,23 @@ void asdf_arch_out3_set(uint8_t value)
 /**
  * Emulates setting OUT3 as an open-collector output.
  *
- * Records the value on PHYSICAL_OUT1_OPEN_HI and advances its pulse detector.
+ * Records the value on PHYSICAL_OUT3_OPEN_HI and advances its pulse detector.
  *
  * @param value  Value written to the output.
- *
- * Records on PHYSICAL_OUT1_OPEN_HI rather than on this output's own device,
- * so a test cannot tell this output from OUT1's open-collector output.
  */
 void asdf_arch_out3_open_hi_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{set_output(PHYSICAL_OUT3_OPEN_HI, value);
 }
 
 /**
  * Emulates setting OUT3 as an open-emitter output.
  *
- * Records the value on PHYSICAL_OUT1_OPEN_HI and advances its pulse detector.
+ * Records the value on PHYSICAL_OUT3_OPEN_LO and advances its pulse detector.
  *
  * @param value  Value written to the output.
- *
- * Records on PHYSICAL_OUT1_OPEN_HI rather than on this output's own device,
- * so a test cannot tell this output from OUT1's open-collector output.
  */
 void asdf_arch_out3_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{set_output(PHYSICAL_OUT3_OPEN_LO, value);
 }
 
 /**

@@ -64,7 +64,7 @@
  * static asdf_t kb;
  *
  * asdf_arch_init(&arch);                   // hardware and tick interrupt
- * asdf_init(&kb, &arch.platform);        // keyboard logic, keymap 0
+ * asdf_init(&kb, &arch.platform);        // keyboard logic, first keymap
  * while (1) {
  *     // scan, debounce, repeat, and send codes for the ticks since last time
  *     asdf_process(&kb, asdf_arch_tick(&arch));
@@ -102,8 +102,9 @@ struct asdf_keyboard {
  *
  * Empties the output queues and ends any message pause, forgets all key state
  * (no keys pressed, no repeating key, debounce counters reloaded), and selects
- * keymap 0, which in turn resets modifiers, repeat, the each-scan action, and
- * virtual outputs, and applies keymap 0's descriptor, driving the outputs
+ * the first keymap (normally keymap 0), which in turn resets modifiers,
+ * repeat, the each-scan action, and virtual outputs, and applies that
+ * keymap's descriptor, driving the outputs
  * through @p platform. Key state is cleared before the keymap is selected, so
  * keys held before a reset are not re-applied as held configuration.
  *

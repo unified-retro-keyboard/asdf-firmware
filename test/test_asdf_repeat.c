@@ -320,6 +320,23 @@ void test_asdf_repeat_activate_while_autorepeating_wont_affect_timing(void)
   TEST_ASSERT_EQUAL_INT(ASDF_REPEAT_TIME_MS, delay);
 }
 
+// Pressing REPEAT while a key is autorepeating switches to REPEAT_ON, so a new
+// key pressed while REPEAT is held repeats at the repeat interval at once,
+// rather than waiting out the autorepeat delay.
+void test_asdf_repeat_activate_while_autorepeating_enters_repeat_mode(void)
+{
+  asdf_repeat_auto_on(&rep);
+  count_repeat_ticks(REPEAT_TIMED_OUT); // the first autorepeat
+  count_repeat_ticks(ASDF_REPEAT_TIME_MS / 2);
+
+  asdf_repeat_activate(&rep);
+  TEST_ASSERT_EQUAL_INT(REPEAT_ON, rep.mode);
+
+  // a new key while REPEAT is held
+  asdf_repeat_reset_count(&rep);
+  TEST_ASSERT_EQUAL_INT(ASDF_REPEAT_TIME_MS, count_repeat_ticks(REPEAT_TIMED_OUT));
+}
+
 //  If in autorepeat mode and the repeat key is released while a key is
 // repeating, the next repeat event should occur after a new autorepeat delay
 // interval.
@@ -466,6 +483,7 @@ int main(void)
   RUN_TEST(test_asdf_repeat_deactivate_returns_to_baseline_no_repeat);
   RUN_TEST(test_asdf_repeat_repeat_key_circumvents_initial_autorepeat_delay);
   RUN_TEST(test_asdf_repeat_activate_while_autorepeating_wont_affect_timing);
+  RUN_TEST(test_asdf_repeat_activate_while_autorepeating_enters_repeat_mode);
   RUN_TEST(test_asdf_repeat_turning_off_auto_cancels_autorepeating_keypress);
   RUN_TEST(test_asdf_repeat_turning_off_auto_cancels_autorepeat_delay_in_progress);
   RUN_TEST(test_asdf_repeat_deactivate_while_repeating_resets_autorepeat_counter);

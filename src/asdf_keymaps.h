@@ -134,7 +134,7 @@ typedef struct {
  *
  * Invariants, after asdf_keymaps_init() has selected a keymap:
  * - current changes only to a keymap that exists (asdf_keymap_valid()); it is
- *   valid once asdf_keymaps_init() has run, provided keymap 0 exists
+ *   valid once asdf_keymaps_init() has run, provided any keymap exists
  * - maps and each_scan hold the current keymap's descriptor; a modifier map
  *   the descriptor could not supply is empty (NULL, 0 x 0), so every lookup in
  *   it returns a key that does nothing
@@ -224,10 +224,11 @@ asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, 
 void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set);
 
 /**
- * Select keymap 0.
+ * Select the first keymap: the lowest-numbered keymap that exists.
  *
  * Called by asdf_init(). Resets and configures the keyboard as
- * asdf_keymaps_switch() does. Does nothing if keymap 0 does not exist.
+ * asdf_keymaps_switch() does. With no keymaps at all, the keyboard is left
+ * reset, with no key matrices and keymap number 0.
  *
  * @param kb  Keyboard to configure.
  */

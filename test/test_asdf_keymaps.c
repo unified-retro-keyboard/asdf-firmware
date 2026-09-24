@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 #include <stdarg.h>
 #include "asdf_arch.h"
 #include "unity.h"
@@ -331,6 +332,19 @@ void keymap_errors_count_rejected_descriptor_entries(void)
   TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors(&kb));
 }
 
+// Keymap initialization sets up the keymap state itself, rather than relying
+// on it being zeroed, and selects the first keymap (keymap 0 in the test
+// registry).
+void keymaps_init_selects_first_keymap_from_any_state(void)
+{
+  memset(&kb.keymap, 0xa5, sizeof(kb.keymap));
+  asdf_keymaps_init(&kb);
+  TEST_ASSERT_EQUAL_INT(0, kb.keymap.current);
+  TEST_ASSERT_EQUAL_INT(0, kb.keymap.requested);
+  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors(&kb));
+  TEST_ASSERT_EQUAL_INT(PLAIN_MATRIX_1, test_get_code(&kb, 0, 0, MOD_PLAIN_MAP));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -350,5 +364,6 @@ int main(void)
   RUN_TEST(dip_switch_properly_sets_bits);
   RUN_TEST(dip_switch_invalid_keymap_has_no_effect);
   RUN_TEST(keymap_errors_count_rejected_descriptor_entries);
+  RUN_TEST(keymaps_init_selects_first_keymap_from_any_state);
   return UNITY_END();
 }
