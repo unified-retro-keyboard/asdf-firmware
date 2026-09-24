@@ -26,7 +26,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 
 void setUp(void)
 {
-  asdf_init_r(&kb, &asdf_arch_platform);
+  asdf_init(&kb, &asdf_arch_platform);
 }
 
 void tearDown(void) {}
@@ -36,8 +36,8 @@ void tearDown(void) {}
 void test_message_buffer_has_priority_over_keycodes(void)
 {
   // Queue a keycode first, then a message byte.
-  asdf_put_code_r(&kb, 'k');
-  asdf_putc_r(&kb, 'm');
+  asdf_put_code(&kb, 'k');
+  asdf_putc(&kb, 'm');
 
   TEST_ASSERT_EQUAL_INT('m', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT('k', test_next_code(&kb));
@@ -48,7 +48,7 @@ void test_message_buffer_has_priority_over_keycodes(void)
 // system messages.
 void test_putc_translates_newline_to_crlf(void)
 {
-  asdf_putc_r(&kb, '\n');
+  asdf_putc(&kb, '\n');
 
   TEST_ASSERT_EQUAL_INT('\r', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT('\n', test_next_code(&kb));
@@ -62,17 +62,17 @@ void test_print_delay_paces_output_after_messages(void)
   const uint8_t delay = 77;
 
   kb.print_delay_ms = delay;
-  asdf_putc_r(&kb, 'x');
-  asdf_put_code_r(&kb, 'y');
-  asdf_put_code_r(&kb, 'z');
+  asdf_putc(&kb, 'x');
+  asdf_put_code(&kb, 'y');
+  asdf_put_code(&kb, 'z');
 
   TEST_ASSERT_EQUAL_INT('x', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 
-  asdf_tick_r(&kb, delay - 1);
+  asdf_tick(&kb, delay - 1);
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 
-  asdf_tick_r(&kb, 1);
+  asdf_tick(&kb, 1);
   TEST_ASSERT_EQUAL_INT('y', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT('z', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
@@ -82,11 +82,11 @@ void test_print_delay_paces_output_after_messages(void)
 void test_print_delay_does_not_underflow(void)
 {
   kb.print_delay_ms = 5;
-  asdf_putc_r(&kb, 'x');
-  asdf_putc_r(&kb, 'y');
+  asdf_putc(&kb, 'x');
+  asdf_putc(&kb, 'y');
 
   TEST_ASSERT_EQUAL_INT('x', test_next_code(&kb));
-  asdf_tick_r(&kb, 200);
+  asdf_tick(&kb, 200);
   TEST_ASSERT_EQUAL_INT('y', test_next_code(&kb));
   TEST_ASSERT_EQUAL_INT(ASDF_INVALID_CODE, test_next_code(&kb));
 }
@@ -94,17 +94,17 @@ void test_print_delay_does_not_underflow(void)
 // Codes that do not fit in a full queue are dropped and counted.
 void test_full_queues_count_dropped_codes(void)
 {
-  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_codes_r(&kb));
+  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_codes(&kb));
   for (int i = 0; i < ASDF_KEYCODE_BUFFER_SIZE + 3; i++) {
-    asdf_put_code_r(&kb, 'x');
+    asdf_put_code(&kb, 'x');
   }
-  TEST_ASSERT_EQUAL_INT(3, asdf_dropped_codes_r(&kb));
+  TEST_ASSERT_EQUAL_INT(3, asdf_dropped_codes(&kb));
 
-  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_messages_r(&kb));
+  TEST_ASSERT_EQUAL_INT(0, asdf_dropped_messages(&kb));
   for (int i = 0; i < ASDF_MESSAGE_BUFFER_SIZE + 2; i++) {
-    asdf_putc_r(&kb, 'y');
+    asdf_putc(&kb, 'y');
   }
-  TEST_ASSERT_EQUAL_INT(2, asdf_dropped_messages_r(&kb));
+  TEST_ASSERT_EQUAL_INT(2, asdf_dropped_messages(&kb));
 }
 
 int main(void)

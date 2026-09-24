@@ -457,7 +457,7 @@ Exit criteria:
   `asdf_keyscan()`, `asdf_next_code()`, and the module wrappers). Only
   `main.c` and the host tests use it; the core and keymaps already take the
   keyboard explicitly.
-- Convert the host tests to the instance (`_r`) API, each on its own `asdf_t`.
+- Convert the host tests to the instance API, each on its own `asdf_t`.
 - Have `main.c` own its `asdf_t`, next to its `asdf_arch_t`.
 - Add a minimal Arduino-compatible simple wrapper and example with `begin()`,
   `poll()`, `available()`, and `read()` semantics around one owned instance.
@@ -467,8 +467,8 @@ Exit criteria:
 - Document when to use the simple wrapper and when to use explicit instances.
 - Done as: `asdf_compat.c` and every argument-less declaration are removed.
   `main.c` owns its `asdf_t`; the host tests each own one (or just the module
-  state they test) and use the `_r` API. `asdf_update_r()` runs the keyboard
-  without sending, leaving codes for `asdf_next_code_r()`. The simple wrapper
+  state they test) and use the instance API. `asdf_update()` runs the keyboard
+  without sending, leaving codes for `asdf_next_code()`. The simple wrapper
   (`src/asdf_simple.[ch]`) owns the hardware, the keyboard, and the tick
   interrupt, and provides `asdf_begin()`, `asdf_poll()`, `asdf_available()`,
   and `asdf_read()`; the application delivers the codes. It is tested on the
@@ -501,6 +501,25 @@ Exit criteria:
   PIC32CM variants before describing those targets as behaviorally validated.
 - Replace stale procedure boilerplate with concise API contracts and module
   invariants.
+- Done as (all but the hardware-in-the-loop tests):
+  - Warnings: `-Wpedantic`, `-Wshadow`, `-Wimplicit-fallthrough`,
+    `-Wnull-dereference`, `-Wredundant-decls` everywhere; `-Wconversion`,
+    `-Wsign-conversion`, `-Wmissing-prototypes` for firmware and the core.
+    `ASDF_WERROR` makes them errors; CI sets it.
+  - `ASDF_SANITIZE` runs the host tests under ASan and UBSan in CI;
+    `ASDF_COVERAGE` reports core coverage (98% of lines) with gcovr.
+  - `test_asdf_fuzz.c` runs randomized scripts on three keyboards and checks
+    state invariants after every step.
+  - Queue drops and keymap descriptor errors are counted and exposed;
+    matrices are checked against the scanner limits at compile time;
+    `test_production_keymaps` applies every production keymap on the host.
+  - `size-report.sh -c` enforces per-target flash and RAM budgets in CI.
+  - Every function has a Doxygen block: the header states the contract
+    (description with side effects, parameters, return); the definition adds
+    implementation notes and modified cyclomatic complexity (a switch counts
+    once) when above 1. Every file has a `@file` block; `doxygen` builds the
+    API documentation. The `_r` suffix is gone, since every function now
+    takes its state explicitly.
 
 ## Compatibility strategy
 

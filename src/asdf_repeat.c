@@ -1,13 +1,14 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unfified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_repeat.c
-//
-// This file contains the key repeat logic.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_repeat.c
+ *
+ * This file contains the key repeat logic.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -39,7 +40,7 @@
  *
  * @param repeat  Repeat state to initialize.
  */
-void asdf_repeat_init_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_init(asdf_repeat_state_t *repeat)
 {
   repeat->mode = repeat->base_mode = ASDF_DEFAULT_REPEAT_STATE;
   repeat->timer = (uint16_t) repeat->mode;
@@ -53,7 +54,7 @@ void asdf_repeat_init_r(asdf_repeat_state_t *repeat)
  *
  * @param repeat  Repeat state to update.
  */
-void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_reset_count(asdf_repeat_state_t *repeat)
 {
   repeat->timer = (uint16_t) repeat->mode;
 }
@@ -69,7 +70,7 @@ void asdf_repeat_reset_count_r(asdf_repeat_state_t *repeat)
  *
  * Complexity: 2
  */
-void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_auto_off(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_OFF;
   if (REPEAT_ON != repeat->mode) {
@@ -88,7 +89,7 @@ void asdf_repeat_auto_off_r(asdf_repeat_state_t *repeat)
  *
  * Complexity: 2
  */
-void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_auto_on(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_AUTO;
   if (REPEAT_ON != repeat->mode) {
@@ -110,7 +111,7 @@ void asdf_repeat_auto_on_r(asdf_repeat_state_t *repeat)
  *
  * Complexity: 3
  */
-void asdf_repeat_activate_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_activate(asdf_repeat_state_t *repeat)
 {
   if (repeat->timer > REPEAT_ON || REPEAT_OFF == repeat->mode) {
     repeat->timer = repeat->mode = REPEAT_ON;
@@ -128,7 +129,7 @@ void asdf_repeat_activate_r(asdf_repeat_state_t *repeat)
  * autorepeat is enabled, the autorepeat delay starts over; otherwise repeat
  * stops.
  */
-void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat)
+void asdf_repeat_deactivate(asdf_repeat_state_t *repeat)
 {
   repeat->timer = repeat->mode = repeat->base_mode;
 }
@@ -141,7 +142,7 @@ void asdf_repeat_deactivate_r(asdf_repeat_state_t *repeat)
  * @param repeat  Repeat state to query.
  * @return 1 if the base mode is REPEAT_AUTO, else 0.
  */
-uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat)
+uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat)
 {
   return (repeat->base_mode == REPEAT_AUTO);
 }
@@ -155,9 +156,9 @@ uint8_t asdf_repeat_is_autorepeat_enabled_r(const asdf_repeat_state_t *repeat)
  * @return 1 when the timer expires and the last code should be repeated to the
  *         output, else 0.
  */
-uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat)
+uint8_t asdf_repeat(asdf_repeat_state_t *repeat)
 {
-  return asdf_repeat_advance_r(repeat, 1);
+  return asdf_repeat_advance(repeat, 1);
 }
 
 /**
@@ -177,7 +178,7 @@ uint8_t asdf_repeat_r(asdf_repeat_state_t *repeat)
  *
  * Complexity: 3
  */
-uint8_t asdf_repeat_advance_r(asdf_repeat_state_t *repeat, uint8_t elapsed)
+uint8_t asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed)
 {
   if (!repeat->timer) {
     return 0;

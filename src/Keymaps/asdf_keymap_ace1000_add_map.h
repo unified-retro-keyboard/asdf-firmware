@@ -1,15 +1,17 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
+/**
+ * @file asdf_keymap_ace1000_add_map.h
+ *
+ * Key codes for the Franklin ACE 1000 replacement keyboard, used by the key
+ * matrices in asdf_keymap_ace1000_maps.yaml.
+ * https://github.com/ryucats/Franklin-ACE-1000-Keyboard
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2023 Chris RYU. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_ace1000_add_map.h
-//
-// Key codes for the Franklin ACE 1000 replacement keyboard, used by the key
-// matrices in asdf_keymap_ace1000_maps.yaml.
-// https://github.com/ryucats/Franklin-ACE-1000-Keyboard
-//
-// Copyright 2023 Chris RYU
 // Copyright 2019 David Fenyes
 //
 // This program is free software: you can redistribute it and/or modify it under

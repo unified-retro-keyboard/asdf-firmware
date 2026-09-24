@@ -54,7 +54,7 @@ static uint32_t next_random(uint32_t *state)
 static void runner_init(runner_t *r, uint32_t seed)
 {
   fake_platform_init(&r->hw);
-  asdf_init_r(&r->kb, &r->hw.platform);
+  asdf_init(&r->kb, &r->hw.platform);
   r->rng = seed;
   r->log_len = 0;
 }
@@ -74,10 +74,10 @@ static void runner_tick(runner_t *r)
     }
   }
 
-  asdf_keyscan_r(&r->kb);
+  asdf_keyscan(&r->kb);
 
   asdf_keycode_t code;
-  while (asdf_next_code_r(&r->kb, &code)) {
+  while (asdf_next_code(&r->kb, &code)) {
     if (r->log_len < MAX_LOG) {
       r->log[r->log_len++] = code;
     }
@@ -150,20 +150,20 @@ void reinit_of_one_instance_leaves_other_alone(void)
 
   fake_platform_press(&pair_a.hw, 0, 4); // CAPS on A
   for (int t = 0; t < ASDF_DEBOUNCE_TIME_MS; t++) {
-    asdf_keyscan_r(&pair_a.kb);
+    asdf_keyscan(&pair_a.kb);
   }
-  modifier_index_t a_mods = asdf_modifier_index_r(&pair_a.kb.modifiers);
+  modifier_index_t a_mods = asdf_modifier_index(&pair_a.kb.modifiers);
   TEST_ASSERT_EQUAL_INT(MOD_CAPS_MAP, a_mods);
 
-  asdf_init_r(&pair_b.kb, &pair_b.hw.platform);
-  TEST_ASSERT_EQUAL_INT(a_mods, asdf_modifier_index_r(&pair_a.kb.modifiers));
-  TEST_ASSERT_EQUAL_INT(MOD_PLAIN_MAP, asdf_modifier_index_r(&pair_b.kb.modifiers));
+  asdf_init(&pair_b.kb, &pair_b.hw.platform);
+  TEST_ASSERT_EQUAL_INT(a_mods, asdf_modifier_index(&pair_a.kb.modifiers));
+  TEST_ASSERT_EQUAL_INT(MOD_PLAIN_MAP, asdf_modifier_index(&pair_b.kb.modifiers));
 }
 
 static void scan_r(runner_t *r)
 {
   for (int t = 0; t < ASDF_DEBOUNCE_TIME_MS; t++) {
-    asdf_keyscan_r(&r->kb);
+    asdf_keyscan(&r->kb);
   }
 }
 
@@ -173,10 +173,10 @@ void each_instance_drives_only_its_own_hardware(void)
 {
   runner_init(&pair_a, 1);
   runner_init(&pair_b, 2);
-  asdf_keymaps_select_r(&pair_a.kb, VCAPS_TEST_KEYMAP);
+  asdf_keymaps_select(&pair_a.kb, VCAPS_TEST_KEYMAP);
   TEST_ASSERT_EQUAL_INT(2, pair_a.hw.resets); // at init, and at the switch
   TEST_ASSERT_EQUAL_INT(1, pair_b.hw.resets);
-  asdf_keymaps_select_r(&pair_b.kb, VCAPS_TEST_KEYMAP);
+  asdf_keymaps_select(&pair_b.kb, VCAPS_TEST_KEYMAP);
 
   fake_platform_press(&pair_a.hw, 0, 4); // CAPS on A: CAPS LED on LED1
   scan_r(&pair_a);

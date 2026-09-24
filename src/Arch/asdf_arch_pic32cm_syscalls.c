@@ -1,15 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_syscalls.c
-//
-// Minimal newlib syscall stubs for the bare-metal PIC32CM PL10 targets. The
-// keyboard firmware performs no host I/O, so these satisfy newlib's link-time
-// references with do-nothing implementations. Providing them lets the link drop
-// --specs=nosys.specs, whose stubs otherwise emit "_X is not implemented"
-// linker warnings. _sbrk grows the heap from the linker-provided `end` symbol.
+/**
+ * @file asdf_arch_pic32cm_syscalls.c
+ *
+ * Minimal newlib syscall stubs for the bare-metal PIC32CM PL10 targets. The
+ * keyboard firmware performs no host I/O, so these satisfy newlib's link-time
+ * references with do-nothing implementations. Providing them lets the link drop
+ * --specs=nosys.specs, whose stubs otherwise emit "_X is not implemented"
+ * linker warnings. _sbrk grows the heap from the linker-provided `end` symbol.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #include <stddef.h>
 #include <sys/stat.h>

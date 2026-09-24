@@ -1,15 +1,16 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_ring.c
-//
-// A ring buffer of keycodes in caller-provided storage. Buffering provides an
-// interface between the generation of keycodes and the hardware-level keycode
-// transmission, which may occur at different rates.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_ring.c
+ *
+ * A ring buffer of keycodes in caller-provided storage. Buffering provides an
+ * interface between the generation of keycodes and the hardware-level keycode
+ * transmission, which may occur at different rates.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software

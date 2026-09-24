@@ -1,16 +1,16 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_pl10_dip28.c
-//
-// PIC32CM6408PL10028 (SPDIP-28, "328p-class") arch implementation. The
-// scan/read and output logic reproduces asdf_arch_atmega328p.c: a 4-bit encoded
-// row value to an external 74LS138, and a serial shift-register column read.
-// Only the pin-I/O primitives change (PORT_REGS helpers in
-// asdf_arch_pic32cm_common.h). Shared clock/tick/delay live in
-// asdf_arch_pic32cm_common.c.
+/**
+ * @file asdf_arch_pic32cm_pl10_dip28.c
+ *
+ * PIC32CM6408PL10028 (SPDIP-28, "328p-class") arch implementation. The
+ * scan/read and output logic reproduces asdf_arch_atmega328p.c: a 4-bit encoded
+ * row value to an external 74LS138, and a serial shift-register column read.
+ * Only the pin-I/O primitives change (PORT_REGS helpers in
+ * asdf_arch_pic32cm_common.h). Shared clock/tick/delay live in
+ * asdf_arch_pic32cm_common.c.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #include "asdf_arch.h"
 #include "asdf_config.h" // ASDF_DEFAULT_DATA_POLARITY, ASDF_PULSE_DELAY_SHORT_US

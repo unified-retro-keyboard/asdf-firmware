@@ -1,15 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_pl10_q64.h
-//
-// Architecture-specific definitions for the PIC32CM6408PL10064 (64-pin),
-// "2560-class" variant: 16 directly-driven one-hot row lines, 8-bit parallel
-// inverted column read. The public API and scan/read logic mirror
-// asdf_arch_atmega2560; only the pin-I/O primitives, clock/tick, and toolchain
-// differ. Shared ARM mechanics live in asdf_arch_pic32cm_common.{c,h}.
+/**
+ * @file asdf_arch_pic32cm_pl10_q64.h
+ *
+ * Architecture-specific definitions for the PIC32CM6408PL10064 (64-pin),
+ * "2560-class" variant: 16 directly-driven one-hot row lines, 8-bit parallel
+ * inverted column read. The public API and scan/read logic mirror
+ * asdf_arch_atmega2560; only the pin-I/O primitives, clock/tick, and toolchain
+ * differ. Shared ARM mechanics live in asdf_arch_pic32cm_common.{c,h}.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #if !defined(ASDF_ARCH_H)
 #define ASDF_ARCH_H

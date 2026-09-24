@@ -1,14 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_apple2_add_map.c
-//
-// Keyboard test action for the apple2 keymaps. The key matrices are in
-// asdf_keymap_apple2_maps.yaml.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymap_apple2_add_map.c
+ *
+ * Keyboard test action for the apple2 keymaps. The key matrices are in
+ * asdf_keymap_apple2_maps.yaml.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -43,7 +44,7 @@
 void applesoft_keyboard_test(asdf_t *kb, uint8_t param)
 {
   (void) param;
-  asdf_print_r(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
+  asdf_print(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

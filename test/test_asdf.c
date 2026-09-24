@@ -36,7 +36,7 @@ typedef struct {
 } coord_t;
 
 // The test key matrices (test_keymaps.h) of the keymap (index 0) that
-// asdf_init_r(&kb) selects are used to find key positions and expected codes. Keys
+// asdf_init(&kb) selects are used to find key positions and expected codes. Keys
 // are identified by test_key_value(): a code, or TEST_ACTION(fn).
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
@@ -46,12 +46,12 @@ void keyscan_delay(int32_t ticks);
 
 void setUp(void)
 {
-  asdf_init_r(&kb, &asdf_arch_platform);
+  asdf_init(&kb, &asdf_arch_platform);
 
-  // asdf_init_r(&kb) does not reset modifier state, and CAPS is a toggle that
+  // asdf_init(&kb) does not reset modifier state, and CAPS is a toggle that
   // tearDown() cannot release, so reset modifiers explicitly.
-  asdf_modifiers_init_r(&kb.modifiers);
-  asdf_sync_lock_leds_r(&kb);
+  asdf_modifiers_init(&kb.modifiers);
+  asdf_sync_lock_leds(&kb);
 
   // initialize simulated key matrix
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
@@ -109,7 +109,7 @@ uint16_t ctrl(uint16_t code)
 void keyscan_delay(int32_t ticks)
 {
   for (; ticks; ticks--) {
-    asdf_keyscan_r(&kb);
+    asdf_keyscan(&kb);
   }
 }
 

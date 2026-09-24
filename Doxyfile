@@ -1,0 +1,23 @@
+# API documentation for the ASDF keyboard firmware.
+#
+# usage: doxygen            (writes HTML to build-doxygen/html/index.html)
+
+PROJECT_NAME           = "ASDF keyboard firmware"
+OUTPUT_DIRECTORY       = build-doxygen
+INPUT                  = src src/Keymaps src/Arch README.md
+FILE_PATTERNS          = *.h *.c *.md
+EXCLUDE                = src/third_party src/Templates
+USE_MDFILE_AS_MAINPAGE = README.md
+OPTIMIZE_OUTPUT_FOR_C  = YES
+EXTRACT_STATIC         = YES
+SOURCE_BROWSER         = YES
+GENERATE_LATEX         = NO
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_NO_PARAMDOC       = NO
+
+# The sources use a few compiler and architecture macros Doxygen cannot parse.
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = "__attribute__(x)=" FLASH=

@@ -28,12 +28,12 @@ static uint8_t read_id_message(char *buf)
   uint8_t len = 0;
   asdf_keycode_t code;
 
-  asdf_action_r(&kb, ACTION_KEYMAP_ID, 0);
+  asdf_action(&kb, ACTION_KEYMAP_ID, 0);
   for (int tries = 0; tries < 4 * MAX_MESSAGE && len < MAX_MESSAGE - 1; tries++) {
-    if (asdf_next_code_r(&kb, &code)) {
+    if (asdf_next_code(&kb, &code)) {
       buf[len++] = (char) code;
     }
-    asdf_tick_r(&kb, UINT8_MAX);
+    asdf_tick(&kb, UINT8_MAX);
   }
   buf[len] = '\0';
   return len;
@@ -55,7 +55,7 @@ static void expected_output(const char *message, char *buf)
 void setUp(void)
 {
   fake_platform_init(&hw);
-  asdf_init_r(&kb, &hw.platform);
+  asdf_init(&kb, &hw.platform);
 }
 
 void tearDown(void) {}
@@ -70,13 +70,13 @@ void production_keymaps_apply_cleanly(void)
       continue;
     }
     num_keymaps++;
-    asdf_keymaps_select_r(&kb, index);
+    asdf_keymaps_select(&kb, index);
     if (0 == index) {
-      asdf_keymaps_switch_r(&kb, index); // already current after init
+      asdf_keymaps_switch(&kb, index); // already current after init
     }
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(index, kb.keymap.current, "keymap not selected");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(0, asdf_keymap_errors_r(&kb), "keymap has errors");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, asdf_keymap_errors(&kb), "keymap has errors");
     for (uint8_t m = 0; m < ASDF_MOD_NUM_MODIFIERS; m++) {
       TEST_ASSERT_NOT_NULL(kb.keymap.maps[m].matrix);
       TEST_ASSERT_EQUAL_INT(keymap->rows, kb.keymap.maps[m].rows);

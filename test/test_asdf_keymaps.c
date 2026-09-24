@@ -28,7 +28,7 @@ static asdf_t kb;
 // modifier_name: name of the modifier to be accessed within the map.
 #define TESTMAP(row, col, keymap_name, defnum, mapindex, modifier_name)                            \
   do {                                                                                             \
-    asdf_keymaps_select_r(&kb, ASDF_##mapindex##_MAP_INDEX);                                       \
+    asdf_keymaps_select(&kb, ASDF_##mapindex##_MAP_INDEX);                                       \
     uint16_t expected = test_key_value(keymap_name##_##modifier_name##_matrix[(row)][(col)]);    \
     uint16_t result = test_get_code(&kb, (row), (col), MOD_##modifier_name##_MAP);        \
     uint16_t map_id = test_get_code(&kb, 0, 0, MOD_##modifier_name##_MAP);                \
@@ -109,8 +109,8 @@ void setUp(void)
 {
   coord_t *temp;
 
-  asdf_init_r(&kb, &asdf_arch_platform);
-  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  asdf_init(&kb, &asdf_arch_platform);
+  asdf_keymaps_select(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
 
   temp = find_code(TESTALPHA);
   alpha_sample = *temp;
@@ -140,7 +140,7 @@ void complicated_set_keymap(uint8_t mapnum)
   }
 
   // The select actions only request a keymap; the end of a scan applies it.
-  asdf_keymaps_apply_request_r(&kb);
+  asdf_keymaps_apply_request(&kb);
 }
 
 // dummy row reader: no keys pressed.
@@ -159,7 +159,7 @@ void test_chars_are_in_map(void)
 void keymap0_plain_gives_plain_values(void)
 {
 
-  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  asdf_keymaps_select(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
 
   TEST0PLAIN(alpha_sample.row, alpha_sample.col);
   TEST0PLAIN(num_sample.row, num_sample.col);
@@ -207,7 +207,7 @@ void keymap2_ctrl_gives_ctrl_values(void)
 void keymap1_capsmap_plain_maps_to_caps(void)
 {
   // set bit 0 to select keymap 1
-  asdf_keymaps_request_bit_r(&kb.keymap, ASDF_KEYMAP_BIT_0, 1);
+  asdf_keymaps_request_bit(&kb.keymap, ASDF_KEYMAP_BIT_0, 1);
   TEST1CAPS(alpha_sample.row, alpha_sample.col);
   TEST1CAPS(num_sample.row, num_sample.col);
 }
@@ -220,7 +220,7 @@ void dip_switch_codes_are_in_last_row_test1_map(void)
                                             { .row = (TEST_NUM_ROWS - 1), .col = 3 } };
   for (uint8_t i = 0; i < NUM_DIPSWITCHES; i++) {
     asdf_key_t key =
-      asdf_keymaps_get_key_r(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
+      asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
                              ASDF_TEST_PLAIN_MAP_INDEX);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_SET, key.press_fn);
     TEST_ASSERT_EQUAL_INT(i, key.press_param);
@@ -237,7 +237,7 @@ void dip_switch_codes_are_in_last_row_test2_map(void)
                                             { .row = (TEST_NUM_ROWS - 1), .col = 3 } };
   for (uint8_t i = 0; i < NUM_DIPSWITCHES; i++) {
     asdf_key_t key =
-      asdf_keymaps_get_key_r(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
+      asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
                              ASDF_TEST2_PLAIN_MAP_INDEX);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_SET, key.press_fn);
     TEST_ASSERT_EQUAL_INT(i, key.press_param);
@@ -251,11 +251,11 @@ void dip_switch_properly_sets_bits(void)
   for (uint8_t i = 0; i < ASDF_NUM_KEYMAPS; i++) {
     uint16_t expected;
     uint16_t result;
-    asdf_keymaps_select_r(&kb, i);
+    asdf_keymaps_select(&kb, i);
     expected = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
 
     // set all keymap bits to '0'
-    asdf_keymaps_select_r(&kb, 0);
+    asdf_keymaps_select(&kb, 0);
     complicated_set_keymap(i);
     result = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
 
@@ -277,11 +277,11 @@ void dip_switch_properly_clears_bits(void)
   for (uint8_t i = 0; i < ASDF_NUM_KEYMAPS; i++) {
     uint16_t expected;
     uint16_t result;
-    asdf_keymaps_select_r(&kb, i);
+    asdf_keymaps_select(&kb, i);
     expected = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
 
     // set as many keymap bits to '1' as possible.
-    asdf_keymaps_select_r(&kb, mask);
+    asdf_keymaps_select(&kb, mask);
     complicated_set_keymap(i);
     result = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
     TEST_ASSERT_EQUAL_INT32(expected, result);
@@ -294,22 +294,22 @@ void dip_switch_invalid_keymap_has_no_effect(void)
   uint16_t map_id;
 
   // First, assert that changing to matrix 2 works:
-  asdf_keymaps_select_r(&kb, ASDF_TEST2_PLAIN_MAP_INDEX);
+  asdf_keymaps_select(&kb, ASDF_TEST2_PLAIN_MAP_INDEX);
   map_id = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
   TEST_ASSERT_EQUAL_INT32(PLAIN_MATRIX_2, map_id);
 
   // assert that resetting keymap to 0 works:
-  asdf_keymaps_select_r(&kb, 0);
+  asdf_keymaps_select(&kb, 0);
   map_id = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
   TEST_ASSERT_EQUAL_INT32(PLAIN_MATRIX_1, map_id);
 
   // selecting one above the highest keymap should have no effect
-  asdf_keymaps_select_r(&kb, ASDF_NUM_KEYMAPS);
+  asdf_keymaps_select(&kb, ASDF_NUM_KEYMAPS);
   map_id = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
   TEST_ASSERT_EQUAL_INT32(PLAIN_MATRIX_1, map_id);
 
   // selecting the highest possible keymap should have no effect
-  asdf_keymaps_select_r(&kb, UINT8_MAX);
+  asdf_keymaps_select(&kb, UINT8_MAX);
   map_id = test_get_code(&kb, keymap_tag.row, keymap_tag.col, MOD_PLAIN_MAP);
   TEST_ASSERT_EQUAL_INT32(PLAIN_MATRIX_1, map_id);
 }
@@ -318,17 +318,17 @@ void dip_switch_invalid_keymap_has_no_effect(void)
 // output twice, or assigns an invalid one, reports one error for it.
 void keymap_errors_count_rejected_descriptor_entries(void)
 {
-  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
-  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors_r(&kb));
+  asdf_keymaps_select(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors(&kb));
 
-  asdf_keymaps_select_r(&kb, DOUBLE_ASSIGN_TEST_KEYMAP);
-  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors_r(&kb));
+  asdf_keymaps_select(&kb, DOUBLE_ASSIGN_TEST_KEYMAP);
+  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors(&kb));
 
-  asdf_keymaps_select_r(&kb, VCAPS_TEST_KEYMAP);
-  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors_r(&kb));
+  asdf_keymaps_select(&kb, VCAPS_TEST_KEYMAP);
+  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors(&kb));
 
-  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
-  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors_r(&kb));
+  asdf_keymaps_select(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors(&kb));
 }
 
 int main(void)

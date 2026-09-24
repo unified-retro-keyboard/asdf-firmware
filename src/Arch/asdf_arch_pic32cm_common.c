@@ -1,15 +1,15 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_common.c
-//
-// Shared ARM mechanics for the PIC32CM PL10 arch variants: clock, the 1 ms
-// SysTick tick timer and tick collection, and busy-loop delays. The board
-// layer (main.c) defines the SysTick interrupt handler. The matrix-scan and
-// output logic that differs between the 64-pin (2560-class) and SPDIP-28
-// (328p-class) variants lives in their asdf_arch_pic32cm_pl10_*.c files.
+/**
+ * @file asdf_arch_pic32cm_common.c
+ *
+ * Shared ARM mechanics for the PIC32CM PL10 arch variants: clock, the 1 ms
+ * SysTick tick timer and tick collection, and busy-loop delays. The board
+ * layer (main.c) defines the SysTick interrupt handler. The matrix-scan and
+ * output logic that differs between the 64-pin (2560-class) and SPDIP-28
+ * (328p-class) variants lives in their asdf_arch_pic32cm_pl10_*.c files.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #include "asdf_arch_pic32cm_common.h"
 

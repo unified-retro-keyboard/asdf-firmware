@@ -1,16 +1,17 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_actions.h
-//
-// Keymap-provided key actions: their action numbers, from ASDF_KEYMAP_ACTIONS
-// on, and their functions. The action table (asdf_keymap_actions.c) maps each
-// number to its function. Keys name these actions in the YAML key matrices,
-// by their KEY_ macros below, for example KEY_APPLESOFT_KEYBOARD_TEST.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymap_actions.h
+ *
+ * Keymap-provided key actions: their action numbers, from ASDF_KEYMAP_ACTIONS
+ * on, and their functions. The action table (asdf_keymap_actions.c) maps each
+ * number to its function. Keys name these actions in the YAML key matrices,
+ * by their KEY_ macros below, for example KEY_APPLESOFT_KEYBOARD_TEST.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software

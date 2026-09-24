@@ -27,7 +27,7 @@
 static asdf_t kb;
 
 // Key positions in the test keymap (ASDF_TEST_PLAIN_MAP) selected by
-// asdf_init_r(&kb).
+// asdf_init(&kb).
 #define KEY_A_ROW 1
 #define KEY_A_COL 6
 #define KEY_CAPS_ROW 0
@@ -60,7 +60,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 static void scan(int32_t ticks)
 {
   while (ticks-- > 0) {
-    asdf_keyscan_r(&kb);
+    asdf_keyscan(&kb);
   }
 }
 
@@ -78,7 +78,7 @@ static void lift(uint8_t row, uint8_t col)
 static int32_t scans_until_code(void)
 {
   for (int32_t ticks = 1; ticks <= 1000; ticks++) {
-    asdf_keyscan_r(&kb);
+    asdf_keyscan(&kb);
     if (ASDF_INVALID_CODE != test_next_code(&kb)) {
       return ticks;
     }
@@ -88,9 +88,9 @@ static int32_t scans_until_code(void)
 
 void setUp(void)
 {
-  asdf_init_r(&kb, &asdf_arch_platform);
-  asdf_modifiers_init_r(&kb.modifiers);
-  asdf_sync_lock_leds_r(&kb);
+  asdf_init(&kb, &asdf_arch_platform);
+  asdf_modifiers_init(&kb.modifiers);
+  asdf_sync_lock_leds(&kb);
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
@@ -186,7 +186,7 @@ void repeat_follows_key_position_not_code(void)
 // Initialization
 //
 
-// asdf_init_r(&kb) clears the stable key state before selecting keymap 0, so keys
+// asdf_init(&kb) clears the stable key state before selecting keymap 0, so keys
 // held before a re-init are forgotten: a held REPEAT key does not leave repeat
 // mode on.
 void reinit_forgets_keys_held_before_init(void)
@@ -194,7 +194,7 @@ void reinit_forgets_keys_held_before_init(void)
   hold(KEY_REPEAT_ROW, KEY_REPEAT_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
 
-  asdf_init_r(&kb, &asdf_arch_platform);
+  asdf_init(&kb, &asdf_arch_platform);
   lift(KEY_REPEAT_ROW, KEY_REPEAT_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
 
@@ -279,7 +279,7 @@ void apply_configuration_ignores_non_configuration_keys(void)
   scan(ASDF_DEBOUNCE_TIME_MS);
   TEST_ASSERT_EQUAL_INT(1, test_here_is_count());
 
-  asdf_apply_configuration_r(&kb);
+  asdf_apply_configuration(&kb);
   TEST_ASSERT_EQUAL_INT(1, test_here_is_count());
 }
 
@@ -316,7 +316,7 @@ void nothing_key_queues_nothing(void)
 static void fill_message_buffer_leaving(int slots)
 {
   for (int i = 0; i < ASDF_MESSAGE_BUFFER_SIZE - slots; i++) {
-    asdf_putc_r(&kb, 'x');
+    asdf_putc(&kb, 'x');
   }
 }
 
@@ -335,7 +335,7 @@ void newline_with_two_slots_queues_crlf(void)
 {
   char tail[2] = { 0 };
   fill_message_buffer_leaving(2);
-  asdf_putc_r(&kb, '\n');
+  asdf_putc(&kb, '\n');
   TEST_ASSERT_EQUAL_INT(ASDF_MESSAGE_BUFFER_SIZE, drain_message_buffer_tail(tail, 2));
   TEST_ASSERT_EQUAL_INT('\r', tail[(ASDF_MESSAGE_BUFFER_SIZE - 2) % 2]);
   TEST_ASSERT_EQUAL_INT('\n', tail[(ASDF_MESSAGE_BUFFER_SIZE - 1) % 2]);
@@ -346,7 +346,7 @@ void newline_with_one_slot_queues_nothing(void)
 {
   char tail[1] = { 0 };
   fill_message_buffer_leaving(1);
-  TEST_ASSERT_EQUAL_INT(EOF, asdf_putc_r(&kb, '\n'));
+  TEST_ASSERT_EQUAL_INT(EOF, asdf_putc(&kb, '\n'));
   TEST_ASSERT_EQUAL_INT(ASDF_MESSAGE_BUFFER_SIZE - 1, drain_message_buffer_tail(tail, 1));
   TEST_ASSERT_EQUAL_INT('x', tail[0]);
 }
@@ -355,7 +355,7 @@ void newline_with_no_slots_queues_nothing(void)
 {
   char tail[1] = { 0 };
   fill_message_buffer_leaving(0);
-  asdf_putc_r(&kb, '\n');
+  asdf_putc(&kb, '\n');
   TEST_ASSERT_EQUAL_INT(ASDF_MESSAGE_BUFFER_SIZE, drain_message_buffer_tail(tail, 1));
   TEST_ASSERT_EQUAL_INT('x', tail[0]);
 }
@@ -366,7 +366,7 @@ void newline_with_no_slots_queues_nothing(void)
 
 void invalid_keymap_select_is_ignored(void)
 {
-  asdf_keymaps_select_r(&kb, 200);
+  asdf_keymaps_select(&kb, 200);
   hold(KEY_A_ROW, KEY_A_COL);
   scan(ASDF_DEBOUNCE_TIME_MS);
   TEST_ASSERT_EQUAL_INT32('a', test_next_code(&kb));
@@ -374,8 +374,8 @@ void invalid_keymap_select_is_ignored(void)
 
 void invalid_virtual_assign_is_ignored(void)
 {
-  asdf_virtual_assign_r(&kb.outputs, (asdf_virtual_dev_t) 200, PHYSICAL_LED1, V_NOFUNC, 0);
-  asdf_virtual_assign_r(&kb.outputs, VLED1, (asdf_physical_dev_t) 200, V_NOFUNC, 0);
+  asdf_virtual_assign(&kb.outputs, (asdf_virtual_dev_t) 200, PHYSICAL_LED1, V_NOFUNC, 0);
+  asdf_virtual_assign(&kb.outputs, VLED1, (asdf_physical_dev_t) 200, V_NOFUNC, 0);
   TEST_PASS();
 }
 
@@ -401,22 +401,22 @@ void invalid_keymap_modifier_returns_nothing(void)
 
 void invalid_virtual_devices_are_ignored(void)
 {
-  asdf_virtual_action_r(&kb.outputs, (asdf_virtual_dev_t) 200, V_SET_HI);
-  asdf_virtual_activate_r(&kb.outputs, (asdf_virtual_dev_t) 200);
+  asdf_virtual_action(&kb.outputs, (asdf_virtual_dev_t) 200, V_SET_HI);
+  asdf_virtual_activate(&kb.outputs, (asdf_virtual_dev_t) 200);
   TEST_PASS();
 }
 
 void invalid_physical_devices_are_ignored(void)
 {
-  asdf_physical_set_r(&kb.outputs.physical, (asdf_physical_dev_t) 200, 1);
-  asdf_physical_toggle_r(&kb.outputs.physical, (asdf_physical_dev_t) 200);
-  asdf_physical_assert_r(&kb.outputs.physical, (asdf_physical_dev_t) 200);
+  asdf_physical_set(&kb.outputs.physical, (asdf_physical_dev_t) 200, 1);
+  asdf_physical_toggle(&kb.outputs.physical, (asdf_physical_dev_t) 200);
+  asdf_physical_assert(&kb.outputs.physical, (asdf_physical_dev_t) 200);
   TEST_ASSERT_EQUAL_INT(PHYSICAL_NO_OUT,
-                        asdf_physical_next_device_r(&kb.outputs.physical, (asdf_physical_dev_t) 200));
+                        asdf_physical_next_device(&kb.outputs.physical, (asdf_physical_dev_t) 200));
   TEST_ASSERT_FALSE(
-    asdf_physical_allocate_r(&kb.outputs.physical, (asdf_physical_dev_t) 200, PHYSICAL_NO_OUT, 0));
+    asdf_physical_allocate(&kb.outputs.physical, (asdf_physical_dev_t) 200, PHYSICAL_NO_OUT, 0));
   TEST_ASSERT_FALSE(
-    asdf_physical_allocate_r(&kb.outputs.physical, PHYSICAL_LED1, (asdf_physical_dev_t) 200, 0));
+    asdf_physical_allocate(&kb.outputs.physical, PHYSICAL_LED1, (asdf_physical_dev_t) 200, 0));
 }
 
 int main(void)

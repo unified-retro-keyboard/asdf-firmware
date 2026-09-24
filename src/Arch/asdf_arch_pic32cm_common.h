@@ -1,18 +1,18 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-//  Unified Keyboard Project
-//  ASDF keyboard firmware
-//
-//  asdf_arch_pic32cm_common.h
-//
-// Shared ARM (Cortex-M0+ / PIC32CM PL10) mechanics common to both arch
-// variants (pic32cm_pl10_q64 and pic32cm_pl10_dip28): the (group,bit) pin
-// helpers, the FLASH/PROGMEM neutralization, F_CPU, and the prototypes for the
-// shared clock/tick/delay implementation in asdf_arch_pic32cm_common.c.
-//
-// Each variant header includes this file; the part-specific device header is
-// selected by pic32c.h from the -D__PIC32CM6408PL100NN__ macro the CMake branch
-// passes.
+/**
+ * @file asdf_arch_pic32cm_common.h
+ *
+ * Shared ARM (Cortex-M0+ / PIC32CM PL10) mechanics common to both arch
+ * variants (pic32cm_pl10_q64 and pic32cm_pl10_dip28): the (group,bit) pin
+ * helpers, the FLASH/PROGMEM neutralization, F_CPU, and the prototypes for the
+ * shared clock/tick/delay implementation in asdf_arch_pic32cm_common.c.
+ *
+ * Each variant header includes this file; the part-specific device header is
+ * selected by pic32c.h from the -D__PIC32CM6408PL100NN__ macro the CMake branch
+ * passes.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ */
 
 #if !defined(ASDF_ARCH_PIC32CM_COMMON_H)
 #define ASDF_ARCH_PIC32CM_COMMON_H

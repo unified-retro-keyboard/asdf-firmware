@@ -1,13 +1,14 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymaps.c
-//
-// Key lookup in the current keymap, and keymap selection. See asdf_keymaps.h.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_keymaps.c
+ *
+ * Key lookup in the current keymap, and keymap selection. See asdf_keymaps.h.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -56,7 +57,7 @@
  *
  * Complexity: 4
  */
-uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
+uint8_t asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
                                modifier_index_t modifier_index, uint8_t num_rows,
                                uint8_t num_cols) {
     if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) && (num_rows <= ASDF_MAX_ROWS) &&
@@ -80,7 +81,7 @@ uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *ma
  *
  * Complexity: 2
  */
-uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
+uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index) {
     return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].rows : 0;
 }
@@ -96,7 +97,7 @@ uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
  *
  * Complexity: 2
  */
-uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
+uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index) {
     return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].cols : 0;
 }
@@ -119,7 +120,7 @@ uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,
  *
  * Complexity: 5
  */
-asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
+asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
                                   uint8_t modifier_index) {
     asdf_key_t key = KEY_NOTHING(0);
 
@@ -143,21 +144,21 @@ asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row
  *
  * Complexity: 2
  */
-static void asdf_keymaps_reset_r(asdf_t *kb) {
+static void asdf_keymaps_reset(asdf_t *kb) {
     for (uint8_t i = 0; i < ASDF_MOD_NUM_MODIFIERS; i++) {
-        asdf_keymaps_add_map_r(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
+        asdf_keymaps_add_map(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
     }
 
-    asdf_virtual_init_r(&kb->outputs, kb->base_platform);
+    asdf_virtual_init(&kb->outputs, kb->base_platform);
 
     // Reset modifiers and repeat state, so each keymap starts from a known
     // state regardless of the keymap it replaces.
-    asdf_modifiers_init_r(&kb->modifiers);
-    asdf_repeat_init_r(&kb->repeat);
+    asdf_modifiers_init(&kb->modifiers);
+    asdf_repeat_init(&kb->repeat);
 
     kb->keymap.each_scan = ACTION_NOTHING;
     kb->keymap.errors = 0;
-    asdf_install_platform_r(kb, NULL);
+    asdf_install_platform(kb, NULL);
 }
 
 /**
@@ -192,13 +193,13 @@ static void asdf_keymaps_count_error(asdf_keymap_state_t *keymap) {
  *
  * Complexity: 9
  */
-static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
+static void asdf_keymaps_apply(asdf_t *kb, const asdf_keymap_t *keymap) {
     asdf_keymap_t k;
     FLASH_MEMCPY(&k, keymap, sizeof(k));
 
     for (uint8_t m = 0; m < ASDF_MOD_NUM_MODIFIERS; m++) {
         if (!k.maps[m] ||
-            !asdf_keymaps_add_map_r(&kb->keymap, k.maps[m], (modifier_index_t)m, k.rows, k.cols)) {
+            !asdf_keymaps_add_map(&kb->keymap, k.maps[m], (modifier_index_t)m, k.rows, k.cols)) {
             asdf_keymaps_count_error(&kb->keymap);
         }
     }
@@ -210,22 +211,22 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
     for (uint8_t i = 0; i < k.num_outputs; i++) {
         asdf_virtual_initializer_t out;
         FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
-        if (!asdf_virtual_assign_r(&kb->outputs, out.virtual_device, out.physical_device,
+        if (!asdf_virtual_assign(&kb->outputs, out.virtual_device, out.physical_device,
                                    out.function, out.initial_value)) {
             asdf_keymaps_count_error(&kb->keymap);
         }
     }
 
     if (k.flags & ASDF_KEYMAP_CAPS_ON) {
-        asdf_modifier_capslock_activate_r(&kb->modifiers);
-        asdf_sync_lock_leds_r(kb);
+        asdf_modifier_capslock_activate(&kb->modifiers);
+        asdf_sync_lock_leds(kb);
     }
     if (k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) {
-        asdf_set_strobe_polarity_r(kb, 0);
+        asdf_set_strobe_polarity(kb, 0);
     }
 
     if (k.platform) {
-        asdf_install_platform_r(kb, k.platform);
+        asdf_install_platform(kb, k.platform);
     }
 }
 
@@ -245,25 +246,25 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
  *
  * Complexity: 2
  */
-void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index) {
+void asdf_keymaps_switch(asdf_t *kb, uint8_t index) {
     if (asdf_keymap_valid(index)) {
         kb->keymap.current = index;
         kb->keymap.requested = index;
 
-        asdf_keymaps_reset_r(kb);
+        asdf_keymaps_reset(kb);
         kb->platform->reset(kb->platform->user);
 
-        asdf_keymaps_apply_r(kb, asdf_keymap_descriptor(index));
+        asdf_keymaps_apply(kb, asdf_keymap_descriptor(index));
 
-        asdf_apply_configuration_r(kb);
-        asdf_virtual_sync_r(&kb->outputs);
+        asdf_apply_configuration(kb);
+        asdf_virtual_sync(&kb->outputs);
     }
 }
 
 /**
  * Switch to a keymap if it differs from the current keymap.
  *
- * Side effects as for asdf_keymaps_switch_r(); does nothing if @p index is
+ * Side effects as for asdf_keymaps_switch(); does nothing if @p index is
  * the current keymap or does not exist.
  *
  * @param kb     Keyboard to configure.
@@ -271,9 +272,9 @@ void asdf_keymaps_switch_r(asdf_t *kb, uint8_t index) {
  *
  * Complexity: 2
  */
-void asdf_keymaps_select_r(asdf_t *kb, uint8_t index) {
+void asdf_keymaps_select(asdf_t *kb, uint8_t index) {
     if (index != kb->keymap.current) {
-        asdf_keymaps_switch_r(kb, index);
+        asdf_keymaps_switch(kb, index);
     }
 }
 
@@ -285,13 +286,13 @@ void asdf_keymaps_select_r(asdf_t *kb, uint8_t index) {
  *
  * @param kb  Keyboard to configure.
  */
-void asdf_keymaps_init_r(asdf_t *kb) { asdf_keymaps_switch_r(kb, 0); }
+void asdf_keymaps_init(asdf_t *kb) { asdf_keymaps_switch(kb, 0); }
 
 /**
  * Set or clear bits of the requested keymap number.
  *
  * Called by the keymap select actions (DIP switches). Changes only
- * keymap->requested; asdf_keymaps_apply_request_r() applies the request at
+ * keymap->requested; asdf_keymaps_apply_request() applies the request at
  * the end of the scan.
  *
  * @param keymap  Keymap state to modify.
@@ -300,7 +301,7 @@ void asdf_keymaps_init_r(asdf_t *kb) { asdf_keymaps_switch_r(kb, 0); }
  *
  * Complexity: 2
  */
-void asdf_keymaps_request_bit_r(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set) {
+void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set) {
     if (set) {
         keymap->requested |= bit;
     } else {
@@ -314,13 +315,13 @@ void asdf_keymaps_request_bit_r(asdf_keymap_state_t *keymap, uint8_t bit, uint8_
  * Called at the end of each scan, so a keymap never changes part-way through
  * a scan, and DIP switch bits that change in the same scan select the final
  * keymap directly rather than passing through intermediate keymaps. Side
- * effects as for asdf_keymaps_switch_r(); a request for a keymap that does
+ * effects as for asdf_keymaps_switch(); a request for a keymap that does
  * not exist is ignored.
  *
  * @param kb  Keyboard to configure.
  */
-void asdf_keymaps_apply_request_r(asdf_t *kb) {
-    asdf_keymaps_select_r(kb, kb->keymap.requested);
+void asdf_keymaps_apply_request(asdf_t *kb) {
+    asdf_keymaps_select(kb, kb->keymap.requested);
 }
 
 

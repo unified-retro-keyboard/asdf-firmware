@@ -28,7 +28,7 @@ static uint32_t key_matrix[TEST_NUM_ROWS];
 static void keyscan_delay(int32_t ticks)
 {
   while (ticks--) {
-    asdf_keyscan_r(&kb);
+    asdf_keyscan(&kb);
   }
 }
 
@@ -59,7 +59,7 @@ static void release_dip(uint8_t col)
 
 void setUp(void)
 {
-  asdf_init_r(&kb, &asdf_arch_platform);
+  asdf_init(&kb, &asdf_arch_platform);
   for (uint32_t i = 0; i < TEST_NUM_ROWS; i++) {
     key_matrix[i] = 0;
   }
@@ -80,33 +80,33 @@ void test_dip_strobe_action_toggles_polarity(void)
 
 void test_dip_autorepeat_action_toggles_mode(void)
 {
-  asdf_repeat_auto_off_r(&kb.repeat);
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  asdf_repeat_auto_off(&kb.repeat);
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
 
   press_dip(AUTOREPEAT_COL);
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
 
   release_dip(AUTOREPEAT_COL);
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
 }
 
 void test_keymap_switch_reapplies_dip_actions(void)
 {
-  asdf_repeat_auto_off_r(&kb.repeat);
-  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  asdf_repeat_auto_off(&kb.repeat);
+  TEST_ASSERT_FALSE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
   TEST_ASSERT_FALSE(asdf_arch_is_strobe_positive());
 
   press_dip(STROBE_COL);
   press_dip(AUTOREPEAT_COL);
 
   TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
 
   // Switching keymaps should reapply any dip-action state
-  asdf_keymaps_select_r(&kb, ASDF_TEST_CAPS_MAP_INDEX);
+  asdf_keymaps_select(&kb, ASDF_TEST_CAPS_MAP_INDEX);
 
   TEST_ASSERT_TRUE(asdf_arch_is_strobe_positive());
-  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled_r(&kb.repeat));
+  TEST_ASSERT_TRUE(asdf_repeat_is_autorepeat_enabled(&kb.repeat));
 
   release_dip(STROBE_COL);
   release_dip(AUTOREPEAT_COL);
@@ -115,11 +115,11 @@ void test_keymap_switch_reapplies_dip_actions(void)
 // SHIFTLOCK_TOGGLE locks SHIFT on the first press and unlocks it on the next.
 void test_shiftlock_toggle_action_toggles_lock(void)
 {
-  TEST_ASSERT_FALSE(asdf_modifier_shift_locked_r(&kb.modifiers));
-  asdf_action_r(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
-  TEST_ASSERT_TRUE(asdf_modifier_shift_locked_r(&kb.modifiers));
-  asdf_action_r(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
-  TEST_ASSERT_FALSE(asdf_modifier_shift_locked_r(&kb.modifiers));
+  TEST_ASSERT_FALSE(asdf_modifier_shift_locked(&kb.modifiers));
+  asdf_action(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
+  TEST_ASSERT_TRUE(asdf_modifier_shift_locked(&kb.modifiers));
+  asdf_action(&kb, ACTION_SHIFTLOCK_TOGGLE, 0);
+  TEST_ASSERT_FALSE(asdf_modifier_shift_locked(&kb.modifiers));
 }
 
 int main(void)

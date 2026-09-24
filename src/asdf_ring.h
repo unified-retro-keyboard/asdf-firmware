@@ -1,13 +1,14 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_ring.h
-//
-// A first-in first-out queue of keycodes in caller-provided storage.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_ring.h
+ *
+ * A first-in first-out queue of keycodes in caller-provided storage.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -58,9 +59,9 @@
 typedef struct {
     asdf_keycode_t *storage;
     uint8_t capacity;
-    uint8_t head;    // index of the next code to read
-    uint8_t count;   // number of codes queued
-    uint8_t dropped; // codes rejected because the ring was full (saturates)
+    uint8_t head;    ///< index of the next code to read
+    uint8_t count;   ///< number of codes queued
+    uint8_t dropped; ///< codes rejected because the ring was full (saturates)
 } asdf_ring_t;
 
 /**

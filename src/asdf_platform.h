@@ -1,18 +1,19 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_platform.h
-//
-// Typed interface between the portable keyboard core and the hardware. A
-// platform object bundles the operations the core needs from the hardware
-// with a context pointer owned by the platform adapter, so each operation has
-// its real signature and no function pointer is ever cast. Each architecture
-// adapter (Arch/asdf_arch_*.c) embeds a platform in its own state object, so
-// every set of hardware has its own platform.
-//
-// Copyright 2019 David Fenyes
+/**
+ * @file asdf_platform.h
+ *
+ * Typed interface between the portable keyboard core and the hardware. A
+ * platform object bundles the operations the core needs from the hardware
+ * with a context pointer owned by the platform adapter, so each operation has
+ * its real signature and no function pointer is ever cast. Each architecture
+ * adapter (Arch/asdf_arch_*.c) embeds a platform in its own state object, so
+ * every set of hardware has its own platform.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -139,11 +140,11 @@ typedef void (*asdf_platform_reset_t)(void *user);
  *
  * asdf_t kb;
  *
- * asdf_init_r(&kb, &my_platform);
+ * asdf_init(&kb, &my_platform);
  * @endcode
  */
 typedef struct asdf_platform {
-  void *user; // passed to every operation; owned by the platform adapter
+  void *user; ///< passed to every operation; owned by the platform adapter
   asdf_platform_read_row_t read_row;
   asdf_platform_send_code_t send_code;
   asdf_platform_set_output_t set_output;

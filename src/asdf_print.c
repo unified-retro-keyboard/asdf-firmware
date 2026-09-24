@@ -1,13 +1,14 @@
-// -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*- 
-//
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_print.c
-//
-// Writes strings stored in flash to the system message output.
-//
-// Copyright 2019 David Fenyes
+// -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
+/**
+ * @file asdf_print.c
+ *
+ * Writes strings stored in flash to the system message output.
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2019 David Fenyes. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -31,21 +32,21 @@
 /**
  * Queue a string stored in flash on the system message output.
  *
- * Queues each character with asdf_putc_r(), which sends each newline as
+ * Queues each character with asdf_putc(), which sends each newline as
  * CR LF. Characters that do not fit in the message queue are dropped and
- * counted by asdf_putc_r().
+ * counted by asdf_putc().
  *
  * @param kb   Keyboard to print to.
  * @param str  NUL-terminated string in flash (see FLASH_STRING()).
  *
  * Complexity: 2
  */
-void asdf_print_flash_r(asdf_t *kb, const char *str)
+void asdf_print_flash(asdf_t *kb, const char *str)
 {
   char c;
 
   while ((c = (char) FLASH_READ(str++))) {
-    asdf_putc_r(kb, c);
+    asdf_putc(kb, c);
   }
 }
 

@@ -1,15 +1,17 @@
 // -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
+/**
+ * @file asdf_keymap_ace1000_add_map.c
+ *
+ * Keyboard test action for the Franklin ACE 1000 replacement keyboard. The key
+ * matrices are in asdf_keymap_ace1000_maps.yaml.
+ * https://github.com/ryucats/Franklin-ACE-1000-Keyboard
+ *
+ * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2023 Chris RYU. GNU General Public License
+ * version 3 or later; see the license notice below.
+ */
 //
-// Unified Keyboard Project
-// ASDF keyboard firmware
-//
-// asdf_keymap_ace1000_add_map.c
-//
-// Keyboard test action for the Franklin ACE 1000 replacement keyboard. The key
-// matrices are in asdf_keymap_ace1000_maps.yaml.
-// https://github.com/ryucats/Franklin-ACE-1000-Keyboard
-//
-// Copyright 2023 Chris RYU
 // Copyright 2019 David Fenyes
 //
 // This program is free software: you can redistribute it and/or modify it under
@@ -45,7 +47,7 @@
 void ace1000_keyboard_test(asdf_t *kb, uint8_t param)
 {
   (void) param;
-  asdf_print_r(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
+  asdf_print(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
