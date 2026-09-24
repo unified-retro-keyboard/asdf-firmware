@@ -226,6 +226,12 @@ def generate(source, stem):
     h += header_includes + [""]
     c = [banner.rstrip("\n"), "", '#include "%s.h"' % stem, ""]
 
+    # The matrices must fit the scanner: a negative array size fails to compile.
+    check = re.sub(r"[^A-Za-z0-9]", "_", stem)
+    c.append("typedef char %s_rows_fit[(%s) <= ASDF_MAX_ROWS ? 1 : -1];" % (check, rows_c))
+    c.append("typedef char %s_cols_fit[(%s) <= ASDF_MAX_COLS ? 1 : -1];" % (check, cols_c))
+    c.append("")
+
     for name, spec in source["maps"].items():
         if not IDENT.match(str(name)):
             raise KeymapError("%r is not a C identifier" % name)

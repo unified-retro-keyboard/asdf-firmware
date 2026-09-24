@@ -84,15 +84,17 @@ typedef struct {
 typedef struct {
   asdf_keycode_map_t maps[ASDF_MOD_NUM_MODIFIERS];
   uint8_t each_scan; // action at the start of each scan, or ACTION_NOTHING
+  uint8_t errors;    // descriptor entries of the current keymap that could not
+                     // be applied (see asdf_keymaps_apply_r); saturates
   uint8_t current;   // keymap now in use
   uint8_t requested; // keymap requested by the keymap select actions
 } asdf_keymap_state_t;
 
 // Instance API on keymap state. See asdf_keymaps.c.
 
-void asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
-                            modifier_index_t modifier_index, uint8_t num_rows,
-                            uint8_t num_cols);
+uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
+                               modifier_index_t modifier_index, uint8_t num_rows,
+                               uint8_t num_cols);
 uint8_t asdf_keymaps_num_rows_r(const asdf_keymap_state_t *keymap,
                                 modifier_index_t modifier_index);
 uint8_t asdf_keymaps_num_cols_r(const asdf_keymap_state_t *keymap,

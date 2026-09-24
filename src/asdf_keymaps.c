@@ -42,27 +42,27 @@
 //         (const asdf_key_t *) matrix - key matrix (in flash), or NULL
 //         (modifier_index_t) modifier_index - the modifier state it is used for
 //         (uint8_t) num_rows, num_cols - dimensions of the matrix
-// OUTPUTS: none
+// OUTPUTS: returns TRUE (nonzero) if the matrix was set, FALSE (0) if the
+//          modifier index, num_rows, or num_cols is not valid
 //
 // DESCRIPTION: Called when a keymap descriptor is applied. Sets the key
 // matrix used for one modifier state.
-//
-// NOTES: If the modifier index, num_rows, or num_cols are not valid then no
-// action is performed.
 //
 // SCOPE: public
 //
 // COMPLEXITY: 2
 //
-void asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
-                            modifier_index_t modifier_index, uint8_t num_rows,
-                            uint8_t num_cols) {
+uint8_t asdf_keymaps_add_map_r(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
+                               modifier_index_t modifier_index, uint8_t num_rows,
+                               uint8_t num_cols) {
     if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) && (num_rows <= ASDF_MAX_ROWS) &&
         (num_cols <= ASDF_MAX_COLS)) {
         keymap->maps[modifier_index].matrix = matrix;
         keymap->maps[modifier_index].rows = num_rows;
         keymap->maps[modifier_index].cols = num_cols;
+        return 1;
     }
+    return 0;
 }
 
 // PROCEDURE: asdf_keymaps_num_rows_r, asdf_keymaps_num_cols_r
@@ -120,7 +120,7 @@ asdf_key_t asdf_keymaps_get_key_r(const asdf_keymap_state_t *keymap, uint8_t row
 //              - Clear all keycode mapping matrices.
 //              - Clear all virtual devices
 //              - Reset modifier and repeat state.
-//              - Clear the each-scan action.
+//              - Clear the each-scan action and the error count.
 //              - Restore the keyboard's base platform.
 //
 // SIDE EFFECTS: see DESCRIPTION
@@ -142,7 +142,25 @@ static void asdf_keymaps_reset_r(asdf_t *kb) {
     asdf_repeat_init_r(&kb->repeat);
 
     kb->keymap.each_scan = ACTION_NOTHING;
+    kb->keymap.errors = 0;
     asdf_install_platform_r(kb, NULL);
+}
+
+// PROCEDURE: asdf_keymaps_count_error
+// INPUTS: (asdf_keymap_state_t *) keymap - keymap state
+// OUTPUTS: none
+//
+// DESCRIPTION: Counts a descriptor entry that could not be applied,
+// saturating.
+//
+// SCOPE: private
+//
+// COMPLEXITY: 1
+//
+static void asdf_keymaps_count_error(asdf_keymap_state_t *keymap) {
+    if (keymap->errors < UINT8_MAX) {
+        keymap->errors++;
+    }
 }
 
 // PROCEDURE: asdf_keymaps_apply_r
@@ -157,7 +175,9 @@ static void asdf_keymaps_reset_r(asdf_t *kb) {
 // SIDE EFFECTS: see DESCRIPTION
 //
 // NOTES: The descriptor and its tables are copied out of flash one element at
-// a time, so only one element is held in RAM.
+// a time, so only one element is held in RAM. A modifier map that is missing
+// or too large, and a virtual output assignment that is invalid or conflicts
+// with an earlier one, is skipped and counted in keymap.errors.
 //
 // SCOPE: private
 //
@@ -168,7 +188,10 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
     FLASH_MEMCPY(&k, keymap, sizeof(k));
 
     for (uint8_t m = 0; m < ASDF_MOD_NUM_MODIFIERS; m++) {
-        asdf_keymaps_add_map_r(&kb->keymap, k.maps[m], (modifier_index_t)m, k.rows, k.cols);
+        if (!k.maps[m] ||
+            !asdf_keymaps_add_map_r(&kb->keymap, k.maps[m], (modifier_index_t)m, k.rows, k.cols)) {
+            asdf_keymaps_count_error(&kb->keymap);
+        }
     }
 
     kb->print_delay_ms = k.print_delay_ms;
@@ -178,8 +201,10 @@ static void asdf_keymaps_apply_r(asdf_t *kb, const asdf_keymap_t *keymap) {
     for (uint8_t i = 0; i < k.num_outputs; i++) {
         asdf_virtual_initializer_t out;
         FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
-        asdf_virtual_assign_r(&kb->outputs, out.virtual_device, out.physical_device,
-                              out.function, out.initial_value);
+        if (!asdf_virtual_assign_r(&kb->outputs, out.virtual_device, out.physical_device,
+                                   out.function, out.initial_value)) {
+            asdf_keymaps_count_error(&kb->keymap);
+        }
     }
 
     if (k.flags & ASDF_KEYMAP_CAPS_ON) {

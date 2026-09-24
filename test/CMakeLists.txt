@@ -44,9 +44,7 @@ target_include_directories(unity
   )
 
 
-add_library(asdf_core
-  STATIC
-  asdf_keymap_table.c
+set(ASDF_CORE_SOURCES
   ${PROJECT_SRC_DIR}/asdf.c
   ${PROJECT_SRC_DIR}/asdf_ring.c
   ${PROJECT_SRC_DIR}/asdf_actions.c
@@ -57,6 +55,13 @@ add_library(asdf_core
   ${PROJECT_SRC_DIR}/asdf_virtual.c
   ${PROJECT_SRC_DIR}/asdf_print.c
   ${PROJECT_SRC_DIR}/Arch/asdf_arch_test.c
+  )
+
+# The core with the test keymaps, used by most tests.
+add_library(asdf_core
+  STATIC
+  asdf_keymap_table.c
+  ${ASDF_CORE_SOURCES}
   )
 
 target_compile_options(asdf_core
@@ -146,3 +151,42 @@ setup_test(test_asdf_characterization)
 setup_test(test_asdf_simple)
 setup_test(test_asdf_fuzz)
 target_sources(test_asdf_simple PRIVATE ${PROJECT_SRC_DIR}/asdf_simple.c)
+
+# The core with the production keymaps (the firmware's keymap list), to check
+# that every production keymap applies cleanly on the host.
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_sources.cmake)
+include(${CMAKE_SOURCE_DIR}/keymap_list.cmake)
+list(TRANSFORM ASDF_KEYMAP_YAML PREPEND ${PROJECT_SRC_DIR}/ OUTPUT_VARIABLE production_keymap_yaml)
+asdf_generate_keymaps(production_keymaps_gen ${production_keymap_yaml})
+set(PRODUCTION_KEYMAP_SOURCES ${ASDF_GENERATED_KEYMAP_SOURCES})
+create_keymap_table("${keymap_list}" keymap_table)
+create_keymap_declarations("${keymap_list}" keymap_declarations)
+configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.c.in
+  ${CMAKE_CURRENT_BINARY_DIR}/production_keymap_setup.c)
+list(TRANSFORM ASDF_KEYMAP_SOURCES PREPEND ${PROJECT_SRC_DIR}/ OUTPUT_VARIABLE production_keymap_c)
+
+add_library(asdf_production
+  STATIC
+  ${ASDF_CORE_SOURCES}
+  ${production_keymap_c}
+  ${PRODUCTION_KEYMAP_SOURCES}
+  ${CMAKE_CURRENT_BINARY_DIR}/production_keymap_setup.c
+  )
+target_compile_options(asdf_production PRIVATE ${C_FLAGS} ${ASDF_STRICT_WARNING_FLAGS})
+target_include_directories(asdf_production
+  PRIVATE
+  ${PROJECT_SRC_DIR}
+  ${PROJECT_SRC_DIR}/Arch
+  ${PROJECT_SRC_DIR}/Keymaps
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
+add_dependencies(asdf_production production_keymaps_gen)
+
+add_executable(test_production_keymaps
+  test_production_keymaps.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/fake_platform.c
+  )
+target_compile_options(test_production_keymaps PRIVATE ${C_FLAGS})
+target_include_directories(test_production_keymaps PRIVATE ${TEST_INCLUDES})
+target_link_libraries(test_production_keymaps unity asdf_production)
+add_test(NAME test_production_keymaps COMMAND ${CMAKE_BINARY_DIR}/test/test_production_keymaps)

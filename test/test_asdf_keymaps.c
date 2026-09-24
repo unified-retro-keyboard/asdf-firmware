@@ -314,6 +314,23 @@ void dip_switch_invalid_keymap_has_no_effect(void)
   TEST_ASSERT_EQUAL_INT32(PLAIN_MATRIX_1, map_id);
 }
 
+// A correct keymap applies without errors. A keymap that assigns a physical
+// output twice, or assigns an invalid one, reports one error for it.
+void keymap_errors_count_rejected_descriptor_entries(void)
+{
+  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors_r(&kb));
+
+  asdf_keymaps_select_r(&kb, DOUBLE_ASSIGN_TEST_KEYMAP);
+  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors_r(&kb));
+
+  asdf_keymaps_select_r(&kb, VCAPS_TEST_KEYMAP);
+  TEST_ASSERT_EQUAL_INT(1, asdf_keymap_errors_r(&kb));
+
+  asdf_keymaps_select_r(&kb, ASDF_TEST_PLAIN_MAP_INDEX);
+  TEST_ASSERT_EQUAL_INT(0, asdf_keymap_errors_r(&kb));
+}
+
 int main(void)
 {
   UNITY_BEGIN();
@@ -332,5 +349,6 @@ int main(void)
   RUN_TEST(dip_switch_properly_clears_bits);
   RUN_TEST(dip_switch_properly_sets_bits);
   RUN_TEST(dip_switch_invalid_keymap_has_no_effect);
+  RUN_TEST(keymap_errors_count_rejected_descriptor_entries);
   return UNITY_END();
 }

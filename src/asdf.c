@@ -71,6 +71,20 @@ uint8_t asdf_put_code_r(asdf_t *kb, asdf_keycode_t code) {
     return asdf_ring_put(&kb->keycodes, code);
 }
 
+// PROCEDURE: asdf_dropped_codes_r, asdf_dropped_messages_r, asdf_keymap_errors_r
+// INPUTS: (const asdf_t *) kb - keyboard
+// OUTPUTS: see asdf_keyboard.h
+//
+// SCOPE: public
+//
+// COMPLEXITY: 1
+//
+uint8_t asdf_dropped_codes_r(const asdf_t *kb) { return asdf_ring_dropped(&kb->keycodes); }
+
+uint8_t asdf_dropped_messages_r(const asdf_t *kb) { return asdf_ring_dropped(&kb->messages); }
+
+uint8_t asdf_keymap_errors_r(const asdf_t *kb) { return kb->keymap.errors; }
+
 // PROCEDURE: asdf_putc_r
 // INPUTS: (asdf_t *) kb - keyboard
 //         (char) c: character to be buffered for output

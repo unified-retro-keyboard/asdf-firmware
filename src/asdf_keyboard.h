@@ -122,6 +122,19 @@ uint8_t asdf_put_code_r(asdf_t *kb, asdf_keycode_t code);
 // LF, as a unit.
 int asdf_putc_r(asdf_t *kb, char c);
 
+// PROCEDURE: asdf_dropped_codes_r, asdf_dropped_messages_r
+// OUTPUTS: the number of typed codes (system message characters) dropped
+//          because their queue was full, saturating at 255.
+uint8_t asdf_dropped_codes_r(const asdf_t *kb);
+uint8_t asdf_dropped_messages_r(const asdf_t *kb);
+
+// PROCEDURE: asdf_keymap_errors_r
+// OUTPUTS: the number of entries of the current keymap's descriptor that could
+//          not be applied: a missing or oversize modifier map, or a virtual
+//          output assignment that is invalid or conflicts with another. Zero
+//          for a correct keymap.
+uint8_t asdf_keymap_errors_r(const asdf_t *kb);
+
 // PROCEDURE: asdf_install_platform_r
 // DESCRIPTION: selects the platform the keyboard is scanned and sent through;
 // NULL restores the keyboard's base platform.
