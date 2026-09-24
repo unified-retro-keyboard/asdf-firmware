@@ -1,11 +1,11 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymaps_sol.h
+// asdf_keymap_sol.h
 //
-// Ascii keymaps
+// Matrix size, outputs, and special key codes for the Sol-20 keymap.
 //
 // Copyright 2019 David Fenyes
 //
@@ -23,23 +23,18 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-// To use this ascii for a new keymap, edit the keymaps definitions as
-// desired. The keymaps are organized from row 0, counting upward, and each row
-// includes the columns from 0-NUM_COLS.
-//
-
 #if !defined(ASDF_KEYMAP_SOL_H)
 #define ASDF_KEYMAP_SOL_H
 #include "asdf.h"
 
-// Edit the number of rows and columns used in this map. If the number is less
-// than the maxium, the unused elements will be initialized to 0.
+// The size of this keymap's matrices, at most ASDF_MAX_ROWS by ASDF_MAX_COLS.
+// Keys not given in the YAML matrices do nothing.
 
-#define ASDF_SOL_NUM_ROWS 13 // DIP switches are row 9
+#define ASDF_SOL_NUM_ROWS 13 // DIP switches are row 8
 #define ASDF_SOL_NUM_COLS 8
 
 
-// Key Matrix for combination of ASCII controller (ATMega328P version) and Classic ASCII matrix
+// Key matrix for the Sol-20 keyboard on the ASCII controller
 //
 // Col->   0          1          2          3          4          5          6          7
 // Row 0   Lt Ctrl    ShiftLock  A          S          D          F          G(alpha)   H

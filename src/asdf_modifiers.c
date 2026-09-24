@@ -30,10 +30,14 @@
 // All modifier state is held in the caller's asdf_modifier_state_t. These
 // functions change only that state; driving the SHIFTLOCK and CAPSLOCK
 // indicator LEDs is left to the caller (see asdf_sync_lock_leds_r), using
-// asdf_modifier_shift_locked_r() and asdf_modifier_caps_locked_r().
+// asdf_modifier_shift_locked_r() and asdf_modifier_caps_locked_r(). The public
+// contracts are in asdf_modifiers.h.
 
-// This table maps the active modifiers (a bitmap of ASDF_MODIFIERS_*_MASK) to
-// the keymap used, and so defines the precedence of combined modifiers.
+/**
+ * Keymap for each combination of active modifiers, indexed by a bitmap of
+ * ASDF_MODIFIERS_*_MASK. Defines the precedence of combined modifiers: CTRL
+ * overrides SHIFT and CAPS, and SHIFT overrides CAPS.
+ */
 static const modifier_index_t modifier_mapping[] = { MOD_PLAIN_MAP, // 0x00: no modifiers
                                                      MOD_SHIFT_MAP, // 0x01: only SHIFT active
                                                      MOD_CAPS_MAP,  // 0x02: only CAPS active
@@ -41,16 +45,13 @@ static const modifier_index_t modifier_mapping[] = { MOD_PLAIN_MAP, // 0x00: no 
                                                      MOD_CTRL_MAP,  // CTRL overrides SHIFT and CAPS
                                                      MOD_CTRL_MAP,  MOD_CTRL_MAP, MOD_CTRL_MAP };
 
-// PROCEDURE: asdf_modifiers_init_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets SHIFT, SHIFTLOCK, CAPS, and CTRL to OFF.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set SHIFT, SHIFTLOCK, CAPSLOCK, and CTRL to off.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to initialize.
+ */
 void asdf_modifiers_init_r(asdf_modifier_state_t *mods)
 {
   mods->shift = SHIFT_OFF_ST;
@@ -58,143 +59,136 @@ void asdf_modifiers_init_r(asdf_modifier_state_t *mods)
   mods->ctrl = CTRL_OFF_ST;
 }
 
-// PROCEDURE: asdf_modifier_shift_activate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets SHIFT to ON. This also clears SHIFTLOCK: a SHIFT press
-// after SHIFTLOCK ends the lock when SHIFT is released.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set SHIFT on and clear SHIFTLOCK, on a SHIFT press.
+ *
+ * Writes only @p mods. A SHIFT press after SHIFTLOCK ends the lock when SHIFT
+ * is released.
+ *
+ * @param mods  Modifier state to update.
+ *
+ * Assigning SHIFT_ON_ST, rather than setting the bit, is what clears
+ * SHIFTLOCK.
+ */
 void asdf_modifier_shift_activate_r(asdf_modifier_state_t *mods)
 {
   mods->shift = SHIFT_ON_ST;
 }
 
-// PROCEDURE: asdf_modifier_shiftlock_on_activate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets SHIFTLOCK to ON.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set SHIFTLOCK on, leaving SHIFT unchanged.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_shiftlock_on_activate_r(asdf_modifier_state_t *mods)
 {
   mods->shift |= SHIFT_LOCKED_ST;
 }
 
-// PROCEDURE: asdf_modifier_shiftlock_toggle_activate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Toggles SHIFTLOCK.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Toggle SHIFTLOCK, leaving SHIFT unchanged.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_shiftlock_toggle_activate_r(asdf_modifier_state_t *mods)
 {
   mods->shift ^= SHIFT_LOCKED_ST;
 }
 
-// PROCEDURE: asdf_modifier_shift_deactivate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets SHIFT and SHIFTLOCK to OFF.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set SHIFT and SHIFTLOCK off, on a SHIFT release.
+ *
+ * Writes only @p mods. Clears SHIFTLOCK too, including a lock set while SHIFT
+ * was held.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_shift_deactivate_r(asdf_modifier_state_t *mods)
 {
   mods->shift = SHIFT_OFF_ST;
 }
 
-// PROCEDURE: asdf_modifier_capslock_activate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Toggles CAPSLOCK.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Toggle CAPSLOCK.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_capslock_activate_r(asdf_modifier_state_t *mods)
 {
   mods->caps ^= CAPS_LOCKED_ST;
 }
 
-// PROCEDURE: asdf_modifier_ctrl_activate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets CTRL to ON.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set CTRL on.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_ctrl_activate_r(asdf_modifier_state_t *mods)
 {
   mods->ctrl = CTRL_ON_ST;
 }
 
-// PROCEDURE: asdf_modifier_ctrl_deactivate_r
-// INPUTS: (asdf_modifier_state_t *) mods - modifier state to operate on
-// OUTPUTS: none
-//
-// DESCRIPTION: Sets CTRL to OFF.
-//
-// SIDE EFFECTS: see DESCRIPTION
-//
-// COMPLEXITY: 1
-//
+/**
+ * Set CTRL off.
+ *
+ * Writes only @p mods.
+ *
+ * @param mods  Modifier state to update.
+ */
 void asdf_modifier_ctrl_deactivate_r(asdf_modifier_state_t *mods)
 {
   mods->ctrl = CTRL_OFF_ST;
 }
 
-// PROCEDURE: asdf_modifier_shift_locked_r
-// INPUTS: (const asdf_modifier_state_t *) mods - modifier state to query
-// OUTPUTS: returns TRUE (nonzero) if SHIFTLOCK is on
-//
-// COMPLEXITY: 1
-//
+/**
+ * Report whether SHIFTLOCK is on.
+ *
+ * No side effects.
+ *
+ * @param mods  Modifier state to query.
+ * @return 1 if the SHIFTLOCK bit is set, else 0.
+ */
 uint8_t asdf_modifier_shift_locked_r(const asdf_modifier_state_t *mods)
 {
   return (mods->shift & SHIFT_LOCKED_ST) != 0;
 }
 
-// PROCEDURE: asdf_modifier_caps_locked_r
-// INPUTS: (const asdf_modifier_state_t *) mods - modifier state to query
-// OUTPUTS: returns TRUE (nonzero) if CAPSLOCK is on
-//
-// COMPLEXITY: 1
-//
+/**
+ * Report whether CAPSLOCK is on.
+ *
+ * No side effects.
+ *
+ * @param mods  Modifier state to query.
+ * @return 1 if CAPSLOCK is on, else 0.
+ */
 uint8_t asdf_modifier_caps_locked_r(const asdf_modifier_state_t *mods)
 {
   return mods->caps != CAPS_OFF_ST;
 }
 
-// PROCEDURE: asdf_modifier_index_r
-// INPUTS: (const asdf_modifier_state_t *) mods - modifier state to query
-// OUTPUTS: returns the keymap index for the active modifiers
-//
-// DESCRIPTION: See OUTPUTS. Precedence among combined modifiers is set by
-// modifier_mapping[].
-//
-// COMPLEXITY: 4
-//
+/**
+ * Return the keymap selected by the active modifiers.
+ *
+ * No side effects.
+ *
+ * @param mods  Modifier state to query.
+ * @return The modifier_mapping[] entry for the bitmap of active modifiers.
+ *
+ * Builds a bitmap of ASDF_MODIFIERS_*_MASK from the active modifiers and looks
+ * it up in modifier_mapping[], which sets the precedence among combined
+ * modifiers. The bitmap is at most 7 and modifier_mapping[] has 8 entries, so
+ * the lookup is always in range.
+ *
+ * Complexity: 4
+ */
 modifier_index_t asdf_modifier_index_r(const asdf_modifier_state_t *mods)
 {
   uint8_t active_modifiers = 0;

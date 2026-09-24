@@ -1,11 +1,12 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
 // asdf_keymap_ace1000.h
 //
-// ASCII keymaps for the Franklin ACE 1000 replacement keyboard
+// Matrix size, outputs, and print delay for the Franklin ACE 1000 replacement
+// keyboard keymap.
 // https://github.com/ryucats/Franklin-ACE-1000-Keyboard
 //
 // Copyright 2023 Chris RYU
@@ -25,17 +26,12 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-// To use this ascii for a new keymap, edit the keymaps definitions as
-// desired. The keymaps are organized from row 0, counting upward, and each row
-// includes the columns from 0-NUM_COLS.
-//
-
 #if !defined(ASDF_KEYMAP_DEFS_ACE1000_H)
 #define ASDF_KEYMAP_DEFS_ACE1000_H
 
 
-// Edit the number of rows and columns used in this map. If the number is less
-// than the maxium, the unused elements will be initialized to 0.
+// The size of this keymap's matrices, at most ASDF_MAX_ROWS by ASDF_MAX_COLS.
+// Keys not given in the YAML matrices do nothing.
 
 #define ACE1000_NUM_ROWS 10 // DIP switches are row 8 (zero based)
 #define ACE1000_NUM_COLS 8

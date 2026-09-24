@@ -38,13 +38,25 @@ static asdf_t keyboard;
 static asdf_keycode_t pending_code;
 static uint8_t code_pending;
 
-// PROCEDURE: tick interrupt
-// DESCRIPTION: Occurs every 1 ms. Counts the tick; asdf_poll() does the work.
+/**
+ * The 1 ms tick interrupt.
+ *
+ * Counts the tick in the hardware state, for asdf_poll() to collect. It does
+ * nothing else; asdf_poll() does the scanning and all other work, so the
+ * interrupt stays short.
+ */
 ASDF_ARCH_TICK_ISR
 {
   asdf_arch_count_tick(&arch);
 }
 
+/**
+ * Set up the hardware and the keyboard.
+ *
+ * Discards any held code, initializes the architecture (which starts the tick
+ * interrupt), then initializes the keyboard on the architecture's platform,
+ * selecting keymap 0.
+ */
 void asdf_begin(void)
 {
   code_pending = 0;
@@ -52,10 +64,26 @@ void asdf_begin(void)
   asdf_init_r(&keyboard, &arch.platform);
 }
 
+/**
+ * Run the keyboard for the ticks counted since the last call.
+ *
+ * Collects the elapsed ticks from the hardware state and passes them to the
+ * keyboard, which advances its timers and scans the key matrix once. Codes
+ * generated are queued on the keyboard for asdf_available().
+ */
 void asdf_poll(void) { asdf_update_r(&keyboard, asdf_arch_tick(&arch)); }
 
-// Takes the next code from the keyboard, if one is ready, and holds it until
-// it is read, so that it can be reported as available without being lost.
+/**
+ * Report whether a code is ready to read.
+ *
+ * When no code is held, takes the next ready code from the keyboard and holds
+ * it until asdf_read() takes it, so that it can be reported as available
+ * without being lost.
+ *
+ * @return Nonzero if a code is held; 0 if not.
+ *
+ * Complexity: 2
+ */
 uint8_t asdf_available(void)
 {
   if (!code_pending) {
@@ -64,6 +92,16 @@ uint8_t asdf_available(void)
   return code_pending;
 }
 
+/**
+ * Take the next code.
+ *
+ * Releases the held code, first taking one from the keyboard through
+ * asdf_available() if none is held.
+ *
+ * @return The held code, or 0 if none is available.
+ *
+ * Complexity: 2
+ */
 asdf_keycode_t asdf_read(void)
 {
   if (!asdf_available()) {

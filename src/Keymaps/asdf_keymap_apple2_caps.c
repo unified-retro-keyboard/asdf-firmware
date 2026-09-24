@@ -5,7 +5,8 @@
 //
 // asdf_keymap_apple2_caps.c
 //
-// set up keymaps for ALL CAPS Apple II keyboards
+// The keymap descriptor, outputs, and ID message for the ALL CAPS Apple II
+// keymap. The key matrices are in asdf_keymap_apple2_maps.yaml.
 //
 // Copyright 2019 David Fenyes
 //

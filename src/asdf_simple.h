@@ -6,23 +6,7 @@
 // asdf_simple.h
 //
 // The simple wrapper: the keyboard firmware for a single keyboard, in four
-// calls. It owns the hardware state, the keyboard, and the tick interrupt, so
-// the application needs no knowledge of keyboard objects or platforms. For
-// example:
-//
-//   asdf_begin();
-//   while (1) {
-//     asdf_poll();
-//     while (asdf_available()) {
-//       send_somewhere(asdf_read());
-//     }
-//   }
-//
-// The application delivers the codes itself (USB, serial, a parallel port, and
-// so on). The keyboard still scans the matrix and drives its LEDs and outputs
-// through the architecture's platform. An application needing more than one
-// keyboard, or its own platform, uses asdf_t and the _r functions directly
-// (asdf_keyboard.h), as main.c does.
+// calls.
 //
 // Copyright 2019 David Fenyes
 //
@@ -46,25 +30,79 @@
 #include <stdint.h>
 #include "asdf.h"
 
-// PROCEDURE: asdf_begin
-// DESCRIPTION: Sets up the hardware and the keyboard, and selects keymap 0.
+/**
+ * @file
+ * The keyboard firmware for a single keyboard, in four calls.
+ *
+ * The wrapper owns the hardware state, the keyboard, and the tick interrupt,
+ * so the application needs no knowledge of keyboard objects or platforms. The
+ * application delivers the codes itself (USB, serial, a parallel port, and so
+ * on); the keyboard still scans the matrix and drives its LEDs and outputs
+ * through the architecture's platform.
+ *
+ * Because it defines the tick interrupt, the wrapper cannot be linked with
+ * main.c. An application needing more than one keyboard, or its own platform,
+ * uses asdf_t and the _r functions in asdf_keyboard.h directly, as main.c
+ * does.
+ *
+ * @code
+ * #include "asdf_simple.h"
+ *
+ * asdf_begin();
+ * while (1) {
+ *     asdf_poll();
+ *     while (asdf_available()) {
+ *         send_somewhere(asdf_read());
+ *     }
+ * }
+ * @endcode
+ */
+
+/**
+ * Set up the hardware and the keyboard.
+ *
+ * Initializes the architecture (including the 1 ms tick interrupt), then the
+ * keyboard, with empty output queues and keymap 0 selected. Discards any code
+ * held by asdf_available(). Call once before any other function here; calling
+ * it again resets the keyboard. Drives the keyboard's outputs and LEDs to
+ * their initial values through the platform.
+ */
 void asdf_begin(void);
 
-// PROCEDURE: asdf_poll
-// DESCRIPTION: Runs the keyboard for the time since the last call: advances its
-// timers and scans the key matrix. Call it often, at least once per
-// millisecond tick for best timing. Never blocks.
+/**
+ * Run the keyboard for the time since the last call.
+ *
+ * Advances the keyboard's timers by the elapsed 1 ms ticks and scans the key
+ * matrix once; codes generated are queued for asdf_available() and
+ * asdf_read(). Never blocks. Call it at least once per tick for best timing;
+ * slower calls lose no time, since the elapsed ticks (up to 255) are caught up
+ * on the next call. Key actions may also drive the keyboard's outputs and LEDs
+ * through the platform.
+ */
 void asdf_poll(void);
 
-// PROCEDURE: asdf_available
-// OUTPUTS: returns TRUE (nonzero) if a code is ready to read.
-// NOTES: After each system message character, the next code is held back for
-// the keymap's print delay, for hosts that cannot take characters quickly.
+/**
+ * Report whether a code is ready to read.
+ *
+ * After each system message character, the next code is held back for the
+ * keymap's print delay, for hosts that cannot take characters quickly; the
+ * delay counts down in asdf_poll(). Once this returns nonzero, the code stays
+ * available until asdf_read() takes it. Side effects: when no code is held,
+ * takes the next ready code from the keyboard and holds it for asdf_read().
+ *
+ * @return Nonzero if a code is ready; 0 if not.
+ */
 uint8_t asdf_available(void);
 
-// PROCEDURE: asdf_read
-// OUTPUTS: returns the next code, or 0 if none is available (check
-//          asdf_available() first; 0 is also a valid code).
+/**
+ * Take the next code.
+ *
+ * Removes the code from the wrapper, taking it from the keyboard first if
+ * asdf_available() has not already done so.
+ *
+ * @return The next code, or 0 if none is available. Since 0 is also a valid
+ *         code, check asdf_available() first.
+ */
 asdf_keycode_t asdf_read(void);
 
 #endif /* !defined(ASDF_SIMPLE_H) */

@@ -1,11 +1,11 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
 // asdf_keymap_apple2_caps.h
 //
-// Apple 2 keymaps
+// Print delay for the ALL CAPS Apple II keymap.
 //
 // Copyright 2019 David Fenyes
 //
@@ -23,7 +23,7 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-// This file supplies the Apple 2 ASCII keyboard keymap.  Two variants are provided:
+// The Apple 2 ASCII keyboard keymaps come in two variants:
 //
 // 1) An Upper/Lowercase variant. This variant moves the @ and ^ symbols from
 //    the P and N keys to the REPEAT key, since the P and N keys need to reserve

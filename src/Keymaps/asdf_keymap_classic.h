@@ -1,11 +1,11 @@
 // -*- mode: C; tab-width: 4 ; indent-tabs-mode: nil -*-
 //
-// Unfified Keyboard Project
+// Unified Keyboard Project
 // ASDF keyboard firmware
 //
 // asdf_keymap_classic.h
 //
-// Ascii keymaps
+// Matrix size, outputs, and print delay for the "classic" keymaps.
 //
 // Copyright 2019 David Fenyes
 //
@@ -23,17 +23,12 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 
-// To use this ascii for a new keymap, edit the keymaps definitions as
-// desired. The keymaps are organized from row 0, counting upward, and each row
-// includes the columns from 0-NUM_COLS.
-//
-
 #if !defined(ASDF_KEYMAP_DEFS_CLASSIC_H)
 #define ASDF_KEYMAP_DEFS_CLASSIC_H
 
 
-// Edit the number of rows and columns used in this map. If the number is less
-// than the maxium, the unused elements will be initialized to 0.
+// The size of this keymap's matrices, at most ASDF_MAX_ROWS by ASDF_MAX_COLS.
+// Keys not given in the YAML matrices do nothing.
 
 #define CLASSIC_NUM_ROWS 9 // DIP switches are row 8 (zero based)
 #define CLASSIC_NUM_COLS 8
@@ -57,7 +52,7 @@
 
 #define ASDF_CLASSIC_PRINT_SPEED 40
 
-#endif /* !defined (ASDF_KEYMAP_DEFS_ASCII_H) */
+#endif /* !defined (ASDF_KEYMAP_DEFS_CLASSIC_H) */
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.

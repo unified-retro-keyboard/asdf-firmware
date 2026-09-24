@@ -5,7 +5,7 @@
 //
 // asdf_ring.h
 //
-// Contains definitions and prototypes for the keycode ring buffer.
+// A first-in first-out queue of keycodes in caller-provided storage.
 //
 // Copyright 2019 David Fenyes
 //
@@ -29,8 +29,32 @@
 #include <stdint.h>
 #include "asdf.h"
 
-// A first-in first-out queue of keycodes held in caller-provided storage. Each
-// ring is independent: operations on one ring never affect another.
+/**
+ * A first-in first-out queue of keycodes held in caller-provided storage.
+ *
+ * Each ring is independent: operations on one ring never affect another.
+ *
+ * Invariants, after asdf_ring_init() and any sequence of operations:
+ * - count <= capacity
+ * - head < capacity, when capacity > 0
+ * - the queued codes are storage[head] onward, wrapping at capacity
+ * - dropped only increases, and saturates at 255
+ *
+ * @code
+ * #include "asdf_ring.h"
+ *
+ * asdf_keycode_t storage[16];
+ * asdf_ring_t ring;
+ * asdf_keycode_t code;
+ *
+ * asdf_ring_init(&ring, storage, 16);
+ * asdf_ring_put(&ring, 'a');
+ * asdf_ring_put_pair(&ring, '\r', '\n');      // CR LF queued as a unit
+ * while (asdf_ring_get(&ring, &code)) {
+ *     // 'a', '\r', '\n', in order
+ * }
+ * @endcode
+ */
 typedef struct {
     asdf_keycode_t *storage;
     uint8_t capacity;
@@ -39,48 +63,76 @@ typedef struct {
     uint8_t dropped; // codes rejected because the ring was full (saturates)
 } asdf_ring_t;
 
-// PROCEDURE: asdf_ring_init
-// INPUTS: (asdf_ring_t *) ring - the ring to initialize
-//         (asdf_keycode_t *) storage - array of at least capacity codes
-//         (uint8_t) capacity - number of codes the ring can hold
-// OUTPUTS: returns TRUE (nonzero) on success, FALSE (0) if storage is NULL or
-//          capacity is 0.
-// DESCRIPTION: Initializes an empty ring using the given storage. On failure,
-// the ring is set to zero capacity, so every put fails and every get finds it
-// empty.
+/**
+ * Initialize an empty ring over caller-provided storage.
+ *
+ * Overwrites all of @p ring. On failure the ring has zero capacity, so every
+ * put fails (and is counted as dropped) and every get finds it empty.
+ *
+ * @param ring      Ring to initialize.
+ * @param storage   Array of at least @p capacity codes, owned by the caller
+ *                  and valid for the life of the ring.
+ * @param capacity  Number of codes the ring can hold.
+ * @return 1 on success; 0 if @p storage is NULL or @p capacity is 0.
+ */
 uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capacity);
 
-// PROCEDURE: asdf_ring_put
-// INPUTS: (asdf_ring_t *) ring, (asdf_keycode_t) code
-// OUTPUTS: returns TRUE (nonzero) if the code was queued, FALSE (0) if the ring
-//          was full.
-// DESCRIPTION: Appends a code. A code that does not fit is dropped and counted.
+/**
+ * Append a code.
+ *
+ * Modifies the ring's contents and count, or its drop count.
+ *
+ * @param ring  Ring to append to.
+ * @param code  Code to queue.
+ * @return 1 if queued; 0 if the ring was full, in which case the code is
+ *         dropped and counted (see asdf_ring_dropped()).
+ */
 uint8_t asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code);
 
-// PROCEDURE: asdf_ring_put_pair
-// INPUTS: (asdf_ring_t *) ring, (asdf_keycode_t) first, (asdf_keycode_t) second
-// OUTPUTS: returns TRUE (nonzero) if both codes were queued, FALSE (0) if the
-//          ring did not have room for both.
-// DESCRIPTION: Appends two codes as a unit: either both are queued or neither
-// is. A pair that does not fit counts as two dropped codes.
+/**
+ * Append two codes as a unit: both are queued, or neither is.
+ *
+ * Used for CR LF, so a full queue never leaves half a line ending. Modifies
+ * the ring's contents and count, or its drop count.
+ *
+ * @param ring    Ring to append to.
+ * @param first   First code.
+ * @param second  Second code.
+ * @return 1 if both were queued; 0 if the ring did not have room for both, in
+ *         which case neither is queued and two drops are counted.
+ */
 uint8_t asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode_t second);
 
-// PROCEDURE: asdf_ring_get
-// INPUTS: (asdf_ring_t *) ring, (asdf_keycode_t *) code - receives the code
-// OUTPUTS: returns TRUE (nonzero) if a code was removed, FALSE (0) if the ring
-//          was empty (code is not written).
-// DESCRIPTION: Removes the oldest code.
+/**
+ * Remove the oldest code.
+ *
+ * Modifies the ring's head and count.
+ *
+ * @param ring  Ring to read from.
+ * @param code  Receives the code; not written if the ring is empty.
+ * @return 1 if a code was removed; 0 if the ring was empty.
+ */
 uint8_t asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code);
 
-// PROCEDURE: asdf_ring_count
-// INPUTS: (const asdf_ring_t *) ring
-// OUTPUTS: returns the number of codes queued.
+/**
+ * Number of codes queued.
+ *
+ * No side effects.
+ *
+ * @param ring  Ring to query.
+ * @return Codes waiting to be read, 0 to capacity.
+ */
 uint8_t asdf_ring_count(const asdf_ring_t *ring);
 
-// PROCEDURE: asdf_ring_dropped
-// INPUTS: (const asdf_ring_t *) ring
-// OUTPUTS: returns the number of codes dropped because the ring was full,
-//          saturating at 255.
+/**
+ * Number of codes dropped because the ring was full.
+ *
+ * No side effects.
+ *
+ * @param ring  Ring to query.
+ * @return Codes rejected by asdf_ring_put() and asdf_ring_put_pair() since
+ *         initialization, saturating at 255.
+ */
 uint8_t asdf_ring_dropped(const asdf_ring_t *ring);
 
 #endif /* !defined (ASDF_RING_H) */

@@ -3,9 +3,10 @@
 // Unified Keyboard Project
 // ASDF keyboard firmware
 //
-// asdf_keymap_classic.c
+// asdf_keymap_classic_caps.c
 //
-// Implements the "classic" ADM 3A style keymaps
+// The keymap descriptor, outputs, and ID message for the ALL CAPS "classic"
+// ADM 3A style keymap. The key matrices are in asdf_keymap_classic_maps.yaml.
 //
 // Copyright 2019 David Fenyes
 //
@@ -41,7 +42,7 @@ static const asdf_virtual_initializer_t FLASH classic_caps_outputs[] = {
   { CLASSIC_VIRTUAL_POWER_LED, CLASSIC_POWER_LED, V_NOFUNC, CLASSIC_POWER_LED_INIT_VALUE },
 
   // Because the virtual power LED never changes, also assign the CAPSLOCK
-  // physical LED to the virtual Power LED, and intialize to OFF (or can change
+  // physical LED to the virtual Power LED, and initialize to OFF (or can change
   // to ON depending on preference)
   { CLASSIC_VIRTUAL_POWER_LED, CLASSIC_CAPS_LED, V_NOFUNC, CLASSIC_CAPS_LED_INIT_VALUE },
 

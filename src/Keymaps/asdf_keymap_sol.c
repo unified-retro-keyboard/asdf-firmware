@@ -5,7 +5,8 @@
 //
 // asdf_keymap_sol.c
 //
-// Implements the keymap definition and setup routines for the sol-20 keymap
+// The keymap descriptor, outputs, and ID message for the Sol-20 keymap. The
+// key matrices are in asdf_keymap_sol_maps.yaml.
 //
 // Copyright 2019 David Fenyes
 //
@@ -46,7 +47,7 @@ static const asdf_virtual_initializer_t FLASH sol_outputs[] = {
   { VSHIFT_LED, SOL_KBD_LED_SHIFTLOCK, V_NOFUNC, SOL_KBD_LED_OFF },
 
   // Set up the LOCAL LED and output, default LED=OFF, TTL output HIGH. Both LED
-  // and TTL out are bound to the save virtual device.
+  // and TTL out are bound to the same virtual device.
   { SOL_KBD_VLOCAL, SOL_KBD_TTLOUT_LOCAL, V_TOGGLE, SOL_KBD_TTL_HIGH },
   { SOL_KBD_VLOCAL, SOL_KBD_LED_LOCAL, V_TOGGLE, SOL_KBD_LED_OFF },
 

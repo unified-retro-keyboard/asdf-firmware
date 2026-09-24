@@ -257,13 +257,9 @@
 // Places a string literal in flash; read it back with FLASH_READ.
 #define FLASH_STRING(s) PSTR(s)
 
-// For 1 ms tick, (8000000 / 64(prescale)) / 1000(usec) - 1 = 124
+// Timer 0 TOP for a 1 ms tick: (8000000 / 64 prescale) / 1000 Hz - 1 = 124
 #define TICK_COUNT 124
 
-
-// Default key matrix row scanner
-
-// Default keyboard output
 
 // DIP switch is on row 8
 #define ASDF_ARCH_DIPSWITCH_ROW 8
@@ -277,14 +273,18 @@ typedef struct {
   uint8_t data_polarity;    // XORed with each code sent
 } asdf_arch_t;
 
-// The tick interrupt: Timer 0 compare match, every 1 ms.
+// The tick interrupt: Timer 0 compare match, every 1 ms. The application
+// defines the interrupt handler with this macro.
 #define ASDF_ARCH_TICK_ISR ISR(TIMER0_COMPA_vect)
 
-// PROCEDURE: asdf_arch_count_tick
-// INPUTS: (asdf_arch_t *) arch
-// OUTPUTS: none
-// DESCRIPTION: Counts one elapsed tick, saturating so a long stall cannot wrap
-// the count. Called only from the tick interrupt.
+/**
+ * Counts one elapsed 1 ms tick.
+ *
+ * The count saturates at 255, so a long stall cannot wrap it. Call only from
+ * the tick interrupt. Increments the tick count in arch.
+ *
+ * @param arch  Hardware state of the keyboard whose tick is counted.
+ */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
   if (arch->ticks < UINT8_MAX) {
@@ -292,17 +292,28 @@ static inline void asdf_arch_count_tick(asdf_arch_t *arch)
   }
 }
 
-// PROCEDURE: asdf_arch_tick
-// INPUTS: (asdf_arch_t *) arch
-// OUTPUTS: returns the number of 1 ms ticks since the last call (saturating at
-//          255)
+/**
+ * Collects the ticks counted since the last call.
+ *
+ * Reads and clears the tick count as one step with respect to the tick
+ * interrupt, so no tick is lost. Clears the tick count in arch.
+ *
+ * @param arch  Hardware state of the keyboard.
+ * @return The number of 1 ms ticks since the last call, saturating at 255.
+ */
 uint8_t asdf_arch_tick(asdf_arch_t *arch);
 
-// PROCEDURE: asdf_arch_init
-// INPUTS: (asdf_arch_t *) arch - hardware state to initialize
-// OUTPUTS: none
-// DESCRIPTION: sets up all the hardware for the keyboard and the platform
-// embedded in arch, and starts the tick interrupt.
+/**
+ * Sets up the keyboard hardware and the platform embedded in arch.
+ *
+ * Call once, before the keyboard runs. Sets the system clock and the 1 ms tick
+ * timer, the ASCII output port with the default data and strobe polarity, the
+ * LED outputs, the row outputs and the column shift register control lines;
+ * fills in the platform operations, clears the tick count and enables
+ * interrupts, so the tick interrupt starts running.
+ *
+ * @param arch  Hardware state to initialize.
+ */
 void asdf_arch_init(asdf_arch_t *arch);
 
 #endif /* !defined (ASDF_ARCH_H) */

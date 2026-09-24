@@ -33,15 +33,25 @@
 #include <stdint.h>
 #include "asdf_keymaps.h"
 
-// PROCEDURE: asdf_keymap_descriptor
-// INPUTS: (uint8_t) index - keymap number
-// OUTPUTS: returns the keymap's descriptor (in flash), or NULL if there is no
-// keymap with that number.
+/**
+ * Look up a keymap's descriptor.
+ *
+ * No side effects.
+ *
+ * @param index  Keymap number.
+ * @return The keymap's descriptor, in flash; NULL if there is no keymap with
+ *         that number.
+ */
 const asdf_keymap_t *asdf_keymap_descriptor(uint8_t index);
 
-// PROCEDURE: asdf_keymap_valid
-// INPUTS: (uint8_t) index - keymap number
-// OUTPUTS: returns TRUE (nonzero) if there is a keymap with that number.
+/**
+ * Whether a keymap exists.
+ *
+ * No side effects.
+ *
+ * @param index  Keymap number.
+ * @return 1 if there is a keymap with that number; 0 otherwise.
+ */
 uint8_t asdf_keymap_valid(uint8_t index);
 
 #endif /* !defined(ASDF_KEYMAP_SETUP_H) */

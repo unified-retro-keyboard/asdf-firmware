@@ -32,17 +32,16 @@
 #include "asdf_keymap_actions.h"
 #include "asdf_print.h"
 
-// PROCEDURE: ace1000_keyboard_test
-// INPUTS: (asdf_t *) kb - keyboard; (uint8_t) param - ignored
-// OUTPUTS: none
-//
-// DESCRIPTION: Types a BASIC program that prints the code of each key pressed,
-// until CTRL-C is pressed. A keymap-provided key action.
-//
-// SCOPE: public
-//
-// COMPLEXITY: 1
-//
+/**
+ * Type the keyboard test program for the Franklin ACE 1000.
+ *
+ * Queues one numbered program line, ending in CR, on the system message
+ * output. When run, the program prints the code of each key pressed, until
+ * CTRL-C is pressed. A keymap-provided key action.
+ *
+ * @param kb     Keyboard to type on.
+ * @param param  Ignored.
+ */
 void ace1000_keyboard_test(asdf_t *kb, uint8_t param)
 {
   (void) param;

@@ -5,7 +5,8 @@
 //
 // asdf_keymap_classic.c
 //
-// Implements the "classic" ADM 3A style keymaps
+// The keymap descriptor, outputs, and ID message for the "classic" ADM 3A
+// style keymap. The key matrices are in asdf_keymap_classic_maps.yaml.
 //
 // Copyright 2019 David Fenyes
 //
