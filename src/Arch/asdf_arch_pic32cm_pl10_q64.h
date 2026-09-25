@@ -53,30 +53,13 @@
 #define OUT2_PIN 12u
 #define OUT3_GROUP 1u
 #define OUT3_PIN 13u
-// OSI control lines overlay the upper row-select lines (2560 parity): PA09/PA10.
-#define OSI_KBE_GROUP 0u
-#define OSI_KBE_PIN 9u
-#define OSI_RW_GROUP 0u
-#define OSI_RW_PIN 10u
 
 // --- public API (mirrors asdf_arch_atmega2560.h) ---
-/**
- * Reads one row of an OSI keyboard.
- *
- * An alternative row reader for OSI keyboards. Not used by any keymap yet; a
- * keymap uses it by installing a platform whose read_row calls it. Drives the
- * row and OSI keyboard control lines, and leaves the column lines as inputs.
- *
- * @param row  Row number to scan.
- * @return The row's columns, one bit per column, with 1 = pressed.
- */
-asdf_cols_t asdf_arch_osi_read_row(uint8_t row);
-
 /**
  * Sets up the keyboard hardware and the platform embedded in arch.
  *
  * Call once, before the keyboard runs. Sets the core clock, the pins (row,
- * column, ASCII, strobe, LED, OUT1-3 and OSI control lines) and the default
+ * column, ASCII, strobe, LED and OUT1-3 lines) and the default
  * data and strobe polarity; fills in the platform operations and clears the
  * tick count; and starts the 1 ms SysTick tick interrupt.
  *

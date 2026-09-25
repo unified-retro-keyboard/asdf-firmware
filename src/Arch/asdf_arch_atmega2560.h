@@ -326,14 +326,6 @@
 #define ASDF_STROBE_DDR DDRB
 #define ASDF_STROBE_BIT 4
 
-#define ASDF_OSI_KBE_PORT ASDF_HIROW_PORT
-#define ASDF_OSI_KBE_DDR ASDF_HIROW_DDR
-#define ASDF_OSI_KBE_BIT 1
-
-#define ASDF_OSI_RW_PORT ASDF_HIROW_PORT
-#define ASDF_OSI_RW_DDR ASDF_HIROW_DDR
-#define ASDF_OSI_RW_BIT 2
-
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
 
 #define FUSE_INTERNAL_8MHZ_OSC_4MS (FUSE_CKSEL1 | FUSE_SUT0)
@@ -387,18 +379,6 @@ static inline void asdf_arch_count_tick(asdf_arch_t *arch)
     arch->ticks++;
   }
 }
-
-/**
- * Reads one row of an OSI keyboard.
- *
- * An alternative row reader for OSI keyboards. Not used by any keymap yet; a
- * keymap uses it by installing a platform whose read_row calls it. Drives the
- * row and OSI keyboard control lines, and leaves the column port as inputs.
- *
- * @param row  Row number to scan.
- * @return The row's columns, one bit per column, with 1 = pressed.
- */
-asdf_cols_t asdf_arch_osi_read_row(uint8_t row);
 
 /**
  * Collects the ticks counted since the last call.

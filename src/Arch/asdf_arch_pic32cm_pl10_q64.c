@@ -43,46 +43,6 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
 }
 
 /**
- * Reads one row of an OSI keyboard.
- *
- * Rows above 7 are read as usual, through the row lines. For rows 0-7, drives
- * the OSI keyboard control lines and the column lines, leaving the column
- * lines as inputs.
- *
- * @param row  Row number to scan.
- * @return The row's columns, one bit per column.
- *
- * Mirrors asdf_arch_atmega2560.c. For rows 0-7, enables the OSI keyboard (KBE
- * low), registers the row by driving its bit on the column lines as outputs
- * and pulsing RW low, then makes the column lines inputs and returns them as
- * read, without inversion.
- *
- * Complexity: 4
- */
-asdf_cols_t asdf_arch_osi_read_row(uint8_t row)
-{
-  if (row > 7) {
-    return asdf_arch_read_row(row);
-  }
-
-  pin_clear(OSI_KBE_GROUP, OSI_KBE_PIN); // enable the OSI keyboard
-
-  for (uint8_t b = 0; b < ASDF_MAX_COLS; b++) {
-    pin_dir_out(COL_GROUP, b);
-  }
-  PORT_REGS->GROUP[COL_GROUP].PORT_OUT =
-    (PORT_REGS->GROUP[COL_GROUP].PORT_OUT & ~COL_MASK) | ((1u << row) & COL_MASK);
-
-  pin_clear(OSI_RW_GROUP, OSI_RW_PIN);
-  pin_set(OSI_RW_GROUP, OSI_RW_PIN);
-
-  for (uint8_t b = 0; b < ASDF_MAX_COLS; b++) {
-    pin_dir_in(COL_GROUP, b);
-  }
-  return (asdf_cols_t)(PORT_REGS->GROUP[COL_GROUP].PORT_IN & COL_MASK);
-}
-
-/**
  * Sends a code on the parallel ASCII port.
  *
  * Outputs the code, XORed with the data polarity, on the ASCII port, then
@@ -340,8 +300,8 @@ static void asdf_arch_out3_open_lo_set(uint8_t value) { out_open_lo(OUT3_GROUP, 
  * Sets up the clock, the tick timer and the pins.
  *
  * Brings up the shared clock and SysTick tick, which starts the tick
- * interrupt; makes the rows, the ASCII byte, the LEDs and OUT1-3 outputs and
- * the columns inputs; and idles the OSI control lines high, as outputs.
+ * interrupt; makes the rows, the ASCII byte, the LEDs and OUT1-3 outputs, and
+ * the columns inputs.
  *
  * Complexity: 2
  */
@@ -364,13 +324,6 @@ static void asdf_arch_init_hardware(void)
   pin_dir_out(OUT1_GROUP, OUT1_PIN);
   pin_dir_out(OUT2_GROUP, OUT2_PIN);
   pin_dir_out(OUT3_GROUP, OUT3_PIN);
-
-  // OSI control lines idle high, outputs.
-  pin_dir_out(OSI_KBE_GROUP, OSI_KBE_PIN);
-  pin_set(OSI_KBE_GROUP, OSI_KBE_PIN);
-  pin_dir_out(OSI_RW_GROUP, OSI_RW_PIN);
-  pin_set(OSI_RW_GROUP, OSI_RW_PIN);
-
 }
 
 // Output handlers, indexed by physical output.

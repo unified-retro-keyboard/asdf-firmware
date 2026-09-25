@@ -519,48 +519,6 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
 }
 
 /**
- * Reads one row of an OSI keyboard.
- *
- * Rows above 7 are read as usual, through the row ports. For rows 0-7, drives
- * the OSI keyboard control lines and the column port, leaving the column port
- * as inputs.
- *
- * @param row  Row number to scan.
- * @return The row's columns, one bit per column.
- *
- * For rows 0-7, enables the OSI keyboard (KBE low), writes the row bit on the
- * column port, latches it with a low pulse on RW, then makes the column port
- * inputs and returns the column pins as read, without inversion.
- *
- * Complexity: 2
- */
-asdf_cols_t asdf_arch_osi_read_row(uint8_t row)
-{
-  asdf_cols_t cols;
-
-  if (row > 7) {
-    cols = asdf_arch_read_row(row);
-  }
-  else {
-    // enable the OSI keyboard
-    clear_bit(&ASDF_OSI_KBE_PORT, ASDF_OSI_KBE_BIT);
-
-    // register the row to be read
-    ASDF_COLUMNS_DDR = ALL_OUTPUTS;
-
-    ASDF_COLUMNS_PORT = (uint8_t)(1u << row);
-    clear_bit(&ASDF_OSI_RW_PORT, ASDF_OSI_RW_BIT);
-    set_bit(&ASDF_OSI_RW_PORT, ASDF_OSI_RW_BIT);
-
-    // Read in the columns
-    ASDF_COLUMNS_DDR = ALL_INPUTS;
-    cols = ASDF_COLUMNS_PIN;
-  }
-  return cols;
-}
-
-
-/**
  * Sends a code on the parallel ASCII port.
  *
  * Outputs the code, XORed with the data polarity, on the ASCII port, then

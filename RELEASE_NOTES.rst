@@ -75,6 +75,8 @@ Details
 - *Build*: PC-lint Plus lint presets for the core (``lint``) and each firmware
   (``lint-<target>``), with each target's compiler configuration; they need a
   licensed PC-lint Plus.
+- *Build*: Removed the unused OSI 542 row reader (``asdf_arch_osi_read_row``)
+  from the ATmega2560 and PIC32CM Q64 adapters.
 - *Test*: Host tests also run under AddressSanitizer and
   UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
 - *Test*: Randomized key event tests check state invariants on three
