@@ -146,7 +146,7 @@ asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, 
  */
 static void asdf_keymaps_reset(asdf_t *kb) {
     for (uint8_t i = 0; i < ASDF_MOD_NUM_MODIFIERS; i++) {
-        asdf_keymaps_add_map(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
+        (void)asdf_keymaps_add_map(&kb->keymap, NULL, (modifier_index_t)i, 0, 0);
     }
 
     asdf_virtual_init(&kb->outputs, kb->base_platform);

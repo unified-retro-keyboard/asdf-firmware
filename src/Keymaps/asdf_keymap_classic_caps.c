@@ -32,6 +32,7 @@
 #include "asdf_virtual.h"
 #include "asdf_modifiers.h"
 #include "asdf_keymap_classic.h"
+#include "asdf_keymap_classic_caps.h"
 #include "asdf_keymap_classic_maps.h"
 
 

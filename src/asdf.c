@@ -202,7 +202,7 @@ uint8_t asdf_next_code(asdf_t *kb, asdf_keycode_t *code) {
  * Complexity: 2
  */
 void asdf_tick(asdf_t *kb, uint8_t elapsed_ms) {
-    kb->output_wait_ms = (kb->output_wait_ms > elapsed_ms) ? kb->output_wait_ms - elapsed_ms : 0;
+    kb->output_wait_ms = (kb->output_wait_ms > elapsed_ms) ? (uint8_t)(kb->output_wait_ms - elapsed_ms) : 0;
     asdf_virtual_tick(&kb->outputs, elapsed_ms);
 }
 
@@ -419,10 +419,10 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
     // debounce timed out. Set new stable state and activate or deactivate key.
     *debounce_count = ASDF_DEBOUNCE_TIME_MS;
     if (key_was_pressed) {
-        kb->stable_rows[row] |= (asdf_cols_t)(1 << col);
+        kb->stable_rows[row] |= (asdf_cols_t)(1U << col);
         asdf_activate_key(kb, asdf_lookup_key(kb, row, col), row, col);
     } else {
-        kb->stable_rows[row] &= (asdf_cols_t) ~(1 << col);
+        kb->stable_rows[row] &= (asdf_cols_t) ~(1U << col);
         asdf_deactivate_key(kb, asdf_lookup_key(kb, row, col), row, col);
     }
 }
@@ -486,7 +486,7 @@ static void asdf_scan_elapsed(asdf_t *kb, uint8_t elapsed) {
          row < asdf_keymaps_num_rows(&kb->keymap, asdf_modifier_index(&kb->modifiers));
          row++) {
         asdf_cols_t row_key_state = scan_platform->read_row(scan_platform->user, row);
-        asdf_cols_t changed = row_key_state ^ kb->stable_rows[row];
+        asdf_cols_t changed = (asdf_cols_t)(row_key_state ^ kb->stable_rows[row]);
 
         for (uint8_t col = 0;
              col < asdf_keymaps_num_cols(&kb->keymap, asdf_modifier_index(&kb->modifiers));
@@ -570,8 +570,8 @@ void asdf_apply_configuration(asdf_t *kb) {
  * Complexity: 3
  */
 void asdf_init(asdf_t *kb, const asdf_platform_t *platform) {
-    asdf_ring_init(&kb->keycodes, kb->keycode_storage, ASDF_KEYCODE_BUFFER_SIZE);
-    asdf_ring_init(&kb->messages, kb->message_storage, ASDF_MESSAGE_BUFFER_SIZE);
+    (void)asdf_ring_init(&kb->keycodes, kb->keycode_storage, ASDF_KEYCODE_BUFFER_SIZE);
+    (void)asdf_ring_init(&kb->messages, kb->message_storage, ASDF_MESSAGE_BUFFER_SIZE);
     kb->print_delay_ms = 0;
     kb->output_wait_ms = 0;
 

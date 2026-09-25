@@ -50,7 +50,7 @@
  */
 static inline void set_bit(volatile uint8_t *port, uint8_t bit)
 {
-  *port |= (1 << bit);
+  *port |= (uint8_t)(1u << bit);
 }
 
 /**
@@ -335,7 +335,7 @@ static void asdf_arch_null_output(uint8_t value)
  */
 static void asdf_arch_out2_open_hi_set(uint8_t value)
 {
-  asdf_arch_null_output(value);
+  (void) value;
 }
 
 /**
@@ -350,7 +350,7 @@ static void asdf_arch_out2_open_hi_set(uint8_t value)
  */
 static void asdf_arch_out2_open_lo_set(uint8_t value)
 {
-  asdf_arch_null_output(value);
+  (void) value;
 }
 
 /**
@@ -533,7 +533,7 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
   for (uint8_t i = 0; i < ASDF_MAX_COLS; i++) {
 
     // invert: a pressed key reads low
-    cols |= (((~(ASDF_COL_PIN) >> ASDF_COL_BIT) & 1) << i);
+    cols |= (asdf_cols_t)(((((uint8_t) ~ASDF_COL_PIN) >> ASDF_COL_BIT) & 1u) << i);
 
     set_bit(&ASDF_COLCLK_PORT, ASDF_COLCLK_BIT);
     clear_bit(&ASDF_COLCLK_PORT, ASDF_COLCLK_BIT);
@@ -626,7 +626,7 @@ static void asdf_arch_reset(asdf_arch_t *arch)
   arch->data_polarity = ASDF_DEFAULT_DATA_POLARITY;
   asdf_arch_init_ascii_output(arch->data_polarity);
 
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) {
+  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) { //lint !e506 !e774 build-time configuration
     asdf_arch_set_pos_strobe();
   }
   else {

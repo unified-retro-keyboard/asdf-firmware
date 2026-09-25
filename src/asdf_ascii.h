@@ -88,7 +88,6 @@ typedef enum {
   ASCII_MIN_PRINTABLE = 0x20,
 } ascii_defs_t;
 
-#define ASCII_NULL 0
 #define ASCII_SOH ASCII_CTRL_A // Start of Heading
 #define ASCII_STX ASCII_CTRL_B // Start of Text
 #define ASCII_ETX ASCII_CTRL_C // End of Text
@@ -115,7 +114,6 @@ typedef enum {
 #define ASCII_CAN ASCII_CTRL_X // Cancel
 #define ASCII_EM ASCII_CTRL_Y  // End of Medium
 #define ASCII_SUB ASCII_CTRL_Z // Substitute
-#define ASCII_ESC 0x1b
 
 
 #define ASCII_

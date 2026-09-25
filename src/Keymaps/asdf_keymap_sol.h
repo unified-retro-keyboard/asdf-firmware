@@ -26,6 +26,9 @@
 
 #if !defined(ASDF_KEYMAP_SOL_H)
 #define ASDF_KEYMAP_SOL_H
+
+#include "asdf_arch.h"
+#include "asdf_keymaps.h"
 #include "asdf.h"
 
 // The size of this keymap's matrices, at most ASDF_MAX_ROWS by ASDF_MAX_COLS.
@@ -103,6 +106,9 @@
 #define SOL_KBD_TTLOUT_LOCAL PHYSICAL_OUT1
 
 
+
+/** The Sol-20 keymap's descriptor, in flash. */
+extern const asdf_keymap_t FLASH sol_keymap;
 
 #endif /* !defined (ASDF_KEYMAP_SOL_H) */
 

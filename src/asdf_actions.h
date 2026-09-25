@@ -60,7 +60,7 @@ typedef void (*asdf_action_fn_t)(asdf_t *kb, uint8_t param);
  * asdf_action_table).
  */
 typedef enum {
-  ACTION_NOTHING = 0,
+  ACTION_NOTHING = 0,          ///< must be 0: a zero-filled key does nothing
   ACTION_SEND_CODE,            ///< queue the code param
   ACTION_SEND_REPEATABLE_CODE, ///< queue the code param; the key autorepeats
   ACTION_SHIFT,            ///< SHIFT pressed

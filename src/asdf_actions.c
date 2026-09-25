@@ -104,7 +104,7 @@ void asdf_action_nothing(asdf_t *kb, uint8_t param)
  * @param kb    Keyboard to act on.
  * @param code  Code to queue.
  */
-void asdf_action_send_code(asdf_t *kb, uint8_t code) { asdf_put_code(kb, code); }
+void asdf_action_send_code(asdf_t *kb, uint8_t code) { (void)asdf_put_code(kb, code); }
 
 /**
  * Send a code from a key that autorepeats.
@@ -117,7 +117,7 @@ void asdf_action_send_code(asdf_t *kb, uint8_t code) { asdf_put_code(kb, code); 
  */
 void asdf_action_send_repeatable_code(asdf_t *kb, uint8_t code)
 {
-  asdf_put_code(kb, code);
+  (void)asdf_put_code(kb, code);
   asdf_arm_repeat(kb);
 }
 

@@ -72,6 +72,9 @@ Details
 - *Build*: Firmware builds check per-target flash and RAM budgets.
 - *Build*: Pedantic, shadow and conversion warnings are enabled, and CI treats
   warnings as errors.
+- *Build*: PC-lint Plus lint presets for the core (``lint``) and each firmware
+  (``lint-<target>``), with each target's compiler configuration; they need a
+  licensed PC-lint Plus.
 - *Test*: Host tests also run under AddressSanitizer and
   UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
 - *Test*: Randomized key event tests check state invariants on three

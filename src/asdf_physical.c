@@ -176,8 +176,8 @@ void asdf_physical_assert(asdf_physical_state_t *phys, asdf_physical_dev_t physi
  */
 void asdf_physical_toggle(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out)
 {
-  if (physical_index_valid(physical_out)) {
-    physical_write(phys, physical_out, !phys->shadow[physical_out]);
+  if (physical_out < ASDF_PHYSICAL_NUM_RESOURCES) {
+    physical_write(phys, physical_out, (uint8_t)!phys->shadow[physical_out]);
   }
 }
 
@@ -204,7 +204,7 @@ static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state
 
   while (next_out != PHYSICAL_NO_OUT && next_out != device) {
     current_out = next_out;
-    next_out = phys->next[current_out];
+    next_out = phys->next[current_out]; //lint !e661 next[] holds only valid indexes (asdf_physical_state_t invariant)
   }
 
   return (PHYSICAL_NO_OUT == next_out) ? ASDF_PHYSICAL_NUM_RESOURCES : current_out;
@@ -225,7 +225,7 @@ static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state
 asdf_physical_dev_t asdf_physical_next_device(const asdf_physical_state_t *phys,
                                                 asdf_physical_dev_t device)
 {
-  return physical_index_valid(device) ? phys->next[device] : PHYSICAL_NO_OUT;
+  return (device < ASDF_PHYSICAL_NUM_RESOURCES) ? phys->next[device] : PHYSICAL_NO_OUT;
 }
 
 /**

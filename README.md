@@ -121,6 +121,14 @@ The presets are:
   UndefinedBehaviorSanitizer; any finding fails the test.
 - **`test-coverage`**: the host unit tests with coverage, followed by a gcovr
   report of the portable core's coverage.
+- **`lint`**: PC-lint Plus over the core and the production keymaps; any
+  message fails the build. Needs a licensed PC-lint Plus: set `PCLP` to the
+  `pclp64_linux` executable. Policy and deviations are in `lint/asdf.lnt`
+  (`lint/avr.lnt` adds the avr-gcc extensions); deviations for a single line
+  are `//lint` comments there.
+- **`lint-atmega328p`**, **`lint-atmega2560`**, **`lint-pic32cm_pl10_q64`**,
+  **`lint-pic32cm_pl10_dip28`**: PC-lint Plus over each firmware, with that
+  target's compiler, so type sizes (16-bit `int` on AVR) match the device.
 - **`simavr_test`**: runs the AVR firmware ELFs in simavr (see
   `test/simavr/README.md`). Build the AVR firmware first; a missing ELF fails
   that target's tests, and the error names the preset that builds it.

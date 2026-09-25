@@ -35,7 +35,6 @@
 #include "asdf_print.h"
 
 
-#define SOL_PRINT_DELAY 40 // msec
 
 // Printed by the KEYMAP_ID key.
 static const char FLASH sol_id_message[] = "[Keybd: Sol-20]";

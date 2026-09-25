@@ -23,10 +23,11 @@ int _isatty(int file);
 int _lseek(int file, int ptr, int dir);
 int _read(int file, char *ptr, int len);
 int _write(int file, char *ptr, int len);
-void _exit(int status);
+void _exit(int status) __attribute__((noreturn));
 int _kill(int pid, int sig);
 int _getpid(void);
 
+//lint -esym(526, end) -esym(2701, end) defined by the linker script
 extern char end; // first address past .bss / start of heap (linker script)
 static char *heap_end = &end;
 

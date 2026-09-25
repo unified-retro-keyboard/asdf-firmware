@@ -405,7 +405,7 @@ static void asdf_arch_reset(asdf_arch_t *arch)
     (PORT_REGS->GROUP[ASCII_GROUP].PORT_OUT & ~ASCII_MASK)
     | (((uint32_t) arch->data_polarity << ASCII_SHIFT) & ASCII_MASK);
 
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) {
+  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) { //lint !e506 !e774 build-time configuration
     asdf_arch_set_pos_strobe();
   }
   else {

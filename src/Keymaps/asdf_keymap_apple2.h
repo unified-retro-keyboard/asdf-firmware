@@ -40,10 +40,16 @@
 #if !defined(ASDF_KEYMAP_DEFS_APPLE2_H)
 #define ASDF_KEYMAP_DEFS_APPLE2_H
 
+#include "asdf_arch.h"
+#include "asdf_keymaps.h"
+
 
 
 #define APPLE2_PRINT_DELAY 40 // msec
 
+
+/** The Apple 2 keymap's descriptor, in flash. */
+extern const asdf_keymap_t FLASH apple2_keymap;
 
 #endif /* !defined (ASDF_KEYMAP_DEFS_APPLE2_H) */
 

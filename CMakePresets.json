@@ -103,6 +103,34 @@
         "ARCH": "test",
         "ASDF_COVERAGE": "ON"
       }
+    },
+    {
+      "name": "lint",
+      "inherits": "base",
+      "displayName": "PC-lint Plus on the core and production keymaps",
+      "cacheVariables": {
+        "ARCH": "test"
+      }
+    },
+    {
+      "name": "lint-atmega328p",
+      "inherits": "atmega328p",
+      "displayName": "PC-lint Plus on the atmega328p firmware"
+    },
+    {
+      "name": "lint-atmega2560",
+      "inherits": "atmega2560",
+      "displayName": "PC-lint Plus on the atmega2560 firmware"
+    },
+    {
+      "name": "lint-pic32cm_pl10_q64",
+      "inherits": "pic32cm_pl10_q64",
+      "displayName": "PC-lint Plus on the pic32cm_pl10_q64 firmware"
+    },
+    {
+      "name": "lint-pic32cm_pl10_dip28",
+      "inherits": "pic32cm_pl10_dip28",
+      "displayName": "PC-lint Plus on the pic32cm_pl10_dip28 firmware"
     }
   ],
   "buildPresets": [
@@ -155,6 +183,41 @@
       "configurePreset": "test-coverage",
       "targets": [
         "coverage"
+      ]
+    },
+    {
+      "name": "lint",
+      "configurePreset": "lint",
+      "targets": [
+        "lint"
+      ]
+    },
+    {
+      "name": "lint-atmega328p",
+      "configurePreset": "lint-atmega328p",
+      "targets": [
+        "lint"
+      ]
+    },
+    {
+      "name": "lint-atmega2560",
+      "configurePreset": "lint-atmega2560",
+      "targets": [
+        "lint"
+      ]
+    },
+    {
+      "name": "lint-pic32cm_pl10_q64",
+      "configurePreset": "lint-pic32cm_pl10_q64",
+      "targets": [
+        "lint"
+      ]
+    },
+    {
+      "name": "lint-pic32cm_pl10_dip28",
+      "configurePreset": "lint-pic32cm_pl10_dip28",
+      "targets": [
+        "lint"
       ]
     }
   ],
@@ -437,6 +500,76 @@
         {
           "type": "build",
           "name": "coverage-report"
+        }
+      ]
+    },
+    {
+      "name": "lint",
+      "displayName": "PC-lint Plus on the core and production keymaps",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lint"
+        },
+        {
+          "type": "build",
+          "name": "lint"
+        }
+      ]
+    },
+    {
+      "name": "lint-atmega328p",
+      "displayName": "PC-lint Plus on the atmega328p firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lint-atmega328p"
+        },
+        {
+          "type": "build",
+          "name": "lint-atmega328p"
+        }
+      ]
+    },
+    {
+      "name": "lint-atmega2560",
+      "displayName": "PC-lint Plus on the atmega2560 firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lint-atmega2560"
+        },
+        {
+          "type": "build",
+          "name": "lint-atmega2560"
+        }
+      ]
+    },
+    {
+      "name": "lint-pic32cm_pl10_q64",
+      "displayName": "PC-lint Plus on the pic32cm_pl10_q64 firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lint-pic32cm_pl10_q64"
+        },
+        {
+          "type": "build",
+          "name": "lint-pic32cm_pl10_q64"
+        }
+      ]
+    },
+    {
+      "name": "lint-pic32cm_pl10_dip28",
+      "displayName": "PC-lint Plus on the pic32cm_pl10_dip28 firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "lint-pic32cm_pl10_dip28"
+        },
+        {
+          "type": "build",
+          "name": "lint-pic32cm_pl10_dip28"
         }
       ]
     }

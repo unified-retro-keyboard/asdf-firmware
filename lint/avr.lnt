@@ -1,0 +1,9 @@
+// Added to lint/asdf.lnt for the AVR firmware: avr-gcc and avr-libc extensions.
+
+// avr-gcc's built-in 24-bit integers, used by avr-libc's pgmspace.h. Only
+// the names matter to lint; ASDF does not use them.
+-d__int24=long
+-d"__uint24=unsigned long"
+
+-emacro(160, pgm_read_*, PSTR)     // avr-libc's flash macros are GNU statement expressions
+-esym(529, __addr16, sreg_save)    // locals declared inside avr-libc's pgm_read_* and ATOMIC_BLOCK

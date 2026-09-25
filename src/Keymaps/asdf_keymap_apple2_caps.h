@@ -40,9 +40,11 @@
 #if !defined(ASDF_KEYMAP_DEFS_APPLE2_CAPS_H)
 #define ASDF_KEYMAP_DEFS_APPLE2_CAPS_H
 
+#include "asdf_arch.h"
+#include "asdf_keymaps.h"
 
-#define APPLE2_PRINT_DELAY 40 // msec
-
+/** The Apple 2 CAPS-only keymap's descriptor, in flash. */
+extern const asdf_keymap_t FLASH apple2_caps_keymap;
 
 #endif /* !defined (ASDF_KEYMAP_DEFS_APPLE2_CAPS_H) */
 

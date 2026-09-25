@@ -42,10 +42,9 @@ function(create_keymap_table keymaps keymap_table)
 endfunction(create_keymap_table)
 
 function(create_keymap_declarations keymaps keymap_decl)
-  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>"  "\nextern const asdf_keymap_t \\1_keymap" OUTPUT_VARIABLE temp_list)
-  # we can keep the ';' cmake list separators as the C statement separators.
-  # However, we need to append an extra ';' at the end.
-  string(APPEND temp_list ";")
+  # each keymap's header declares its descriptor
+  list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>" "#include \"asdf_keymap_\\1.h\"" OUTPUT_VARIABLE temp_list)
+  list(JOIN temp_list "\n" temp_list)
   set(${keymap_decl} "${temp_list}" PARENT_SCOPE)
 endfunction(create_keymap_declarations)
 

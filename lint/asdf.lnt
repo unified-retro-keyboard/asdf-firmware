@@ -1,0 +1,52 @@
+// PC-lint Plus policy for ASDF, shared by every target's lint build.
+// Deviations go here, each with its reason. Deviations for a single line are
+// //lint comments at that line; search the sources for "//lint".
+
+-max_threads=8
+-width(0)             // one message per line, for grep and editors
+-frz                  // exit code is the message count, so any message fails the build
+
++fcu                  // char is unsigned on every target (-funsigned-char on AVR and host)
+
+// Library headers (<...> includes and vendored code): report errors only.
++libclass(angle)
++libdir(*/third_party/*)
+-wlib(1)
+
+// Every ASDF header has an include guard; the compiler's own stdint.h and
+// stddef.h are included from several headers.
+-e537                 // repeated include file
+-e451                 // repeatedly included header without a guard
+
+// Enums index arrays (maps[modifier_index]) and are passed as small integers
+// throughout. Mixing distinct types is left to strong type checking instead.
+-e641                 // implicit conversion of enum to integral type
+
+// C99 guarantees 31 significant characters in external identifiers. Every
+// toolchain ASDF uses (gcc, avr-gcc, arm-none-eabi-gcc) uses the full name,
+// and no two identifiers match in their first 31 characters.
+-e793                 // translation limit of 31 significant characters exceeded
+
+// Bit-position macros can be 0, giving "+ 0" and "<< 0" in constants.
+-e835                 // zero given as argument to an operator
+
+-esym(534, memcpy, memcpy_P)       // FLASH_MEMCPY: the destination it returns is not needed
+-esym(788, ASDF_*NUM_*)            // count sentinels closing an enum need no switch case
+-esym(849, ASCII_MAX_PRINTABLE, ASCII_MIN_PRINTABLE)  // deliberate aliases of ASCII_DEL, ASCII_SPACE
+-esym(785, *_keymap)               // descriptors omit optional fields: zero is no flags, ACTION_NOTHING, NULL
+
+// Whole-program checks. The core is a library with a public API that each
+// firmware uses only part of (the rest serves embedding applications and the
+// tests); interrupt handlers and newlib stubs are found by name; and headers
+// describe the hardware and character sets completely.
+-e714                 // external symbol defined but not referenced
+-e755                 // global macro not referenced
+-e757                 // global declarator not referenced
+-e759                 // header declaration could be moved to the module
+-e765                 // external symbol could be made static
+-e768                 // global struct member not referenced
+-e769                 // global enumeration constant not referenced
+
+-e546                 // &function: output handler tables take function addresses explicitly
+-e716                 // while (1): the firmware main loop
+-esym(818, user)                   // platform callbacks share the asdf_platform_t signature

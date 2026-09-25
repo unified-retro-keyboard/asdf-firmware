@@ -86,6 +86,15 @@ target_compile_options(${PROJECT_EXECUTABLE_TARGET_NAME}
   )
 add_dependencies(${PROJECT_EXECUTABLE_TARGET_NAME} keymaps_gen)
 
+# PC-lint Plus over the whole firmware (lint/asdf.lnt), with this target's
+# compiler, so type sizes match the device.
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_lint.cmake)
+if(ARCH_TYPE MATCHES AVR)
+  asdf_add_lint(${PROJECT_EXECUTABLE_TARGET_NAME} ${CMAKE_SOURCE_DIR}/lint/avr.lnt)
+else()
+  asdf_add_lint(${PROJECT_EXECUTABLE_TARGET_NAME})
+endif()
+
 if(ARCH_TYPE STREQUAL "ARM")
   target_include_directories(${PROJECT_EXECUTABLE_TARGET_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src/third_party/cmsis

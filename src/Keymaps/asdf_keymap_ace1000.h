@@ -31,6 +31,9 @@
 #if !defined(ASDF_KEYMAP_DEFS_ACE1000_H)
 #define ASDF_KEYMAP_DEFS_ACE1000_H
 
+#include "asdf_arch.h"
+#include "asdf_keymaps.h"
+
 
 // The size of this keymap's matrices, at most ASDF_MAX_ROWS by ASDF_MAX_COLS.
 // Keys not given in the YAML matrices do nothing.
@@ -56,6 +59,9 @@
 
 
 #define ASDF_ACE1000_PRINT_SPEED 40
+
+/** The Franklin ACE 1000 keymap's descriptor, in flash. */
+extern const asdf_keymap_t FLASH ace1000_keymap;
 
 #endif /* !defined (ASDF_KEYMAP_DEFS_ACE1000_H) */
 

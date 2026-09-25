@@ -50,7 +50,7 @@
  */
 static inline void set_bit(volatile uint8_t *port, uint8_t bit)
 {
-  *port |= (1 << bit);
+  *port |= (uint8_t)(1u << bit);
 }
 
 /**
@@ -515,7 +515,7 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
   ASDF_HIROW_PORT = (uint8_t)((rows >> 8) & 0xff);
   _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US);
 
-  return ~(asdf_cols_t) ASDF_COLUMNS_PIN;
+  return (asdf_cols_t) ~ASDF_COLUMNS_PIN;
 }
 
 /**
@@ -530,8 +530,7 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
  *
  * For rows 0-7, enables the OSI keyboard (KBE low), writes the row bit on the
  * column port, latches it with a low pulse on RW, then makes the column port
- * inputs and returns the column pins as read, without inversion. The
- * statements after that return are unreachable.
+ * inputs and returns the column pins as read, without inversion.
  *
  * Complexity: 2
  */
@@ -549,17 +548,13 @@ asdf_cols_t asdf_arch_osi_read_row(uint8_t row)
     // register the row to be read
     ASDF_COLUMNS_DDR = ALL_OUTPUTS;
 
-    ASDF_COLUMNS_PORT = (1 << row);
+    ASDF_COLUMNS_PORT = (uint8_t)(1u << row);
     clear_bit(&ASDF_OSI_RW_PORT, ASDF_OSI_RW_BIT);
     set_bit(&ASDF_OSI_RW_PORT, ASDF_OSI_RW_BIT);
 
     // Read in the columns
     ASDF_COLUMNS_DDR = ALL_INPUTS;
-    return ASDF_COLUMNS_PIN;
-
-    ASDF_LOROW_PORT = row & 0xff;
-
-    cols = (asdf_cols_t) ASDF_COLUMNS_PORT;
+    cols = ASDF_COLUMNS_PIN;
   }
   return cols;
 }
@@ -648,7 +643,7 @@ static void asdf_arch_reset(asdf_arch_t *arch)
   arch->data_polarity = ASDF_DEFAULT_DATA_POLARITY;
   asdf_arch_init_ascii_output(arch->data_polarity);
 
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) {
+  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) { //lint !e506 !e774 build-time configuration
     asdf_arch_set_pos_strobe();
   }
   else {
