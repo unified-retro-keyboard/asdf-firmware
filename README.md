@@ -1,5 +1,7 @@
 # ASDF Keyboard scanning firmware
 
+*A Switch Dispatch Framework*
+
 ASDF scans a key matrix, debounces keypresses and releases, and runs an action,
 which could be to send an 8-bit code. The supported application is a parallel
 ASCII keyboard. Serial, USB, or anything else is a `send_code` routine you

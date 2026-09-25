@@ -3,6 +3,7 @@
 # usage: doxygen            (writes HTML to build-doxygen/html/index.html)
 
 PROJECT_NAME           = "ASDF keyboard firmware"
+PROJECT_BRIEF          = "A Switch Dispatch Framework"
 OUTPUT_DIRECTORY       = build-doxygen
 INPUT                  = src src/Keymaps src/Arch README.md
 FILE_PATTERNS          = *.h *.c *.md
