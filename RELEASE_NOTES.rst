@@ -1,6 +1,46 @@
 ASDF Firmware Release Notes
 ===========================
 
+Version 1.8.0 (Release)
+----------------------
+This release pays down accumulated technical debt
+
+Highlights
+----------
+
+- Factored out all the local state into a keyboard object (asdf_t), allowing
+  multiple keyboards to run independently.
+
+- Added a simple wrapper for an application to instantiate and run a single
+  keyboard, with codes sent to the client application, for example, an arduino
+  implementing a keyboard over USB, BT, or ethernet
+
+- Keyboard processing doesn't block. Scanning can continue while output buffers
+  are drained and timed I/O events are playing out.
+
+ - Keymaps are now implemented as a tuple of {keypress_function, keypress_param,
+   release_function, release_param} to provide greater keymap flexibility
+   without significantly more complexity. This fixes a few longstanding issues:
+
+   - No reserved codes for functions, so all 8-bit codes can be generated. user
+     function hooks are no longer required.
+
+   - The keymap can insert user functions directly into the function table. So
+     the unsafe and undefined behavior pointer casts can be eliminated.
+
+   - Press and Release actions are no longer tightly coupled. They can be
+     independently specified. This permits richer behavior.
+
+   - Parameters attached to functions pave the way for key-based keyboard
+     settings, to permit reuse of functions like send_code(), and also
+     permitting key-based configuration, which can eventually replace or augment
+     the DIP switch settings.
+
+- cleaner keymap configuration via a YAML file makes modifying and creating keymaps easier.
+
+- Replace older block-style headers with modern doxygen headers, improving readability
+
+
 Version 1.7.1 (Release)
 -----------------------
 

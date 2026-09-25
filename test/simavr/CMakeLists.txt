@@ -16,8 +16,11 @@ find_library(ELF_LIBRARY NAMES elf
   HINTS /usr/local/lib /opt/local/lib /opt/homebrew/lib)
 if(NOT SIMAVR_INCLUDE_DIR OR NOT SIMAVR_LIBRARY)
   message(FATAL_ERROR
-    "simavr not found. Install libsimavr-dev (apt) or build from source and "
-    "pass -DSIMAVR_ROOT=<prefix>.")
+    "simavr not found. Install it with one of:\n"
+    "  sudo apt-get install simavr libsimavr-dev pkg-config\n"
+    "  sudo port install simavr   (MacPorts)\n"
+    "  brew install simavr        (Homebrew)\n"
+    "or build it from source and pass -DSIMAVR_ROOT=<prefix>.")
 endif()
 if(NOT ELF_LIBRARY)
   message(FATAL_ERROR
@@ -56,30 +59,26 @@ target_include_directories(asdf_sim_test_capture PRIVATE harness)
 target_compile_options(asdf_sim_test_capture PRIVATE -Wall -Wextra -std=c99 -UNDEBUG)
 add_test(NAME unit_capture COMMAND asdf_sim_test_capture)
 
-# Derive the simavr-tested target list from the shared targets.csv registry
-# (the rows whose third column is "yes"), so it stays in sync with
-# make-targets.sh and CI rather than drifting as a separate hardcoded list.
-set(SIMAVR_TARGETS "")
-file(STRINGS ${CMAKE_SOURCE_DIR}/targets.csv _target_rows)
-foreach(_row ${_target_rows})
-  if(_row MATCHES "^[ \t]*#")
-    continue()
-  endif()
-  string(REPLACE "," ";" _cols "${_row}")
-  list(LENGTH _cols _ncols)
-  if(_ncols GREATER_EQUAL 3)
-    list(GET _cols 0 _name)
-    list(GET _cols 2 _simavr)
-    string(STRIP "${_name}" _name)
-    string(STRIP "${_simavr}" _simavr)
-    if(_simavr STREQUAL "yes")
-      list(APPEND SIMAVR_TARGETS ${_name})
-    endif()
-  endif()
-endforeach()
+# The simavr-tested targets are the rows of targets.csv whose simavr column is
+# "yes", so the list cannot drift from the target registry.
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_targets.cmake)
+asdf_read_targets(ASDF_TARGETS)
+set(SIMAVR_TARGETS ${ASDF_TARGETS_SIMAVR})
 message(STATUS "simavr targets (from targets.csv): ${SIMAVR_TARGETS}")
 set(SIMAVR_KEYMAPS classic classic_caps apple2 apple2_caps sol ace1000)
 set(SIMAVR_MODES   events identity string latency)
+
+# Each target's tests need its firmware ELF, built by that target's own preset.
+# A setup test per target checks for it, so a missing ELF is reported once,
+# with the command that builds it, and that target's tests are not run.
+foreach(tgt ${SIMAVR_TARGETS})
+  add_test(NAME simavr_${tgt}_elf
+    COMMAND ${CMAKE_COMMAND}
+            -DELF=${CMAKE_SOURCE_DIR}/build-${tgt}/src/asdf-v${PROJECT_VERSION}-${tgt}.elf
+            -DTARGET=${tgt}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/check_elf.cmake)
+  set_tests_properties(simavr_${tgt}_elf PROPERTIES FIXTURES_SETUP elf_${tgt})
+endforeach()
 
 foreach(tgt ${SIMAVR_TARGETS})
   foreach(km ${SIMAVR_KEYMAPS})
@@ -99,7 +98,8 @@ foreach(tgt ${SIMAVR_TARGETS})
                 --elf ${elf_path}
                 --vcd ${CMAKE_CURRENT_BINARY_DIR}/simavr_${tgt}_${km}${suffix}.vcd
       )
-      set_tests_properties(simavr_${tgt}_${km}${suffix} PROPERTIES TIMEOUT 30)
+      set_tests_properties(simavr_${tgt}_${km}${suffix} PROPERTIES
+        TIMEOUT 30 FIXTURES_REQUIRED elf_${tgt})
     endforeach()
   endforeach()
 endforeach()
@@ -118,7 +118,8 @@ foreach(tgt ${SIMAVR_TARGETS})
             --elf ${elf_path}
             --vcd ${CMAKE_CURRENT_BINARY_DIR}/simavr_${tgt}_sol_out2.vcd
   )
-  set_tests_properties(simavr_${tgt}_sol_out2 PROPERTIES TIMEOUT 30)
+  set_tests_properties(simavr_${tgt}_sol_out2 PROPERTIES
+    TIMEOUT 30 FIXTURES_REQUIRED elf_${tgt})
 
   # Column-independent autorepeat (issue #15). Sol row 6 gives seven
   # comparable emitting keys; the invariant is shared scan-loop behaviour, so
@@ -131,5 +132,6 @@ foreach(tgt ${SIMAVR_TARGETS})
             --mode repeat
             --elf ${elf_path}
   )
-  set_tests_properties(simavr_${tgt}_sol_repeat PROPERTIES TIMEOUT 120)
+  set_tests_properties(simavr_${tgt}_sol_repeat PROPERTIES
+    TIMEOUT 120 FIXTURES_REQUIRED elf_${tgt})
 endforeach()

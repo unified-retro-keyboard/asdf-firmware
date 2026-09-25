@@ -1,0 +1,28 @@
+# Python tooling for the ASDF firmware repo (Sphinx docs and linters).
+# Managed by uv: `uv sync` builds .venv; `uv run <cmd>` runs inside it.
+# The key matrix generator (src/asdf_keymap_gen.py) carries its own inline
+# script metadata and does not use this environment.
+
+[project]
+name = "asdf-tools"
+version = "0"
+requires-python = ">=3.9"
+dependencies = []
+
+[dependency-groups]
+docs = [
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-rtd-theme",
+    "toml",
+]
+dev = [
+    "black",
+    "flake8",
+    "pylint",
+    "mypy",
+]
+
+[tool.uv]
+package = false
+default-groups = ["docs", "dev"]

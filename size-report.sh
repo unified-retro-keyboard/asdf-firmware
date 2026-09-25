@@ -6,7 +6,8 @@
 #
 # With no TARGET, reports every avr and arm_m0+ target in targets.csv whose ELF
 # has been built (build-<target>/src/asdf-v<version>-<target>.elf); targets
-# that have not been built are skipped. Output is CSV:
+# that have not been built are skipped. A TARGET named on the command line
+# must have been built, or the script exits 2. Output is CSV:
 #
 #   target,text,data,bss,reserved,flash,ram
 #
@@ -91,6 +92,13 @@ report() {
 }
 
 REPORT="$(report "$@")"
+
+for target in "$@"; do
+    if ! grep -q "^$target," <<< "$REPORT"; then
+        echo "not a built firmware target: $target" >&2
+        exit 2
+    fi
+done
 
 if [[ -z $BASELINE ]]; then
     echo "$REPORT"

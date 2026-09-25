@@ -1,0 +1,444 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build-${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "test",
+      "inherits": "base",
+      "displayName": "test: Host unit tests",
+      "cacheVariables": {
+        "ARCH": "test"
+      }
+    },
+    {
+      "name": "atmega328p",
+      "inherits": "base",
+      "displayName": "atmega328p: AVR firmware",
+      "cacheVariables": {
+        "ARCH": "atmega328p"
+      }
+    },
+    {
+      "name": "atmega168p",
+      "inherits": "base",
+      "displayName": "atmega168p: AVR firmware",
+      "cacheVariables": {
+        "ARCH": "atmega168p"
+      }
+    },
+    {
+      "name": "atmega2560",
+      "inherits": "base",
+      "displayName": "atmega2560: AVR firmware",
+      "cacheVariables": {
+        "ARCH": "atmega2560"
+      }
+    },
+    {
+      "name": "atmega1280",
+      "inherits": "base",
+      "displayName": "atmega1280: AVR firmware",
+      "cacheVariables": {
+        "ARCH": "atmega1280"
+      }
+    },
+    {
+      "name": "atmega640",
+      "inherits": "base",
+      "displayName": "atmega640: AVR firmware",
+      "cacheVariables": {
+        "ARCH": "atmega640"
+      }
+    },
+    {
+      "name": "pic32cm_pl10_q64",
+      "inherits": "base",
+      "displayName": "pic32cm_pl10_q64: PIC32CM PL10 firmware (build-verified)",
+      "cacheVariables": {
+        "ARCH": "pic32cm_pl10_q64"
+      }
+    },
+    {
+      "name": "pic32cm_pl10_dip28",
+      "inherits": "base",
+      "displayName": "pic32cm_pl10_dip28: PIC32CM PL10 firmware (build-verified)",
+      "cacheVariables": {
+        "ARCH": "pic32cm_pl10_dip28"
+      }
+    },
+    {
+      "name": "simavr_test",
+      "inherits": "base",
+      "displayName": "simavr_test: simavr integration tests",
+      "cacheVariables": {
+        "ARCH": "simavr_test"
+      }
+    },
+    {
+      "name": "test-sanitize",
+      "inherits": "base",
+      "displayName": "Host unit tests under ASan and UBSan",
+      "cacheVariables": {
+        "ARCH": "test",
+        "ASDF_SANITIZE": "ON"
+      }
+    },
+    {
+      "name": "test-coverage",
+      "inherits": "base",
+      "displayName": "Host unit tests with core coverage report",
+      "cacheVariables": {
+        "ARCH": "test",
+        "ASDF_COVERAGE": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "test",
+      "configurePreset": "test"
+    },
+    {
+      "name": "atmega328p",
+      "configurePreset": "atmega328p"
+    },
+    {
+      "name": "atmega168p",
+      "configurePreset": "atmega168p"
+    },
+    {
+      "name": "atmega2560",
+      "configurePreset": "atmega2560"
+    },
+    {
+      "name": "atmega1280",
+      "configurePreset": "atmega1280"
+    },
+    {
+      "name": "atmega640",
+      "configurePreset": "atmega640"
+    },
+    {
+      "name": "pic32cm_pl10_q64",
+      "configurePreset": "pic32cm_pl10_q64"
+    },
+    {
+      "name": "pic32cm_pl10_dip28",
+      "configurePreset": "pic32cm_pl10_dip28"
+    },
+    {
+      "name": "simavr_test",
+      "configurePreset": "simavr_test"
+    },
+    {
+      "name": "test-sanitize",
+      "configurePreset": "test-sanitize"
+    },
+    {
+      "name": "test-coverage",
+      "configurePreset": "test-coverage"
+    },
+    {
+      "name": "coverage-report",
+      "configurePreset": "test-coverage",
+      "targets": [
+        "coverage"
+      ]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test",
+      "configurePreset": "test",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "atmega328p",
+      "configurePreset": "atmega328p",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "atmega168p",
+      "configurePreset": "atmega168p",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "atmega2560",
+      "configurePreset": "atmega2560",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "atmega1280",
+      "configurePreset": "atmega1280",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "atmega640",
+      "configurePreset": "atmega640",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "pic32cm_pl10_q64",
+      "configurePreset": "pic32cm_pl10_q64",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "pic32cm_pl10_dip28",
+      "configurePreset": "pic32cm_pl10_dip28",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "simavr_test",
+      "configurePreset": "simavr_test",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-sanitize",
+      "configurePreset": "test-sanitize",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-coverage",
+      "configurePreset": "test-coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "test",
+      "displayName": "test: Host unit tests",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "test"
+        },
+        {
+          "type": "build",
+          "name": "test"
+        },
+        {
+          "type": "test",
+          "name": "test"
+        }
+      ]
+    },
+    {
+      "name": "atmega328p",
+      "displayName": "atmega328p: AVR firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "atmega328p"
+        },
+        {
+          "type": "build",
+          "name": "atmega328p"
+        },
+        {
+          "type": "test",
+          "name": "atmega328p"
+        }
+      ]
+    },
+    {
+      "name": "atmega168p",
+      "displayName": "atmega168p: AVR firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "atmega168p"
+        },
+        {
+          "type": "build",
+          "name": "atmega168p"
+        },
+        {
+          "type": "test",
+          "name": "atmega168p"
+        }
+      ]
+    },
+    {
+      "name": "atmega2560",
+      "displayName": "atmega2560: AVR firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "atmega2560"
+        },
+        {
+          "type": "build",
+          "name": "atmega2560"
+        },
+        {
+          "type": "test",
+          "name": "atmega2560"
+        }
+      ]
+    },
+    {
+      "name": "atmega1280",
+      "displayName": "atmega1280: AVR firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "atmega1280"
+        },
+        {
+          "type": "build",
+          "name": "atmega1280"
+        },
+        {
+          "type": "test",
+          "name": "atmega1280"
+        }
+      ]
+    },
+    {
+      "name": "atmega640",
+      "displayName": "atmega640: AVR firmware",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "atmega640"
+        },
+        {
+          "type": "build",
+          "name": "atmega640"
+        },
+        {
+          "type": "test",
+          "name": "atmega640"
+        }
+      ]
+    },
+    {
+      "name": "pic32cm_pl10_q64",
+      "displayName": "pic32cm_pl10_q64: PIC32CM PL10 firmware (build-verified)",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "pic32cm_pl10_q64"
+        },
+        {
+          "type": "build",
+          "name": "pic32cm_pl10_q64"
+        },
+        {
+          "type": "test",
+          "name": "pic32cm_pl10_q64"
+        }
+      ]
+    },
+    {
+      "name": "pic32cm_pl10_dip28",
+      "displayName": "pic32cm_pl10_dip28: PIC32CM PL10 firmware (build-verified)",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "pic32cm_pl10_dip28"
+        },
+        {
+          "type": "build",
+          "name": "pic32cm_pl10_dip28"
+        },
+        {
+          "type": "test",
+          "name": "pic32cm_pl10_dip28"
+        }
+      ]
+    },
+    {
+      "name": "simavr_test",
+      "displayName": "simavr_test: simavr integration tests",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "simavr_test"
+        },
+        {
+          "type": "build",
+          "name": "simavr_test"
+        },
+        {
+          "type": "test",
+          "name": "simavr_test"
+        }
+      ]
+    },
+    {
+      "name": "test-sanitize",
+      "displayName": "Host unit tests under ASan and UBSan",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "test-sanitize"
+        },
+        {
+          "type": "build",
+          "name": "test-sanitize"
+        },
+        {
+          "type": "test",
+          "name": "test-sanitize"
+        }
+      ]
+    },
+    {
+      "name": "test-coverage",
+      "displayName": "Host unit tests with core coverage report",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "test-coverage"
+        },
+        {
+          "type": "build",
+          "name": "test-coverage"
+        },
+        {
+          "type": "test",
+          "name": "test-coverage"
+        },
+        {
+          "type": "build",
+          "name": "coverage-report"
+        }
+      ]
+    }
+  ]
+}

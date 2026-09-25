@@ -18,11 +18,19 @@ if(ASDF_SANITIZE OR "$ENV{ASDF_SANITIZE}")
 endif()
 
 # With ASDF_COVERAGE set (CMake option or environment variable), the host tests
-# record line and branch coverage for gcov; report it with gcovr (see README).
+# record line and branch coverage for gcov. After the tests run, the coverage
+# target reports the core's coverage with gcovr (run through uv).
 option(ASDF_COVERAGE "Build host tests with coverage instrumentation" OFF)
 if(ASDF_COVERAGE OR "$ENV{ASDF_COVERAGE}")
   add_compile_options(--coverage -O0)
   add_link_options(--coverage)
+  add_custom_target(coverage
+    COMMAND ${ASDF_UV} tool run gcovr --root ${CMAKE_SOURCE_DIR}
+            --filter src/ --exclude src/Arch/ --exclude src/Keymaps/
+            ${CMAKE_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Reporting host test coverage of the core"
+    VERBATIM)
 endif()
 
 # Match the firmware's unsigned char (set by -funsigned-char on AVR, the default
@@ -198,3 +206,7 @@ target_compile_options(test_production_keymaps PRIVATE ${C_FLAGS})
 target_include_directories(test_production_keymaps PRIVATE ${TEST_INCLUDES})
 target_link_libraries(test_production_keymaps unity asdf_production)
 add_test(NAME test_production_keymaps COMMAND ${CMAKE_BINARY_DIR}/test/test_production_keymaps)
+
+# CMakePresets.json must have a preset for every target in targets.csv.
+add_test(NAME presets_match_targets
+  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/asdf_check_presets.cmake)

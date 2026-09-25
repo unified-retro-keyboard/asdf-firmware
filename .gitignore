@@ -18,7 +18,7 @@
 /docs/source/toc_*.rst
 /docs/build/
 
-# python tooling byproducts (conf.py, pipenv)
+# python tooling byproducts (conf.py, uv)
 __pycache__/
 *.pyc
 .venv/

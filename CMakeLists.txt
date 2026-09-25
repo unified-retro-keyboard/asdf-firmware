@@ -1,4 +1,12 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.25)
+
+# Each build directory builds one target, selected by ARCH. The presets in
+# CMakePresets.json set it: cmake --workflow --preset <target>.
+if(NOT ARCH)
+  message(FATAL_ERROR
+    "ARCH is not set. Configure with a preset (cmake --list-presets), "
+    "or pass -DARCH=<target> with a target from targets.csv.")
+endif()
 
 set(KEYMAPFILE keymaps.txt)
 
@@ -80,7 +88,7 @@ elseif(ARCH MATCHES pic32cm_pl10_dip28)
 endif()
 
 project("asdf"
-  VERSION 1.7.1
+  VERSION 1.8.0
   DESCRIPTION "A customizable keyboard matrix controller for retrocomputers"
   LANGUAGES C)
 
@@ -121,6 +129,12 @@ else()
   endif()
 
   add_subdirectory(src)
+
+  # The firmware's test is its size budget (test/size-ceilings.csv).
+  enable_testing()
+  add_test(NAME size_budget
+    COMMAND bash ${CMAKE_SOURCE_DIR}/size-report.sh
+            -c ${CMAKE_SOURCE_DIR}/test/size-ceilings.csv ${ARCH})
 endif()
 
 # generate reStructuredText index file for project version: Note: this may be

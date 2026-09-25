@@ -7,14 +7,15 @@ representative keypresses per keymap.
 ## Run locally
 
 ```bash
-bash make-targets.sh -a              # build AVR firmware (one-time)
-bash make-targets.sh -t simavr_test  # build runner, run ctest matrix
+bash make-targets.sh -a avr               # build AVR firmware (one-time)
+cmake --workflow --preset simavr_test     # build runner, run ctest matrix
 ```
 
-`make-targets.sh -t simavr_test` checks that `simavr` and
-`libsimavr-dev` headers are installed and that all five AVR ELFs exist
-before invoking cmake and ctest. If either check fails it prints the
-relevant install or build command and exits nonzero.
+Configuring `simavr_test` fails, with install instructions, if the
+`libsimavr-dev` headers are missing. Each target's tests depend on a
+setup test (`simavr_<target>_elf`) that checks for the target's
+firmware ELF; if it is missing, the setup test fails with the preset
+that builds it, and that target's tests are not run.
 
 ### Supported targets
 
@@ -22,7 +23,7 @@ relevant install or build command and exits nonzero.
 atmega328p  atmega168p  atmega1280  atmega2560
 ```
 
-atmega640 is built by `make-targets.sh -a` but simavr 1.6 on Ubuntu does
+atmega640 is built by `make-targets.sh -a avr` but simavr 1.6 on Ubuntu does
 not support that core; its cases are not registered in the ctest matrix.
 
 All four supported targets run the full event-driven sequence (matrix
@@ -34,7 +35,7 @@ and feeds bits onto PINB[0] one at a time.
 ## Iterate on a single case
 
 ```bash
-cd build-simavr-test
+cd build-simavr_test
 ctest -R simavr_atmega2560_sol -V    # one case, verbose ctest output
 ./test/simavr/asdf_simavr_runner \
     --target atmega2560 --keymap sol \
@@ -128,7 +129,7 @@ Consequences for the tests:
 
 ## Add a new keymap test
 
-1. Build the firmware: `bash make-targets.sh -a`.
+1. Build the firmware: `bash make-targets.sh -a avr`.
 
 2. Copy `keymap_data/asdf_simavr_test_classic.h` to
    `keymap_data/asdf_simavr_test_<new>.h`. Rename the struct and events
@@ -161,7 +162,7 @@ Consequences for the tests:
    `expected` bytes in the events array accordingly — a plain `a` press
    on a boot-CAPS keymap should expect `'A'`, not `'a'`.
 
-8. Run `bash make-targets.sh -t simavr_test`. New ctest cases appear as
+8. Run `cmake --workflow --preset simavr_test`. New ctest cases appear as
    `simavr_<each-target>_<new>` and run automatically.
 
 9. If a case fails, re-run with `--verbose --vcd /tmp/debug.vcd` and

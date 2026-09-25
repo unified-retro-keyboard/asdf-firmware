@@ -240,6 +240,7 @@ function(add_avr_executable EXECUTABLE_NAME)
 
   install(FILES ${sphinx_file} DESTINATION docs/source)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${basename}.hex DESTINATION dist)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${basename}.hex DESTINATION docs/source)
 
    # elf file
    add_executable(${elf_file} EXCLUDE_FROM_ALL ${ARGN})

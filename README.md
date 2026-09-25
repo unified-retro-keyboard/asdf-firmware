@@ -1,22 +1,24 @@
 # ASDF Keyboard scanning firmware
 
-This is a key matrix scanner that can detect and debounce keypress and release
-events on a key matrix and either send codes or perform actions on keypress or
-release. Keymaps are defined per application and may, for example, generate
-ASCII codes, special keyscan codes, etc. The code is modular and may be
-integrated into a larger system easily.
+ASDF scans a key matrix, debounces keypresses and releases, and runs an action,
+which could be to send an 8-bit code. The supported application is a parallel
+ASCII keyboard. Serial, USB, or anything else is a `send_code` routine you
+supply, or a loop that reads the codes (see "Using the keyboard in your own
+program" below).
 
-By default, the code supports any number of rows by 8 columns, which will give
-the bestperformance on an 8-bit microcontroller. For more than 8 columns per
-row, the row datatype would need to be changed to uint16_t to support 16
-columns, etc.
+A keymap includes one matrix for each modifier state (plain, shift, caps, and
+control), plus that keymap's outputs and options. The keymap definition matrices
+are written in YAML under `src/Keymaps/`. The definitions are turned into C at
+build time. A key names an action. Sending a code is one such action,
+so a key can send any byte. Debounce time, repeat rate, and buffer sizes are
+specified in `src/asdf_config.h`.
 
-The first supported application is a parallel ASCII output keyboard. If you want
-serial or USB output, you can supply your own routines.
+The scanner accepts up to 16 rows and 8 columns (`ASDF_MAX_ROWS` and
+`ASDF_MAX_COLS` in `src/asdf.h`). A row is an `asdf_cols_t`, one bit per
+column, so eight columns keeps the row a byte on an 8-bit machine. Wider rows
+mean widening `asdf_cols_t` (for example to `uint16_t`) and raising
+`ASDF_MAX_COLS` to match.
 
-ASDF supports basic keyboard functionality and is configurable via a few
-boolean variables, and via the key maps. The key maps are organized in
-row,column format, with separate keymaps shift, capslock, and control-key modes.
 
 ## Downloads
 
@@ -40,10 +42,12 @@ The following keymaps may be selected via the DIP switches:
 
 ## Keyboard features
 
-  * N-key rollover
-  * Debouncing
-  * Auto repeat and manual repeat.  Autorepeat may be enabled or diabled via DIP switch.
+  * N-key rollover (Requires a diode per switch.  A diodeless keyboard is prone to ghosting.)
+  * Per-key debouncing
+  * Auto repeat and manual repeat.  Autorepeat may be enabled or disabled via DIP switch.
   * Positive or negative strobe polarity selection via DIP switch.
+  * Keymap selection by DIP switch
+  * Embeddable, so keycodes can be ingested by a larger application, or pushed onto other channels such as USB, Bluetooth, or Ethernet.
 
 ## Compiling and configuration
 
@@ -53,7 +57,7 @@ The following keymaps may be selected via the DIP switches:
 - You will see a "project" section near the beginning of the file.
 
         project("asdf"
-            VERSION 1.7.1
+            VERSION 1.8.0
             DESCRIPTION "A customizable keyboard matrix controller for retrocomputers"
             LANGUAGES C)
 
@@ -67,111 +71,87 @@ The following keymaps may be selected via the DIP switches:
 ### building using github actions:
 
 If you have commit privileges to the repository, or if you have your own fork,
-then push a commit to one of the following branches to trigger an automatic build:
-
-- main
-- asdf-build-test
+then push a commit to `main`, or open a pull request against `main`, to trigger
+an automatic build and test of every target.
 
 Pushing a `vX.Y.Z` tag also triggers the release pipeline (documentation deploy and GitHub Release with built `.hex` / `.elf` assets).
 
-This will generate a github page with downloadable hex files. You will find the
-link to the github page in the "Actions" tab of the repository.
+The tag build generates a github page with downloadable hex files. You will find
+the link to the github page in the "Actions" tab of the repository.
 
 You will also need to activate GitHub pages.  To do this:
 
 - Click "Settings" at the top of this GitHub page, then along the menu bar on the left, select "Pages" in the "Code and Actions Section."
 - In the "Build and deployment" section, select "Deploy from Branch"
 - The "Branch" section will display a message that github pages is disabled.  Select the branch "gh-pages" from the dropdown, and the "disabled" message will be replaced with a message that the site is being built from "gh-pages".  Once you have triggered a build, you will see a message at the top of this page with a link to the live page.
--
 
-### build using the make-build-dirs.sh script.
+### build with CMake presets
 
+The build needs CMake 3.25 or later, [uv](https://docs.astral.sh/uv/) (it runs
+the key matrix generator), and the compiler for each target: `avr-gcc` for the
+AVR firmware, `arm-none-eabi-gcc` for the PIC32CM PL10 firmware, and the host
+`gcc` for the tests. The simavr tests also need `libsimavr-dev` and
+`libelf-dev`.
 
-1) Run the make-targets.sh script
+Each target in `targets.csv` has a preset in `CMakePresets.json`, which builds
+it in `build-<target>`. List them with:
 
-    Options:
+        cmake --list-presets=all
 
-            -x   Before creating a build directgory or virtual env, remove
-                 any pre-existing version
-            -t   add an architecture directory
-            -a   Add all valid architecture directories
-            -i   Build each specified target and install to dist directory
-            -p   Install pipenv virtual environment for python scripts
-            -c   Clean all artifacts
-            -s   Copy dist files to sphinx directory
+A workflow preset configures, builds, and tests a target in one command:
 
-    Valid targets: atmega168p, atmega328p, atmega640, atmega1280, atmega2560, pic32cm_pl10_q64, pic32cm_pl10_dip28, test, simavr_test
+        cmake --workflow --preset atmega2560
 
-    (`test` runs the host-side Unity unit tests; `simavr_test` runs
-    simavr-driven integration tests against the built AVR ELFs.)
+The steps can also be run one at a time:
 
-    - To create build directories for all targets and install the python virtual
-      environment:
+        cmake --preset atmega2560
+        cmake --build --preset atmega2560
+        ctest --preset atmega2560
 
-            bash make-targets.sh -ap
+The presets are:
 
-    - To create a a build directory for atmega1280, deleting any pre-existing directory:
+- **Firmware** (`atmega328p`, `atmega168p`, `atmega2560`, `atmega1280`,
+  `atmega640`, `pic32cm_pl10_q64`, `pic32cm_pl10_dip28`): builds the firmware.
+  Its test checks the flash and RAM use against the budget in
+  `test/size-ceilings.csv`.
+- **`test`**: the host unit tests.
+- **`test-sanitize`**: the host unit tests under AddressSanitizer and
+  UndefinedBehaviorSanitizer; any finding fails the test.
+- **`test-coverage`**: the host unit tests with coverage, followed by a gcovr
+  report of the portable core's coverage.
+- **`simavr_test`**: runs the AVR firmware ELFs in simavr (see
+  `test/simavr/README.md`). Build the AVR firmware first; a missing ELF fails
+  that target's tests, and the error names the preset that builds it.
 
-            bash make-targets.sh -xt atmega2560
+To install the hex files to `dist/`, and the AVR hex files and download links
+to `docs/source/` for the documentation:
 
-    - To remove and rebuild the python virtual environment:
+        cmake --install build-atmega2560
 
-            bash make-targets.sh -xp
+With `-DASDF_WERROR=ON`, or `ASDF_WERROR=1` in the environment, warnings are
+errors, as in CI.
 
-    - To copy hex files to sphinx source tree (Requires the hex files
-      to be installed in ./dist either from make install in each target
-      directory, or 'bash make-targets.sh -ai')
+`size-report.sh` reports the flash and RAM use of every built firmware target,
+and with `-b test/size-baseline.csv` the change from the baseline.
 
-            bash make-targets.sh -s
+### build several targets at once
 
+`make-targets.sh` runs the workflow preset for several targets:
 
-    - From a fresh checkout, build all targets and install hex files in
-      sphinx tree for the download links:
+        bash make-targets.sh -t atmega328p -t test   # the named presets
+        bash make-targets.sh -a avr                  # every AVR target
+        bash make-targets.sh -a                      # every target
+        bash make-targets.sh -xia avr                # clean rebuild, then install
+        bash make-targets.sh -l                      # list the targets
 
-            bash make-targets.sh -pais
+Run `bash make-targets.sh -h` for all the options.
 
-2) Enter the build directory for the desired architecture and build:
-   Only needed if working on single target.  To make all targets at once,
-   use the make-targest script described in step 1.
+### build the documentation
 
-   Example: building the atmega2560 binary:
+Install the hex files first (`bash make-targets.sh -ia avr`), then:
 
-         cd build-atmega2560
-         make
-
-3) Build the sphinx documentation:
-
-         cd docs
-         pipenv run make html
-
-### build manually (e.g., for development)
-
-1) make build directories for the desired architectures:
-
-        mkdir build-atmega328p build-atmega2560
-
-2) enter each build directory and run cmake for the desired architecture.
-
-        cd build-atmega2560
-        cmake .. -DARCH=atmega2560 -DCMAKE_BUILD_TYPE=RELEASE
-        make
-
-3) to run unit tests, the process is the same as above, with "test" as the
-   target:
-
-        mkdir build-test
-        cd build-test
-        cmake .. -DARCH=test
-        make && ctest
-
-   The host tests can also be built with checks:
-
-   - `-DASDF_SANITIZE=ON`: run under AddressSanitizer and
-     UndefinedBehaviorSanitizer; any finding fails the test.
-   - `-DASDF_COVERAGE=ON`: record coverage. After running the tests, report
-     the portable core's coverage with
-     `uvx gcovr --root . --filter src/ --exclude src/Arch/ --exclude src/Keymaps/ build-test`.
-   - `-DASDF_WERROR=ON` (any build): make warnings errors, as CI does.
+        cd docs
+        uv run make html
 
 ## Porting
 
@@ -194,16 +174,14 @@ yet been validated on hardware or in an emulator. The core runs at 24 MHz (the
 OSCHF internal-oscillator maximum; the PL10 flash is single-cycle, so no wait
 states are needed). Building them requires `arm-none-eabi-gcc`.
 
-The firmware is designed to run from ROM on a slow vintage processor, with a
-small RAM footprint. All of a keyboard's changeable state is held in one
-keyboard object (`asdf_t`), so the core keeps no hidden state and any number of
-keyboards can run independently. It is designed to compile on small
-architectures, or to be hand-translated to assembly on small processors, or to
-an HDL for a CPLD or FPGA.
+The firmware runs from flash on a small microcontroller. Keymaps and the action
+table are constant data. All of a keyboard's changeable state is held in one
+keyboard object (`asdf_t`), so the core keeps no hidden state and multiple
+independent keyboards can be maintained. The stock firmware uses one keyboard.
+Another keyboard is another `asdf_t`, and it has to fit in the part's RAM.
 
-The code was written to favor readability over cleverness. While tempted to
-optimize bit testing via bithacks, I opted for code simplicity since the
-performance benefit was not there for 8-bit values.
+The code favors readability over cleverness. Bit tests are plain shifts and
+masks. I left the bithacks out because they were not faster for 8-bit values.
 
 To port to a new processor architecture, you may use the atmega2560 files as an
 example, and create a pair of architecture-specific .c and .h files for the new

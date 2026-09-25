@@ -1,359 +1,102 @@
 #!/bin/bash
+#
+# Build several targets in one command. Each target is built by its CMake
+# workflow preset (configure, build, test); see CMakePresets.json and README.md.
+# For a single target, the native commands are enough:
+#
+#   cmake --workflow --preset atmega328p
+#
+# Targets and their categories are listed in targets.csv.
 
-source "$(dirname "${BASH_SOURCE[0]}")/version.sh"
+# cmake --workflow reads CMakePresets.json from the current directory.
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+TARGETS_FILE=targets.csv
 
-GENERATOR="Unix Makefiles"
-NUM_VALID_TARGETS=0
-BUILD_TYPE=RELEASE
-INSTALL_DIR="dist"
-MAKE_TARGETS="all"
-DOC_DIR=docs
-LINKS_DIR="$DOC_DIR/source"
+usage() {
+    cat <<EOF
+Usage:
+  $0 [-x] [-i] [-c] -t PRESET [-t PRESET] ...
+  $0 [-x] [-i] [-c] -a [CATEGORY]
+  $0 -l [CATEGORY | simavr]
 
-# Targets are defined in targets.csv (the single source of truth, also read by
-# test/simavr/CMakeLists.txt and CI). Each target has a category that determines
-# how it is built (see build_arch) and lets -a select a whole category at once:
-#   avr     - 8-bit AVR firmware (avr-gcc); compiled/installed via deploy (-i)
-#   test    - host unit tests (native gcc + ctest)
-#   arm_m0+ - Arm Cortex-M0+ firmware (arm-none-eabi-gcc); build-verified
-#   sim     - simavr integration tests (needs the AVR ELFs + simavr)
-TARGETS_FILE="$(dirname "${BASH_SOURCE[0]}")/targets.csv"
+Options:
+  -t PRESET  Run a workflow preset (configure, build, test); may repeat
+  -a         Run every target in targets.csv, or only those in CATEGORY
+  -l         List targets, optionally filtered by CATEGORY or 'simavr'
+  -x         Remove each target's build directory first
+  -i         Install each target (hex files to dist/ and docs/source/)
+  -c         Remove installed artifacts from dist/ and docs/source/
+  -h         Display this help message
 
-add_valid_target() {
-    VALID_TARGETS[$NUM_VALID_TARGETS]=$1
-    TARGET_CATEGORY[$NUM_VALID_TARGETS]=$2
-    TARGET_SIMAVR[$NUM_VALID_TARGETS]=$3
-    ((NUM_VALID_TARGETS++))
+Categories: avr, test, arm_m0+, sim
+Presets:    cmake --list-presets=workflow
+EOF
 }
 
-# Populate the target tables from targets.csv (name,category,simavr).
-load_targets() {
+# Print target names from targets.csv matching a filter: empty = all, a
+# category name, or the keyword "simavr" for the simavr-tested targets.
+list_targets() {
     local name category simavr
     while IFS=, read -r name category simavr; do
-        # strip whitespace / CR; skip comments and blank lines
         name="${name//[[:space:]]/}"
         category="${category//[[:space:]]/}"
         simavr="${simavr//[[:space:]]/}"
         [[ -z $name || $name == \#* ]] && continue
-        add_valid_target "$name" "$category" "$simavr"
+        if [[ -z $1 || $category == "$1" || ($1 == simavr && $simavr == yes) ]]; then
+            echo "$name"
+        fi
     done < "$TARGETS_FILE"
 }
-load_targets
 
-# Print target names matching a filter: empty = all, a category name, or the
-# keyword "simavr" for targets exercised by the simavr integration tests.
-list_targets() {
-    local i
-    for (( i = 0; i < NUM_VALID_TARGETS; i++ )); do
-        if [[ -z $1 ]] \
-           || [[ $1 == simavr && ${TARGET_SIMAVR[$i]} == yes ]] \
-           || [[ ${TARGET_CATEGORY[$i]} == "$1" ]]; then
-            echo "${VALID_TARGETS[$i]}"
-        fi
-    done
+clean_installed() {
+    rm -rvf dist docs/source/toc_*.rst docs/source/*.hex docs/source/index.rst
 }
 
+PRESETS=()
+CLEAN_FIRST=""
+INSTALL=""
+CLEAN_INSTALLED=""
 
-check_valid_target() {
-    result="false"
-
-    for (( i = 0; i < NUM_VALID_TARGETS; i++ ))
-    do
-        if [[ ${VALID_TARGETS[$i]} == $1 ]]
-        then
-            result=$i
-        fi
-    done
-    echo $result
-}
-
-
-# Return success if $1 is a category used by at least one registered target.
-is_known_category() {
-    local i
-    for (( i = 0; i < NUM_VALID_TARGETS; i++ ))
-    do
-        [[ ${TARGET_CATEGORY[$i]} == "$1" ]] && return 0
-    done
-    return 1
-}
-
-
-do_pipenv_clean() {
-    echo removing old python virtual environment...
-    pipenv --rm
-}
-
-
-do_pipenv_install() {
-    echo installing python virtual environment...
-    pipenv install
-}
-
-clean_arch() {
-    target_arch="$1"
-    echo "Removing pre-existing build directory: $target_arch..."
-    rm -rf "build-$target_arch"
-    echo "Removing any build artifacts"
-    rm -f $INSTALL_DIR/*"$1"*
-    echo "Removing any download links"
-    rm -f $LINKS_DIR/*$1*
-}
-
-preflight_simavr_test() {
-    local missing=0
-    local ver
-    ver=$(asdf_version)
-    for t in $(list_targets simavr); do
-        local elf="build-$t/src/asdf-v${ver}-$t.elf"
-        if [[ ! -f $elf ]]; then
-            echo "ERROR: missing $elf"
-            missing=1
-        fi
-    done
-    if [[ $missing -ne 0 ]]; then
-        echo
-        echo "Run: bash make-targets.sh -a avr"
-        echo "to build the AVR firmware before running integration tests."
-        return 1
-    fi
-
-    if ! command -v simavr >/dev/null 2>&1; then
-        echo "ERROR: simavr not found on PATH."
-        echo "Install with: sudo apt-get install simavr libsimavr-dev pkg-config"
-        echo "          or: sudo port install simavr  (MacPorts)"
-        echo "          or: brew install simavr  (Homebrew)"
-        return 1
-    fi
-    local header_found=
-    for prefix in /usr/include /usr/local/include /opt/local/include /opt/homebrew/include; do
-        if [[ -f "$prefix/simavr/sim_avr.h" ]]; then
-            header_found="$prefix/simavr/sim_avr.h"
-            break
-        fi
-    done
-    if [[ -z $header_found ]]; then
-        echo "ERROR: libsimavr headers not found."
-        echo "Install with: sudo apt-get install libsimavr-dev"
-        echo "          or: sudo port install simavr"
-        echo "          or: brew install simavr"
-        echo "Or build from source and pass -DSIMAVR_ROOT=<prefix> via cmake."
-        return 1
-    fi
-    return 0
-}
-
-# Build a target. Behavior is derived from the target's category:
-#   avr     -> configure only (firmware is compiled and installed by deploy, -i)
-#   test    -> make + ctest (host unit tests)
-#   sim     -> preflight + make + ctest (simavr integration tests)
-#   arm_m0+ -> make (build-verified firmware; not installed/deployed)
-build_arch() {
-    local target_arch="$1"
-    local category="$2"
-
-    if [[ $category == sim ]]; then
-        preflight_simavr_test || exit 1
-    fi
-
-    cmake -S . -B "build-$target_arch" -G "$GENERATOR" \
-        -DCMAKE_INSTALL_PREFIX="." -DARCH="$target_arch" \
-        -DCMAKE_BUILD_TYPE="$BUILD_TYPE" || exit 1
-
-    case "$category" in
-        test | sim)
-            (cd "build-$target_arch" && make && ctest --output-on-failure) || exit 1
-            ;;
-        "arm_m0+")
-            (cd "build-$target_arch" && make) || exit 1
-            ;;
-    esac
-
-}
-
-deploy_arch() {
-    local target_arch="$1"
-
-    if [[ -d "build-$target_arch" ]]
-    then
-        (cd "build-$target_arch" \
-        && make install) || exit 1
-    fi
-}
-
-clean_all() {
-    echo "- Removing install dir \"$INSTALL_DIR\"..."
-    rm -rvf "$INSTALL_DIR"
-    echo "- Removing download links from doc dir..."
-    rm -vf $DOC_DIR/source/toc_*
-    echo "- Removing hex files from doc dir..."
-    rm -vf $DOC_DIR/source/*.hex
-    echo "- Removing versioned index file from doc dir"
-    rm -vf "$DOC_DIR/source/index.rst"
-}
-
-syntax() {
-    echo "Usage:"
-    echo "  $0 -t target [-t target] ..."
-    echo "  $0 -a [category]"
-    echo "  $0 -h"
-    echo ""
-    echo "Options:"
-    echo "  -h.  Display this help message"
-    echo "  -x   Before creating a build directgory or virtual env, remove"
-    echo "       any pre-existing version"
-    echo "  -t   add an architecture target"
-    echo "  -a   Build all targets; with a category argument, only that category"
-    echo "  -l   List target names (optionally filtered by category or 'simavr')"
-    echo "  -i   Build each specified target and install to dist directory"
-    echo "  -p   Install pipenv virtual environment for python scripts"
-    echo "  -c   Clean all artifacts"
-    echo "  -s   Copy dist files to sphinx directory"
-    echo "Valid targets: ${VALID_TARGETS[*]}"
-    echo "Categories:    avr, test, arm_m0+, sim"
-}
-
-parse() {
-    local SYNTAX=""
-    local ALL_CATEGORY=""
-    local i
-    local valid_index
-    local next
-
-    NUM_CMAKE_TARGETS=0
-    CLEAN_BEFORE_BUILD=""
-    DO_PIPENV_INSTALL=""
-    DEPLOY=""
-    CLEAN_ALL=""
-    COPY_DIST_TO_DOCS=""
-
-    while getopts "t:ahipxcsl" optname
-    do
-        case "$optname" in
-            h)
-                SYNTAX="yes"
-                ;;
-            l)
-                # -l prints target names (optionally filtered by category, or by
-                # the keyword "simavr") and exits. Used by CI and humans.
-                next="${!OPTIND}"
-                if [[ -n $next && $next != -* ]]; then
-                    list_targets "$next"
-                    ((OPTIND++))
-                else
-                    list_targets ""
-                fi
-                exit 0
-                ;;
-            a)
-                # -a takes an OPTIONAL category argument. With a known category,
-                # build that category; a bare -a builds every target.
-                next="${!OPTIND}"
-                if [[ -n $next && $next != -* ]]; then
-                    if is_known_category "$next"; then
-                        ALL_CATEGORY="$next"
-                        ((OPTIND++))
-                    else
-                        echo "Unknown category \"$next\""
-                        SYNTAX="yes"
-                    fi
-                else
-                    ALL_CATEGORY="__all__"
-                fi
-                ;;
-            t)
-                # Test that target is valid
-                valid_index=$(check_valid_target $OPTARG)
-                if [[ $valid_index != "false" ]]
-                then
-                    CMAKE_TARGETS[$NUM_CMAKE_TARGETS]=$valid_index
-                    ((NUM_CMAKE_TARGETS++))
-                else
-                    echo Unknown target \"$OPTARG\"
-                    SYNTAX="yes"
-                fi
-                ;;
-            p)
-                DO_PIPENV_INSTALL="yes"
-                ;;
-            x)
-                CLEAN_BEFORE_BUILD="yes"
-                ;;
-            i)  DEPLOY="yes"
-                ;;
-            s)  COPY_DIST_TO_DOCS="yes"
-                ;;
-            c)  CLEAN_ALL="yes"
-
-    esac
-    done
-
-    if [[ "$SYNTAX" == "yes" ]]; then
-        syntax && die
-    fi
-
-    if [[ -n "$ALL_CATEGORY" ]]
-    then
-        for (( i=0; i<NUM_VALID_TARGETS; i++ ))
-        do
-            if [[ "$ALL_CATEGORY" == "__all__" || ${TARGET_CATEGORY[$i]} == "$ALL_CATEGORY" ]]; then
-                CMAKE_TARGETS[$NUM_CMAKE_TARGETS]=$i
-                ((NUM_CMAKE_TARGETS++))
+while getopts "t:alxich" opt; do
+    case $opt in
+        t) PRESETS+=("$OPTARG") ;;
+        a | l)
+            # -a and -l take an optional filter argument
+            filter=""
+            next="${!OPTIND}"
+            if [[ -n $next && $next != -* ]]; then
+                filter="$next"
+                ((OPTIND++))
             fi
-        done
+            if [[ $opt == l ]]; then
+                list_targets "$filter"
+                exit 0
+            fi
+            selected=$(list_targets "$filter")
+            if [[ -z $selected ]]; then
+                echo "No targets in category \"$filter\"" >&2
+                exit 2
+            fi
+            PRESETS+=($selected)
+            ;;
+        x) CLEAN_FIRST="yes" ;;
+        i) INSTALL="yes" ;;
+        c) CLEAN_INSTALLED="yes" ;;
+        *) usage; exit 2 ;;
+    esac
+done
+
+if [[ ${#PRESETS[@]} -eq 0 && -z $CLEAN_INSTALLED ]]; then
+    usage
+    exit 2
+fi
+
+[[ -n $CLEAN_INSTALLED ]] && clean_installed
+
+for preset in "${PRESETS[@]}"; do
+    [[ -n $CLEAN_FIRST ]] && rm -rf "build-$preset"
+    cmake --workflow --preset "$preset" || exit 1
+    if [[ -n $INSTALL ]]; then
+        cmake --install "build-$preset" || exit 1
     fi
-
-}
-
-die() {
-    builtin echo $@
-    exit 1
-}
-
-main() {
-     local TARGET
-     local i
-     parse $@
-
-     if [[ "$DO_PIPENV_INSTALL" == "yes" ]]
-     then
-         if [[ "$CLEAN_BEFORE_BUILD" == "yes" ]]
-         then
-             do_pipenv_clean
-         fi
-
-         do_pipenv_install
-     fi
-
-     if [[ "$CLEAN_ALL" == "yes" ]]
-     then
-         clean_all
-     fi
-
-     echo Valid Targets: "${VALID_TARGETS[*]}"
-
-     for (( i=0; $i<$NUM_CMAKE_TARGETS; i++ ))
-     do
-         TARGET=${CMAKE_TARGETS[$i]}
-         if [[ "$CLEAN_BEFORE_BUILD" == "yes" ]]
-         then
-             clean_arch ${VALID_TARGETS[$TARGET]}
-         fi
-         build_arch ${VALID_TARGETS[$TARGET]} ${TARGET_CATEGORY[$TARGET]}
-         if [[ "$DEPLOY" == "yes" ]]
-         then
-             deploy_arch ${VALID_TARGETS[$TARGET]}
-         fi
-     done
-
-     if [[ $COPY_DIST_TO_DOCS == "yes" && -d "$INSTALL_DIR" ]]
-     then
-         cp -av "$INSTALL_DIR"/* docs/source
-     fi
-
-}
-
-
-main $@
-
-exit 0
+done

@@ -49,9 +49,10 @@ jobs:
             echo "Tag $GITHUB_REF_NAME (version $TAG_VERSION) does not match CMakeLists VERSION ($CMAKE_VERSION)" >&2
             exit 1
           fi
-      - run: /bin/bash ./make-targets.sh -a avr -i -s
-      - name: Report firmware sizes against baseline and check size budgets
-        run: /bin/bash ./size-report.sh -b test/size-baseline.csv -c test/size-ceilings.csv
+      # each target: cmake --workflow --preset <target> (build and size budget), then install
+      - run: /bin/bash ./make-targets.sh -a avr -i
+      - name: Report firmware sizes against baseline
+        run: /bin/bash ./size-report.sh -b test/size-baseline.csv
       - name: Upload built ELFs
         uses: actions/upload-artifact@v4
         with:
@@ -84,18 +85,11 @@ jobs:
       - name: Install uv (runs the key matrix generator)
         uses: astral-sh/setup-uv@v5
       - name: Run host unit tests
-        run: bash ./make-targets.sh -t test
+        run: cmake --workflow --preset test
       - name: Run host unit tests under ASan and UBSan
-        run: |
-          cmake -S . -B build-test-sanitize -DARCH=test -DASDF_SANITIZE=ON
-          cmake --build build-test-sanitize -j
-          ctest --test-dir build-test-sanitize --output-on-failure
+        run: cmake --workflow --preset test-sanitize
       - name: Report host test coverage of the core
-        run: |
-          cmake -S . -B build-test-coverage -DARCH=test -DASDF_COVERAGE=ON
-          cmake --build build-test-coverage -j
-          ctest --test-dir build-test-coverage
-          uvx gcovr --root . --filter src/ --exclude src/Arch/ --exclude src/Keymaps/ build-test-coverage
+        run: cmake --workflow --preset test-coverage
 
   build_arm:
     runs-on: ubuntu-latest
@@ -109,8 +103,8 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Build PIC32CM PL10 firmware (build-verified, no hardware/emulator validation yet)
         run: bash ./make-targets.sh -a arm_m0+
-      - name: Report firmware sizes against baseline and check size budgets
-        run: bash ./size-report.sh -b test/size-baseline.csv -c test/size-ceilings.csv
+      - name: Report firmware sizes against baseline
+        run: bash ./size-report.sh -b test/size-baseline.csv
 
   integration_test:
     needs: build_firmware
@@ -137,7 +131,7 @@ jobs:
                 -exec mv {} build-$t/src/ \; 2>/dev/null || true
           done
       - name: Run simavr integration tests
-        run: bash ./make-targets.sh -t simavr_test
+        run: cmake --workflow --preset simavr_test
       - name: Upload VCD on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -158,17 +152,14 @@ jobs:
       - name: install_git_and_bash
         run: apk add bash git rsync zip
       - uses: actions/checkout@v4
-      - run: apk add python3 py3-pip
-      - run: pip install --break-system-packages -U sphinx sphinx-rtd-theme sphinx-autodoc-typehints
-      - run: pip install --break-system-packages -U sphinxcontrib-napoleon
-      - run: pip install --break-system-packages -U toml
+      - run: apk add python3 py3-pip && pip install --break-system-packages uv
       - name: Download docs/dist
         uses: actions/download-artifact@v4
         with:
           name: asdf-docs-dist
           path: .
       - run: mkdir public; touch public/.nojekyll
-      - run: sphinx-build -b html docs/source public
+      - run: uv run --only-group docs sphinx-build -b html docs/source public
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:

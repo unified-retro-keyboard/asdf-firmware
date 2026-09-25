@@ -1,4 +1,5 @@
-# Size budgets for each firmware target, checked by size-report.sh -c.
+# Size budgets for each firmware target, checked by size-report.sh -c. Each
+# firmware preset runs this check as its test (size_budget).
 #
 # flash: text + data; ram: data + bss (static use, excluding the ARM
 # heap/stack reservation). Each budget is about 5% above the size when it

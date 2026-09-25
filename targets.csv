@@ -1,8 +1,9 @@
 # ASDF build-target registry — single source of truth.
 #
-# Consumed by make-targets.sh (target list + build category), by
-# test/simavr/CMakeLists.txt (which targets the simavr tests run against), and
-# by CI. Keep this file as the only place target membership is defined.
+# Consumed by make-targets.sh (target lists by category), size-report.sh
+# (firmware targets), and test/simavr/CMakeLists.txt (which targets the simavr
+# tests run against). Each target also needs a workflow preset of the same
+# name in CMakePresets.json; the host test presets_match_targets checks this.
 #
 # Columns: name,category,simavr
 #   category : avr | test | arm_m0+ | sim   (determines how the target is built)
