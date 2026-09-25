@@ -246,3 +246,9 @@ There are two ways to run the keyboard from an application:
   `asdf_init()` once, then `asdf_process()` (which sends codes through the
   platform) or `asdf_update()` (which leaves them queued for
   `asdf_next_code()`) with the elapsed ticks. `src/main.c` is an example.
+
+## License
+
+ASDF is released under the MIT License; see [LICENSE](LICENSE). Versions before
+1.8.0 were released under the GNU General Public License, version 3 or later.
+Vendored third-party code keeps its own license, noted in each file.

@@ -9,6 +9,9 @@ This release pays down accumulated technical debt.
 Highlights
 ~~~~~~~~~~
 
+- ASDF is now released under the MIT License, instead of the GNU General
+  Public License.
+
 - Factored out all the local state into a keyboard object (``asdf_t``),
   allowing multiple keyboards to run independently.
 

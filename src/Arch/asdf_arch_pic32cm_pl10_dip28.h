@@ -11,7 +11,10 @@
  * shift register) are retained from the 328P board.
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
  */
+// SPDX-License-Identifier: MIT
 
 #if !defined(ASDF_ARCH_H)
 #define ASDF_ARCH_H

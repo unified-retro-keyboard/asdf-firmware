@@ -9,7 +9,10 @@
  * linker warnings. _sbrk grows the heap from the linker-provided `end` symbol.
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
  */
+// SPDX-License-Identifier: MIT
 
 #include <stddef.h>
 #include <sys/stat.h>

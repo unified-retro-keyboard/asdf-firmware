@@ -10,7 +10,10 @@
  * asdf_arch_pic32cm_common.c.
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
  */
+// SPDX-License-Identifier: MIT
 
 #include <stdbool.h>
 #include "asdf_arch.h"

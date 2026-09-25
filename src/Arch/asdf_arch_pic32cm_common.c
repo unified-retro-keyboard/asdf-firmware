@@ -9,7 +9,10 @@
  * (328p-class) variants lives in their asdf_arch_pic32cm_pl10_*.c files.
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
  */
+// SPDX-License-Identifier: MIT
 
 #include "asdf_arch_pic32cm_common.h"
 

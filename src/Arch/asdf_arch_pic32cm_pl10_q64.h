@@ -9,7 +9,10 @@
  * differ. Shared ARM mechanics live in asdf_arch_pic32cm_common.{c,h}.
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
+ *
+ * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
  */
+// SPDX-License-Identifier: MIT
 
 #if !defined(ASDF_ARCH_H)
 #define ASDF_ARCH_H
