@@ -2,43 +2,81 @@ ASDF Firmware Release Notes
 ===========================
 
 Version 1.8.0 (Release)
-----------------------
-This release pays down accumulated technical debt
+-----------------------
+
+This release pays down accumulated technical debt.
 
 Highlights
-----------
+~~~~~~~~~~
 
-- Factored out all the local state into a keyboard object (asdf_t), allowing
-  multiple keyboards to run independently.
+- Factored out all the local state into a keyboard object (``asdf_t``),
+  allowing multiple keyboards to run independently.
 
 - Added a simple wrapper for an application to instantiate and run a single
   keyboard, with codes sent to the client application, for example, an arduino
-  implementing a keyboard over USB, BT, or ethernet
+  implementing a keyboard over USB, BT, or ethernet.
 
 - Keyboard processing doesn't block. Scanning can continue while output buffers
   are drained and timed I/O events are playing out.
 
- - Keymaps are now implemented as a tuple of {keypress_function, keypress_param,
-   release_function, release_param} to provide greater keymap flexibility
-   without significantly more complexity. This fixes a few longstanding issues:
+- Keymaps are now implemented as a tuple of {keypress_function, keypress_param,
+  release_function, release_param} to provide greater keymap flexibility
+  without significantly more complexity. This fixes a few longstanding issues:
 
-   - No reserved codes for functions, so all 8-bit codes can be generated. user
-     function hooks are no longer required.
+  - No reserved codes for functions, so all 8-bit codes can be generated. User
+    function hooks are no longer required.
 
-   - The keymap can insert user functions directly into the function table. So
-     the unsafe and undefined behavior pointer casts can be eliminated.
+  - The keymap can insert user functions directly into the function table. So
+    the unsafe and undefined behavior pointer casts can be eliminated.
 
-   - Press and Release actions are no longer tightly coupled. They can be
-     independently specified. This permits richer behavior.
+  - Press and Release actions are no longer tightly coupled. They can be
+    independently specified. This permits richer behavior.
 
-   - Parameters attached to functions pave the way for key-based keyboard
-     settings, to permit reuse of functions like send_code(), and also
-     permitting key-based configuration, which can eventually replace or augment
-     the DIP switch settings.
+  - Parameters attached to functions pave the way for key-based keyboard
+    settings, to permit reuse of functions like ``send_code()``, and also
+    permitting key-based configuration, which can eventually replace or augment
+    the DIP switch settings.
 
-- cleaner keymap configuration via a YAML file makes modifying and creating keymaps easier.
+- Cleaner keymap configuration via a YAML file makes modifying and creating
+  keymaps easier.
 
-- Replace older block-style headers with modern doxygen headers, improving readability
+- Replaced older block-style headers with modern Doxygen headers, improving
+  readability.
+
+Details
+~~~~~~~
+
+- *Bug Fix*: Keymap switches no longer replay held keys. Only configuration
+  switches (keymap select, strobe polarity, autorepeat) are re-applied, and the
+  switch is deferred to the end of the scan.
+- *Bug Fix*: REPEAT pressed during autorepeat now keeps repeating.
+- *Bug Fix*: At startup, the lowest-numbered keymap that exists is selected,
+  rather than assuming keymap 0.
+- *Bug Fix*: A "No Action" key no longer queues a code.
+- *Bug Fix*: The Applesoft test key now works in ``apple2_caps``, as it does in
+  ``apple2``.
+- *Feature*: Any code 0x00–0xFF can be sent. ``KEY_SEND`` repeats,
+  ``KEY_SEND_ONCE`` sends once, and any action can opt into autorepeat.
+- *Feature*: ``asdf_dropped_codes()`` and ``asdf_dropped_messages()`` report
+  queue overflows; ``asdf_keymap_errors()`` reports keymap entries that could
+  not be applied.
+- *Feature*: The typed platform interface (``asdf_platform_t``) replaces the
+  cast hook table.
+- *Feature*: Messages print from flash; nanoprintf is dropped.
+- *Build*: ATmega88P dropped: four-byte keys no longer fit its 8 KB flash. The
+  ATmega328P, 168P, 2560, 1280 and 640 remain.
+- *Build*: Builds now need `uv <https://docs.astral.sh/uv/>`_ to run the keymap
+  generator. ``pyproject.toml`` and ``uv.lock`` replace the Pipfile.
+- *Build*: CMake workflow presets configure, build and test each target;
+  ``make-targets.sh`` and CI use them. CMake 3.25 or later is required.
+- *Build*: Firmware builds check per-target flash and RAM budgets.
+- *Build*: Pedantic, shadow and conversion warnings are enabled, and CI treats
+  warnings as errors.
+- *Test*: Host tests also run under AddressSanitizer and
+  UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
+- *Test*: Randomized key event tests check state invariants on three
+  interleaved keyboards.
+- *Test*: Production keymaps are built and checked on the host.
 
 
 Version 1.7.1 (Release)
@@ -110,7 +148,7 @@ Details
 - *Build*: Removed unused row/column list plumbing and an unused keymap helper.
 
 Version 1.6.5 (Release: 2023-01-02)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -130,7 +168,7 @@ Details
 - *Build*: Fixed install directory handling and ``make-targets.sh`` issues.
 
 Version 1.6.4 (Release: 2022-12-27)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -149,7 +187,7 @@ Details
 - *Bug Fix*: Added missing keymap setup files and missing keymap headers needed by tests and builds.
 
 Version 1.6.3 (Release: 2021-12-05)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -171,7 +209,7 @@ Details
 - *Bug Fix*: ``asdf_buffer_get()`` fixed to validate the buffer handle before use.
 
 Version 1.6.2 (Release: 2021-11-29)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -190,7 +228,7 @@ Details
 - *Build*: Added CMake templates for generated keymap setup files.
 
 Version 1.6.1 (Release: 2021-11-28)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -207,7 +245,7 @@ Details
 - *Build*: Updated generated keymap setup handling for the new layout.
 
 Version 1.6.0 (Release: 2021-11-28)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -225,7 +263,7 @@ Details
 - *Bug Fix*: Fixed Sol map comments and keymap initialization cleanup items found during the conversion.
 
 Version 1.5.1 (Release: 2021-11-08)
---------------------------
+-----------------------------------
 
 Highlights
 ~~~~~~~~~~
@@ -241,7 +279,7 @@ Details
 - *Build*: Fixed CMake test files and C compile flags.
 
 Version 1.5 (Release: 2021-03-04)
-------------------------
+---------------------------------
 
 Highlights
 ~~~~~~~~~~

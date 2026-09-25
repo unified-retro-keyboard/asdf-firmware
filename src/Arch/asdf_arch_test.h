@@ -277,7 +277,7 @@ asdf_cols_t asdf_arch_read_row(uint8_t row);
  *
  * @param code  The code sent.
  */
-void asdf_arch_send_code(asdf_keycode_t);
+void asdf_arch_send_code(asdf_keycode_t code);
 
 /**
  * Collects the last code sent.
