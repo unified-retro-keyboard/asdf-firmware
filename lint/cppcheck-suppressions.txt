@@ -1,0 +1,17 @@
+# Cppcheck suppressions (cmake/asdf_cppcheck.cmake runs with --enable=all).
+# Each entry is a false positive for how the check is run; suppress a single
+# real finding in the source with a "cppcheck-suppress" comment instead.
+
+# System include paths are not passed, so <stdint.h> and the like are not
+# found. The standard library and toolchain headers are not ours to check.
+missingIncludeSystem
+
+# The check covers the core and production keymaps, not main.c, the firmware
+# adapters or the unit tests, so functions they call look unused or
+# file-local. Checking the tests as well trades these for many more findings
+# in the Unity test functions.
+unusedFunction
+staticFunction
+
+# The summary of active checkers is not a finding.
+checkersReport

@@ -113,6 +113,14 @@
       }
     },
     {
+      "name": "cppcheck",
+      "inherits": "base",
+      "displayName": "Cppcheck on the core and production keymaps",
+      "cacheVariables": {
+        "ARCH": "test"
+      }
+    },
+    {
       "name": "lint-atmega328p",
       "inherits": "atmega328p",
       "displayName": "PC-lint Plus on the atmega328p firmware"
@@ -190,6 +198,13 @@
       "configurePreset": "lint",
       "targets": [
         "lint"
+      ]
+    },
+    {
+      "name": "cppcheck",
+      "configurePreset": "cppcheck",
+      "targets": [
+        "cppcheck"
       ]
     },
     {
@@ -514,6 +529,20 @@
         {
           "type": "build",
           "name": "lint"
+        }
+      ]
+    },
+    {
+      "name": "cppcheck",
+      "displayName": "Cppcheck on the core and production keymaps",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "cppcheck"
+        },
+        {
+          "type": "build",
+          "name": "cppcheck"
         }
       ]
     },

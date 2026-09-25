@@ -375,16 +375,6 @@ static void asdf_arch_pulse_delay(void)
 }
 
 /**
- * Emulates the short pulse delay.
- *
- * Advances every output's pulse detector with a delay event.
- */
-void asdf_arch_pulse_delay_short(void)
-{
-  asdf_arch_pulse_delay();
-}
-
-/**
  * Emulates setting the strobe to positive polarity.
  *
  * Records the strobe polarity as positive.
@@ -530,7 +520,7 @@ static void arch_platform_set_strobe_polarity(void *user, bool positive)
 static void arch_platform_pulse_delay_short(void *user)
 {
   (void) user;
-  asdf_arch_pulse_delay_short();
+  asdf_arch_pulse_delay();
 }
 
 /**

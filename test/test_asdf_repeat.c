@@ -403,8 +403,9 @@ void test_asdf_repeat_new_key_while_repeat_active_keeps_repeating(void)
   }
   TEST_ASSERT_EQUAL_INT(ASDF_REPEAT_TIME_MS * NUM_REPETITIONS, delay);
 
-  // simulate half a repeat interval
+  // simulate half a repeat interval, with no repeat
   delay = count_repeat_ticks(ASDF_REPEAT_TIME_MS / 2);
+  TEST_ASSERT_EQUAL_INT(ASDF_REPEAT_TIME_MS / 2, delay);
 
   // simulate a new key press:
   asdf_repeat_reset_count(&rep);

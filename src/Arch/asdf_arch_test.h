@@ -241,13 +241,6 @@ uint8_t asdf_arch_check_output(asdf_physical_dev_t device);
 uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device);
 
 /**
- * Emulates the short pulse delay.
- *
- * Advances every output's pulse detector with a delay event.
- */
-void asdf_arch_pulse_delay_short(void);
-
-/**
  * Reads one row of the emulated key matrix.
  *
  * The default (weak) definition reports no keys pressed; tests that press keys

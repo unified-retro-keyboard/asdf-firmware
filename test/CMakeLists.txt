@@ -212,6 +212,10 @@ add_test(NAME test_production_keymaps COMMAND ${CMAKE_BINARY_DIR}/test/test_prod
 include(${CMAKE_SOURCE_DIR}/cmake/asdf_lint.cmake)
 asdf_add_lint(asdf_production)
 
+# Cppcheck runs over the same sources.
+include(${CMAKE_SOURCE_DIR}/cmake/asdf_cppcheck.cmake)
+asdf_add_cppcheck(asdf_production)
+
 # CMakePresets.json must have a preset for every target in targets.csv.
 add_test(NAME presets_match_targets
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/asdf_check_presets.cmake)

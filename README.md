@@ -131,6 +131,11 @@ The presets are:
 - **`lint-atmega328p`**, **`lint-atmega2560`**, **`lint-pic32cm_pl10_q64`**,
   **`lint-pic32cm_pl10_dip28`**: PC-lint Plus over each firmware, with that
   target's compiler, so type sizes (16-bit `int` on AVR) match the device.
+- **`cppcheck`**: Cppcheck 2.17 or later, with every check enabled, over the
+  core and the production keymaps; any finding fails the build. CI runs it on
+  every push and pull request. False positives for how the check is run are
+  suppressed, with the reasons, in `lint/cppcheck-suppressions.txt`;
+  suppressions for a single line are `// cppcheck-suppress` comments there.
 - **`simavr_test`**: runs the AVR firmware ELFs in simavr (see
   `test/simavr/README.md`). Build the AVR firmware first; a missing ELF fails
   that target's tests, and the error names the preset that builds it.

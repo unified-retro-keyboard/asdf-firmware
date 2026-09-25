@@ -91,6 +91,8 @@ Details
   from the ATmega2560 and PIC32CM Q64 adapters.
 - *Build*: The lint presets check MISRA C:2025 (``lint/misra.lnt``);
   deviations are recorded in ``lint/MISRA-DEVIATIONS.md``.
+- *Build*: A ``cppcheck`` preset runs Cppcheck over the core and production
+  keymaps, and CI fails on any finding.
 - *Test*: Host tests also run under AddressSanitizer and
   UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
 - *Test*: Randomized key event tests check state invariants on three
