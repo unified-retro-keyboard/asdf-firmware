@@ -42,17 +42,6 @@
 #define ASDF_KEYBOARD_ROW_SETTLING_TIME_US 4 // time for keyboard capacitance to
                                              // settle before sampling
 
-// Clock definitions:
-#define SYSCLK_DIV1 0
-#define SYSCLK_DIV2 (CLKPS0)
-#define SYCCLK_DIV4 (CLKPS1)
-#define SYSCLK_DIV8 (CLKPS1 | CLKPS0)
-#define SYSCLK_DIV16 (CLKPS2)
-#define SYSCLK_DIV32 (CLKPS2 | CLKPS0)
-#define SYSCLK_DIV64 (CLKPS2 | CLKPS1)
-#define SYSCLK_DIV128 (CLKPS2 | CLKPS1 | CLKPS0)
-#define SYSCLK_DIV256 (CLKPS3)
-
 // Timer 0 definitions
 // Define fields for register A, B, interrupt mask as 8-bit masks, and
 // as masks offset into a combined config word

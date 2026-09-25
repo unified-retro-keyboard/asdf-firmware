@@ -28,6 +28,7 @@
 #include "asdf_arch.h"
 
 #include <avr/io.h>
+#include <avr/power.h>
 #include <avr/interrupt.h>
 #include <util/atomic.h>
 #include <util/delay.h>
@@ -133,11 +134,15 @@ uint8_t asdf_arch_tick(asdf_arch_t *arch)
 /**
  * Sets the system clock prescaler.
  *
- * Writes CLKPR so the system clock runs undivided, at F_CPU.
+ * Sets the prescaler to 1, so the system clock runs undivided, at F_CPU,
+ * whatever the CKDIV8 fuse.
+ *
+ * clock_prescale_set() writes CLKPCE and then the prescaler within the four
+ * cycles the hardware allows, with interrupts disabled.
  */
 static void asdf_arch_init_clock(void)
 {
-  CLKPR = (CLKPCE | SYSCLK_DIV1);
+  clock_prescale_set(clock_div_1);
 }
 
 /**

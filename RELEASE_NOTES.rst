@@ -55,6 +55,9 @@ Details
 - *Bug Fix*: A "No Action" key no longer queues a code.
 - *Bug Fix*: The Applesoft test key now works in ``apple2_caps``, as it does in
   ``apple2``.
+- *Bug Fix*: The AVR firmware now sets the clock prescaler to 1. The old code
+  wrote CLKPR in a way the hardware ignores, so a board with the CKDIV8 fuse
+  programmed ran every delay and tick 8x slow.
 - *Feature*: Any code 0x00–0xFF can be sent. ``KEY_SEND`` repeats,
   ``KEY_SEND_ONCE`` sends once, and any action can opt into autorepeat.
 - *Feature*: ``asdf_dropped_codes()`` and ``asdf_dropped_messages()`` report

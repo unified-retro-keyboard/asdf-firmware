@@ -41,17 +41,6 @@
 #define ASDF_STROBE_LENGTH_US 10 // strobe length in microseconds
 
 
-// Clock definitions:
-#define SYSCLK_DIV1 0
-#define SYSCLK_DIV2 (CLKPS0)
-#define SYCCLK_DIV4 (CLKPS1)
-#define SYSCLK_DIV8 (CLKPS1 | CLKPS0)
-#define SYSCLK_DIV16 (CLKPS2)
-#define SYSCLK_DIV32 (CLKPS2 | CLKPS0)
-#define SYSCLK_DIV64 (CLKPS2 | CLKPS1)
-#define SYSCLK_DIV128 (CLKPS2 | CLKPS1 | CLKPS0)
-#define SYSCLK_DIV256 (CLKPS3)
-
 // Define fields for register A, B, interrupt mask as 8-bit masks, and
 // as masks offset into a combined config word
 #define TMR0A_POS 0
