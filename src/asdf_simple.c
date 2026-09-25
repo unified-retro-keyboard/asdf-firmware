@@ -8,7 +8,7 @@
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
  *
- * @copyright Copyright 2019 David Fenyes. MIT License; see LICENSE.
+ * @copyright Copyright 2019 David F. MIT License; see LICENSE.
  */
 // SPDX-License-Identifier: MIT
 

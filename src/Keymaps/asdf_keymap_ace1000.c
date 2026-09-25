@@ -10,7 +10,7 @@
  *
  * @copyright Copyright 2023 Chris RYU. MIT License; see LICENSE.
  */
-// Copyright 2019 David Fenyes
+// Copyright 2019 David F.
 // SPDX-License-Identifier: MIT
 
 #include "asdf.h"

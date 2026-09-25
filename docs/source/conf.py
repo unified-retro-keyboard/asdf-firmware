@@ -18,8 +18,8 @@ import toml
 # -- Project information -----------------------------------------------------
 
 project = "ASDF - Unified Retro Keyboard Firmware"
-copyright = "2022 Osiweb.org"
-author = "David F"
+copyright = "2019-2026 David F"  # the theme adds the final period
+author = "David F."
 
 # -- General configuration ---------------------------------------------------
 

@@ -1,4 +1,4 @@
-// Copyright 2019 David Fenyes
+// Copyright 2019 David F.
 // SPDX-License-Identifier: MIT
 
 // While there is nothing preventing a standard keyboard from having both a

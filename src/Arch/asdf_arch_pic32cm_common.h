@@ -13,7 +13,7 @@
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
  *
- * @copyright Copyright 2026 David Fenyes. MIT License; see LICENSE.
+ * @copyright Copyright 2026 David F. MIT License; see LICENSE.
  */
 // SPDX-License-Identifier: MIT
 
