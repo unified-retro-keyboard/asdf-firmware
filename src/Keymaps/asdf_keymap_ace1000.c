@@ -8,10 +8,11 @@
  *
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
  *
- * @copyright Copyright 2023 Chris RYU. MIT License; see LICENSE.
+ * @copyright Copyright 2023 Chris RYU. GNU General Public License version 3
+ * or later, pending relicensing; see LICENSES/GPL-3.0-or-later.txt.
  */
 // Copyright 2019 David F.
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "asdf.h"
 #include "asdf_arch.h"

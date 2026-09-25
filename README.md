@@ -252,3 +252,5 @@ There are two ways to run the keyboard from an application:
 ASDF is released under the MIT License; see [LICENSE](LICENSE). Versions before
 1.8.0 were released under the GNU General Public License, version 3 or later.
 Vendored third-party code keeps its own license, noted in each file.
+The Franklin ACE 1000 keymap remains under the GPL, version 3 or later, until
+its relicensing is confirmed, so firmware built with it is subject to the GPL.

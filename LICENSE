@@ -1,7 +1,6 @@
 MIT License
 
 Copyright (c) 2019-2026 David F.
-Copyright (c) 2023 Chris Ryu (Franklin ACE 1000 keymap)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,3 +23,8 @@ SOFTWARE.
 Vendored third-party code keeps its own license: the Microchip and Arm CMSIS
 files in src/third_party/cmsis, the Unity test framework in test/unity, and
 the AVR CMake toolchain file cmake/generic-gcc-avr.cmake.
+
+The Franklin ACE 1000 keymap (src/Keymaps/asdf_keymap_ace1000*), Copyright (c)
+2023 Chris Ryu, remains under the GNU General Public License, version 3 or
+later, until its relicensing is confirmed; see LICENSES/GPL-3.0-or-later.txt.
+Firmware built with that keymap is subject to the GPL.
