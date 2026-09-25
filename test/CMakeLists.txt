@@ -176,6 +176,7 @@ list(TRANSFORM ASDF_KEYMAP_YAML PREPEND ${PROJECT_SRC_DIR}/ OUTPUT_VARIABLE prod
 asdf_generate_keymaps(production_keymaps_gen ${production_keymap_yaml})
 set(PRODUCTION_KEYMAP_SOURCES ${ASDF_GENERATED_KEYMAP_SOURCES})
 create_keymap_table("${keymap_list}" keymap_table)
+create_keymap_slots("${keymap_list}" keymap_slots)
 create_keymap_declarations("${keymap_list}" keymap_declarations)
 configure_file(${PROJECT_SRC_DIR}/asdf_keymap_setup.c.in
   ${CMAKE_CURRENT_BINARY_DIR}/production_keymap_setup.c)

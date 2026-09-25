@@ -1,0 +1,38 @@
+// MISRA C:2025 checking, part of every lint target, after lint/asdf.lnt.
+// Each deviation below names its record in
+// lint/MISRA-DEVIATIONS.md; deviations for one line or one file are //lint
+// comments there, citing the same record.
+
+au-misra5.lnt         // MISRA C:2025, from the PC-lint Plus lnt directory
+
+// au-misra5.lnt reports on library headers too; ASDF checks only its own code.
++libh(co-compiler.h)  // the generated compiler configuration
+-elib(9??,9???)       // undo au-misra5.lnt's per-message +elib options (MISRA
+-elib(4??,5??,6??,7??,8??)   // checks are 9xxx; the rest are lint's own)
+
+// Dir 4.10 is met by every ASDF header; message 451 reports the compiler's own
+// stdint.h and stddef.h, which have no guards of their own.
+-e451
+
+-e755                                        // D1  Rule 2.5: unused macros
+-e714 -e765                                  // D2  Rules 2.8, 8.7: public API and entry points
+-e9026                                       // D3  Dir 4.9: function-like macros
+-emacro(9078, _SFR_MEM8, _SFR_MEM16, _SFR_IO8, _SFR_IO16, *_REGS, SysTick, NVIC, SCB, pgm_read_*)
+                                             // D4  Rule 11.4: hardware register and flash addresses
+-esym(9093, _exit, _sbrk, _close, _fstat, _getpid, _isatty, _kill, _lseek, _read, _write, __vector_*)
+-esym(9093, __addr16, __result, __ToDo, __c) // D5  Rule 5.10: names the toolchain requires or defines
+-e793                                        // D6  Rule 1.1: identifiers over 31 characters
+-e9059                                       // D7  Rule 3.1: // in @code examples
+-e9079                                       // D8  Rule 11.5: platform callbacks' user pointer
+-e9045                                       // D9  Dir 4.8: types the caller allocates
+-emacro(9001, S_IFCHR)                       // D10 Rule 7.1: newlib's octal file mode
+-esym(9046, ASCII_*)                         // D11 Dir 4.5: standard ASCII control names
+                                             // D12 Dir 4.6, Rule 8.13: //lint comments at
+                                             //     newlib stubs, main, and asdf_putc
+-emacro(923, FLASH_READ_PTR)                 // D13 Rule 11.6: AVR pointers stored in flash
+-esym(9221, asdf_keymap_descriptor, asdf_action_keymap_id, asdf_print_flash, asdf_arch_init, arch_delay_us)
+                                             // D14 Dir 4.3: assembly only inside avr-libc and CMSIS macros
+-esym(9003, *_keymap, asdf_action_table, asdf_arch_platform)
+                                             // D17 Rule 8.9: defined in one module, used in another
+                                             // D18 Rules 14.2, 14.4, 10.3: //lint comments at
+                                             //     ATOMIC_BLOCK and _delay_us

@@ -26,6 +26,7 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_arch.h"
@@ -37,7 +38,7 @@ static asdf_t keyboard;
 
 // A code taken from the keyboard by asdf_available(), not yet read.
 static asdf_keycode_t pending_code;
-static uint8_t code_pending;
+static bool code_pending;
 
 /**
  * The 1 ms tick interrupt.
@@ -60,7 +61,7 @@ ASDF_ARCH_TICK_ISR
  */
 void asdf_begin(void)
 {
-  code_pending = 0;
+  code_pending = false;
   asdf_arch_init(&arch);
   asdf_init(&keyboard, &arch.platform);
 }
@@ -81,11 +82,11 @@ void asdf_poll(void) { asdf_update(&keyboard, asdf_arch_tick(&arch)); }
  * it until asdf_read() takes it, so that it can be reported as available
  * without being lost.
  *
- * @return Nonzero if a code is held; 0 if not.
+ * @return true if a code is held; false if not.
  *
  * Complexity: 2
  */
-uint8_t asdf_available(void)
+bool asdf_available(void)
 {
   if (!code_pending) {
     code_pending = asdf_next_code(&keyboard, &pending_code);
@@ -108,7 +109,7 @@ asdf_keycode_t asdf_read(void)
   if (!asdf_available()) {
     return 0;
   }
-  code_pending = 0;
+  code_pending = false;
   return pending_code;
 }
 

@@ -7,8 +7,8 @@
 # compiler configuration (type sizes, predefined macros, system include paths)
 # is generated at build time by the pclp_config.py shipped with PC-lint Plus,
 # from the compiler and language options <target> is built with, so nothing
-# machine-specific is committed. Project policy and deviations are in
-# lint/asdf.lnt.
+# machine-specific is committed. Project policy is in lint/asdf.lnt; MISRA C
+# checking and its deviations are in lint/misra.lnt.
 #
 # ASDF_PCLP is the PC-lint Plus executable, from the CMake cache or the PCLP
 # environment variable. Its license file must be in the same directory. Without
@@ -20,7 +20,7 @@ find_package(Python3 COMPONENTS Interpreter)
 
 function(asdf_add_lint target)
   set(lint_dir ${CMAKE_BINARY_DIR}/lint)
-  set(policy ${CMAKE_SOURCE_DIR}/lint/asdf.lnt ${ARGN})
+  set(policy ${CMAKE_SOURCE_DIR}/lint/asdf.lnt ${ARGN} ${CMAKE_SOURCE_DIR}/lint/misra.lnt)
 
   if(NOT EXISTS "${ASDF_PCLP}" OR NOT Python3_Interpreter_FOUND)
     add_custom_target(lint
@@ -64,7 +64,7 @@ $<$<BOOL:${defines}>:-d$<JOIN:${defines},\n-d>\n>\
   # Relative source paths are relative to the target's source directory.
   get_target_property(source_dir ${target} SOURCE_DIR)
   add_custom_target(lint
-    COMMAND ${ASDF_PCLP} ${lint_dir}/co-compiler.lnt ${policy} ${lint_dir}/project.lnt
+    COMMAND ${ASDF_PCLP} -i${pclp_home}/lnt ${lint_dir}/co-compiler.lnt ${policy} ${lint_dir}/project.lnt
     DEPENDS ${lint_dir}/co-compiler.lnt ${policy}
     WORKING_DIRECTORY ${source_dir}
     COMMENT "Running PC-lint Plus on ${target}"

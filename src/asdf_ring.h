@@ -27,6 +27,7 @@
 #if !defined(ASDF_RING_H)
 #define ASDF_RING_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 
@@ -74,9 +75,9 @@ typedef struct {
  * @param storage   Array of at least @p capacity codes, owned by the caller
  *                  and valid for the life of the ring.
  * @param capacity  Number of codes the ring can hold.
- * @return 1 on success; 0 if @p storage is NULL or @p capacity is 0.
+ * @return true on success; false if @p storage is NULL or @p capacity is 0.
  */
-uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capacity);
+bool asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capacity);
 
 /**
  * Append a code.
@@ -85,10 +86,10 @@ uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capac
  *
  * @param ring  Ring to append to.
  * @param code  Code to queue.
- * @return 1 if queued; 0 if the ring was full, in which case the code is
+ * @return true if queued; false if the ring was full, in which case the code is
  *         dropped and counted (see asdf_ring_dropped()).
  */
-uint8_t asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code);
+bool asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code);
 
 /**
  * Append two codes as a unit: both are queued, or neither is.
@@ -99,10 +100,10 @@ uint8_t asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code);
  * @param ring    Ring to append to.
  * @param first   First code.
  * @param second  Second code.
- * @return 1 if both were queued; 0 if the ring did not have room for both, in
- *         which case neither is queued and two drops are counted.
+ * @return true if both were queued; false if the ring did not have room for
+ *         both, in which case neither is queued and two drops are counted.
  */
-uint8_t asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode_t second);
+bool asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode_t second);
 
 /**
  * Remove the oldest code.
@@ -111,9 +112,9 @@ uint8_t asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode
  *
  * @param ring  Ring to read from.
  * @param code  Receives the code; not written if the ring is empty.
- * @return 1 if a code was removed; 0 if the ring was empty.
+ * @return true if a code was removed; false if the ring was empty.
  */
-uint8_t asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code);
+bool asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code);
 
 /**
  * Number of codes queued.

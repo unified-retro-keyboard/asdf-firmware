@@ -2,6 +2,7 @@
 //
 // Fake hardware for host tests; see fake_platform.h.
 
+#include <stdbool.h>
 #include <string.h>
 #include "fake_platform.h"
 
@@ -31,7 +32,7 @@ static void fake_set_output(void *user, asdf_physical_dev_t output, uint8_t valu
   }
 }
 
-static void fake_set_strobe_polarity(void *user, uint8_t positive)
+static void fake_set_strobe_polarity(void *user, bool positive)
 {
   fake_platform_t *fake = user;
 

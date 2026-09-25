@@ -32,6 +32,7 @@
 #if !defined(ASDF_PLATFORM_H)
 #define ASDF_PLATFORM_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_physical.h"
@@ -70,10 +71,10 @@ typedef void (*asdf_platform_set_output_t)(void *user, asdf_physical_dev_t outpu
  * Set the idle level of the output strobe.
  *
  * @param user      The platform's user pointer.
- * @param positive  Nonzero for a positive strobe (idle low); 0 for a negative
+ * @param positive  True for a positive strobe (idle low); false for a negative
  *                  strobe (idle high).
  */
-typedef void (*asdf_platform_set_strobe_polarity_t)(void *user, uint8_t positive);
+typedef void (*asdf_platform_set_strobe_polarity_t)(void *user, bool positive);
 
 /**
  * Wait for the width of a short output pulse.
@@ -108,7 +109,7 @@ typedef void (*asdf_platform_reset_t)(void *user);
  * #include "asdf_platform.h"
  *
  * typedef struct {
- *   uint8_t strobe_positive;
+ *   bool strobe_positive;
  * } my_adapter_t;
  *
  * static my_adapter_t my_adapter;
@@ -120,11 +121,11 @@ typedef void (*asdf_platform_reset_t)(void *user);
  * static void my_pulse_delay_short(void *user);
  * static void my_reset(void *user);
  *
- * static void my_set_strobe_polarity(void *user, uint8_t positive)
+ * static void my_set_strobe_polarity(void *user, bool positive)
  * {
  *   my_adapter_t *adapter = user; // &my_adapter
  *
- *   adapter->strobe_positive = positive ? 1 : 0;
+ *   adapter->strobe_positive = positive;
  *   // ... drive the strobe line to its new idle level
  * }
  *

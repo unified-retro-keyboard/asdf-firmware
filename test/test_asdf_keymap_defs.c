@@ -23,6 +23,7 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 //
 
+#include <stdbool.h>
 #include "test_asdf_keymap_defs.h"
 #include "asdf_ascii.h"
 #include "asdf_modifiers.h"
@@ -119,7 +120,7 @@ static void test_platform_set_output(void *user, asdf_physical_dev_t output, uin
   asdf_arch_platform.set_output(asdf_arch_platform.user, output, value);
 }
 
-static void test_platform_set_strobe_polarity(void *user, uint8_t positive)
+static void test_platform_set_strobe_polarity(void *user, bool positive)
 {
   (void) user;
   asdf_arch_platform.set_strobe_polarity(asdf_arch_platform.user, positive);

@@ -39,6 +39,7 @@
 #include "asdf_physical.h"
 #include "asdf_repeat.h"
 #include "asdf_virtual.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -58,9 +59,9 @@ static void asdf_scan_elapsed(asdf_t *kb, uint8_t elapsed);
  *
  * @param kb    Keyboard.
  * @param code  Code to be buffered for output.
- * @return 1 if the code was queued; 0 if the keycode queue was full.
+ * @return true if the code was queued; false if the keycode queue was full.
  */
-uint8_t asdf_put_code(asdf_t *kb, asdf_keycode_t code) {
+bool asdf_put_code(asdf_t *kb, asdf_keycode_t code) {
     return asdf_ring_put(&kb->keycodes, code);
 }
 
@@ -111,10 +112,11 @@ uint8_t asdf_keymap_errors(const asdf_t *kb) { return kb->keymap.errors; }
  *
  * Complexity: 3
  */
-int asdf_putc(asdf_t *kb, char c) {
-    uint8_t queued = ('\n' == c) ? asdf_ring_put_pair(&kb->messages, '\r', '\n')
-                                 : asdf_ring_put(&kb->messages, (asdf_keycode_t)c);
-    return queued ? (int)c : EOF;
+int asdf_putc(asdf_t *kb, char c) { //lint !e970 D12: returns int and EOF, like putc
+    bool queued = ('\n' == c) ? asdf_ring_put_pair(&kb->messages, (asdf_keycode_t)'\r',
+                                                    (asdf_keycode_t)'\n')
+                              : asdf_ring_put(&kb->messages, (asdf_keycode_t)c);
+    return queued ? (int)c : EOF; //lint !e970 D12
 }
 
 /**
@@ -140,9 +142,9 @@ void asdf_install_platform(asdf_t *kb, const asdf_platform_t *platform) {
  * Drives the strobe through the platform.
  *
  * @param kb        Keyboard.
- * @param positive  Nonzero for a positive (idle low) strobe; 0 for negative.
+ * @param positive  True for a positive (idle low) strobe; false for negative.
  */
-void asdf_set_strobe_polarity(asdf_t *kb, uint8_t positive) {
+void asdf_set_strobe_polarity(asdf_t *kb, bool positive) {
     kb->platform->set_strobe_polarity(kb->platform->user, positive);
 }
 
@@ -167,8 +169,8 @@ void asdf_send_code(asdf_t *kb, asdf_keycode_t code) {
  *
  * @param kb    Keyboard.
  * @param code  Receives the code; not written when none is taken.
- * @return 1 if a code was taken into @p code; 0 if none is queued or output is
- *         paused after a message character.
+ * @return true if a code was taken into @p code; false if none is queued or
+ *         output is paused after a message character.
  *
  * After each system message character, output pauses for print_delay_ms
  * ticks, to reduce the risk of dropped characters with unbuffered polling
@@ -178,13 +180,13 @@ void asdf_send_code(asdf_t *kb, asdf_keycode_t code) {
  *
  * Complexity: 3
  */
-uint8_t asdf_next_code(asdf_t *kb, asdf_keycode_t *code) {
-    if (kb->output_wait_ms) {
-        return 0;
+bool asdf_next_code(asdf_t *kb, asdf_keycode_t *code) {
+    if (kb->output_wait_ms > 0u) {
+        return false;
     }
     if (asdf_ring_get(&kb->messages, code)) {
         kb->output_wait_ms = kb->print_delay_ms;
-        return 1;
+        return true;
     }
     return asdf_ring_get(&kb->keycodes, code);
 }
@@ -202,8 +204,23 @@ uint8_t asdf_next_code(asdf_t *kb, asdf_keycode_t *code) {
  * Complexity: 2
  */
 void asdf_tick(asdf_t *kb, uint8_t elapsed_ms) {
-    kb->output_wait_ms = (kb->output_wait_ms > elapsed_ms) ? (uint8_t)(kb->output_wait_ms - elapsed_ms) : 0;
+    kb->output_wait_ms =
+        (kb->output_wait_ms > elapsed_ms) ? (uint8_t)(kb->output_wait_ms - elapsed_ms) : 0u;
     asdf_virtual_tick(&kb->outputs, elapsed_ms);
+}
+
+/**
+ * Clamp an elapsed time to the ticks one call advances by.
+ *
+ * No side effects.
+ *
+ * @param elapsed_ms  1 ms ticks elapsed.
+ * @return @p elapsed_ms, or 255 if it is larger.
+ *
+ * Complexity: 2
+ */
+static uint8_t asdf_elapsed_ticks(uint16_t elapsed_ms) {
+    return (elapsed_ms > 0xFFu) ? 0xFFu : (uint8_t)elapsed_ms;
 }
 
 /**
@@ -223,20 +240,23 @@ void asdf_tick(asdf_t *kb, uint8_t elapsed_ms) {
  * tick. Callers on a 1 ms tick pass the ticks counted since the last call
  * (see the platform adapter's asdf_arch_tick()).
  *
- * Complexity: 5
+ * Complexity: 4
  */
 void asdf_process(asdf_t *kb, uint16_t elapsed_ms) {
-    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? (uint8_t)UINT8_MAX : (uint8_t)elapsed_ms;
+    uint8_t elapsed = asdf_elapsed_ticks(elapsed_ms);
 
-    if (!elapsed) {
+    if (elapsed == 0u) {
         return;
     }
 
     asdf_tick(kb, elapsed);
 
     // send up to one code per elapsed tick, subject to message pacing
-    asdf_keycode_t code;
-    for (uint8_t n = elapsed; n && asdf_next_code(kb, &code); n--) {
+    for (uint8_t n = 0u; n < elapsed; n++) {
+        asdf_keycode_t code;
+        if (!asdf_next_code(kb, &code)) {
+            break;
+        }
         asdf_send_code(kb, code);
     }
 
@@ -257,12 +277,12 @@ void asdf_process(asdf_t *kb, uint16_t elapsed_ms) {
  *
  * Never blocks.
  *
- * Complexity: 3
+ * Complexity: 2
  */
 void asdf_update(asdf_t *kb, uint16_t elapsed_ms) {
-    uint8_t elapsed = (elapsed_ms > UINT8_MAX) ? (uint8_t)UINT8_MAX : (uint8_t)elapsed_ms;
+    uint8_t elapsed = asdf_elapsed_ticks(elapsed_ms);
 
-    if (elapsed) {
+    if (elapsed > 0u) {
         asdf_tick(kb, elapsed);
         asdf_scan_elapsed(kb, elapsed);
     }
@@ -308,7 +328,7 @@ static asdf_key_t asdf_lookup_key(const asdf_t *kb, uint8_t row, uint8_t col) {
  */
 static void asdf_forget_repeat_key(asdf_t *kb) {
     kb->repeat_key = (asdf_key_t)KEY_NOTHING(0);
-    kb->repeat_armed = 0;
+    kb->repeat_armed = false;
     kb->last_key_row = NO_KEY_POSITION;
     kb->last_key_col = NO_KEY_POSITION;
 }
@@ -328,12 +348,12 @@ static void asdf_forget_repeat_key(asdf_t *kb) {
  * Complexity: 4
  */
 static void asdf_activate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t col) {
-    kb->repeat_armed = 0;
+    kb->repeat_armed = false;
     asdf_action(kb, key.press_fn, key.press_param);
     if (kb->repeat_armed) {
-        kb->repeat_armed = 0;
+        kb->repeat_armed = false;
         kb->repeat_key = key;
-        if (row != kb->last_key_row || col != kb->last_key_col) {
+        if ((row != kb->last_key_row) || (col != kb->last_key_col)) {
             kb->last_key_row = row;
             kb->last_key_col = col;
             asdf_repeat_reset_count(&kb->repeat);
@@ -349,7 +369,7 @@ static void asdf_activate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t c
  *
  * @param kb  Keyboard.
  */
-void asdf_arm_repeat(asdf_t *kb) { kb->repeat_armed = 1; }
+void asdf_arm_repeat(asdf_t *kb) { kb->repeat_armed = true; }
 
 /**
  * Compare two keys.
@@ -358,13 +378,14 @@ void asdf_arm_repeat(asdf_t *kb) { kb->repeat_armed = 1; }
  *
  * @param a  First key.
  * @param b  Second key.
- * @return 1 if @p a and @p b have the same actions and parameters; else 0.
+ * @return true if @p a and @p b have the same actions and parameters; else
+ *         false.
  *
  * Complexity: 4
  */
-static uint8_t asdf_same_key(asdf_key_t a, asdf_key_t b) {
-    return a.press_fn == b.press_fn && a.press_param == b.press_param &&
-           a.release_fn == b.release_fn && a.release_param == b.release_param;
+static bool asdf_same_key(asdf_key_t a, asdf_key_t b) {
+    return (a.press_fn == b.press_fn) && (a.press_param == b.press_param) &&
+           (a.release_fn == b.release_fn) && (a.release_param == b.release_param);
 }
 
 /**
@@ -382,7 +403,7 @@ static uint8_t asdf_same_key(asdf_key_t a, asdf_key_t b) {
  */
 static void asdf_deactivate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t col) {
     asdf_action(kb, key.release_fn, key.release_param);
-    if (row == kb->last_key_row && col == kb->last_key_col) {
+    if ((row == kb->last_key_row) && (col == kb->last_key_col)) {
         asdf_forget_repeat_key(kb);
     }
 }
@@ -397,7 +418,7 @@ static void asdf_deactivate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t
  * @param kb               Keyboard.
  * @param row              Row of the changed key.
  * @param col              Column of the changed key.
- * @param key_was_pressed  Nonzero if the key is now pressed.
+ * @param key_was_pressed  True if the key is now pressed.
  * @param elapsed          Ticks since the previous scan.
  *
  * The counter counts down from ASDF_DEBOUNCE_TIME_MS and is reloaded when it
@@ -408,7 +429,7 @@ static void asdf_deactivate_key(asdf_t *kb, asdf_key_t key, uint8_t row, uint8_t
  * Complexity: 3
  */
 static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t col,
-                                             uint8_t key_was_pressed, uint8_t elapsed) {
+                                             bool key_was_pressed, uint8_t elapsed) {
     uint8_t *debounce_count = &kb->debounce[row][col];
 
     if (*debounce_count > elapsed) {
@@ -443,14 +464,17 @@ static void asdf_handle_key_press_or_release(asdf_t *kb, uint8_t row, uint8_t co
  */
 static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
                                          uint8_t elapsed) {
-    if (row != kb->last_key_row || col != kb->last_key_col) {
+    if ((row != kb->last_key_row) || (col != kb->last_key_col)) {
         return;
     }
 
     asdf_key_t key = asdf_lookup_key(kb, row, col);
-    if (asdf_same_key(key, kb->repeat_key) && asdf_repeat_advance(&kb->repeat, elapsed)) {
-        asdf_action(kb, key.press_fn, key.press_param);
-        kb->repeat_armed = 0; // already the repeating key
+    // advance the repeat timer only while the repeating key is held
+    if (asdf_same_key(key, kb->repeat_key)) {
+        if (asdf_repeat_advance(&kb->repeat, elapsed)) {
+            asdf_action(kb, key.press_fn, key.press_param);
+            kb->repeat_armed = false; // already the repeating key
+        }
     }
 }
 
@@ -479,7 +503,7 @@ static void asdf_handle_key_held_pressed(asdf_t *kb, uint8_t row, uint8_t col,
 static void asdf_scan_elapsed(asdf_t *kb, uint8_t elapsed) {
     const asdf_platform_t *scan_platform = kb->platform;
 
-    if (kb->keymap.each_scan) {
+    if (kb->keymap.each_scan != (uint8_t)ACTION_NOTHING) {
         asdf_action(kb, kb->keymap.each_scan, 0);
     }
     for (uint8_t row = 0;
@@ -491,12 +515,13 @@ static void asdf_scan_elapsed(asdf_t *kb, uint8_t elapsed) {
         for (uint8_t col = 0;
              col < asdf_keymaps_num_cols(&kb->keymap, asdf_modifier_index(&kb->modifiers));
              col++) {
-            if (changed & 1) {
-                asdf_handle_key_press_or_release(kb, row, col, row_key_state & 1, elapsed);
+            if ((changed & 1u) != 0u) {
+                asdf_handle_key_press_or_release(kb, row, col, (row_key_state & 1u) != 0u,
+                                                 elapsed);
             } else {
                 // key is in its stable state: restart any debounce in progress
                 kb->debounce[row][col] = ASDF_DEBOUNCE_TIME_MS;
-                if (row_key_state & 1) {
+                if ((row_key_state & 1u) != 0u) {
                     asdf_handle_key_held_pressed(kb, row, col, elapsed);
                 }
             }
@@ -544,7 +569,7 @@ void asdf_apply_configuration(asdf_t *kb) {
         asdf_cols_t row_key_state = kb->stable_rows[row];
 
         for (uint8_t col = 0; col < asdf_keymaps_num_cols(&kb->keymap, mods); col++) {
-            if (row_key_state & 1) {
+            if ((row_key_state & 1u) != 0u) {
                 asdf_key_t key = asdf_lookup_key(kb, row, col);
                 if (asdf_is_configuration_action(key.press_fn)) {
                     asdf_action(kb, key.press_fn, key.press_param);

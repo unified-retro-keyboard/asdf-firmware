@@ -17,6 +17,7 @@
 #if !defined(ASDF_ARCH_PIC32CM_COMMON_H)
 #define ASDF_ARCH_PIC32CM_COMMON_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 #include "pic32c.h" // selects the part header from -D__PIC32CM6408PL100NN__
@@ -53,7 +54,7 @@
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTSET = (1u << b); }
+static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTSET = ((uint32_t) 1u << b); }
 /**
  * Drives an output pin low.
  *
@@ -63,7 +64,7 @@ static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTS
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTCLR = (1u << b); }
+static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTCLR = ((uint32_t) 1u << b); }
 /**
  * Toggles an output pin.
  *
@@ -73,7 +74,7 @@ static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OU
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_toggle(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTTGL = (1u << b); }
+static inline void pin_toggle(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTTGL = ((uint32_t) 1u << b); }
 /**
  * Reads the level of a pin.
  *
@@ -81,11 +82,11 @@ static inline void pin_toggle(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_O
  *
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
- * @return 1 if the pin reads high; 0 if it reads low.
+ * @return true if the pin reads high; false if it reads low.
  */
-static inline uint8_t pin_read(uint8_t g, uint8_t b)
+static inline bool pin_read(uint8_t g, uint8_t b)
 {
-  return (uint8_t)((PORT_REGS->GROUP[g].PORT_IN >> b) & 1u);
+  return ((PORT_REGS->GROUP[g].PORT_IN >> b) & 1u) != 0u;
 }
 /**
  * Makes a pin an output.
@@ -96,7 +97,7 @@ static inline uint8_t pin_read(uint8_t g, uint8_t b)
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_dir_out(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_DIRSET = (1u << b); }
+static inline void pin_dir_out(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_DIRSET = ((uint32_t) 1u << b); }
 /**
  * Makes a pin an input.
  *
@@ -109,7 +110,7 @@ static inline void pin_dir_out(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_
  */
 static inline void pin_dir_in(uint8_t g, uint8_t b)
 {
-  PORT_REGS->GROUP[g].PORT_DIRCLR = (1u << b);
+  PORT_REGS->GROUP[g].PORT_DIRCLR = ((uint32_t) 1u << b);
   PORT_REGS->GROUP[g].PORT_PINCFG[b] = PORT_PINCFG_INEN_Msk;
 }
 
@@ -137,7 +138,7 @@ typedef struct {
  */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
-  if (arch->ticks < UINT8_MAX) {
+  if (arch->ticks < 0xFFu) {
     arch->ticks++;
   }
 }

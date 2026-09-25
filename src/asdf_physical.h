@@ -27,6 +27,7 @@
 #if !defined(ASDF_PHYSICAL_H)
 #define ASDF_PHYSICAL_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 /**
@@ -187,12 +188,12 @@ asdf_physical_dev_t asdf_physical_next_device(const asdf_physical_state_t *phys,
  * @param physical_out   Output to allocate.
  * @param tail           List to link after @p physical_out.
  * @param initial_value  Shadow value to record for @p physical_out.
- * @return 1 if allocated; 0 if @p physical_out is PHYSICAL_NO_OUT, out of
- *         range, or already allocated, or if @p tail is out of range. On
+ * @return true if allocated; false if @p physical_out is PHYSICAL_NO_OUT, out
+ *         of range, or already allocated, or if @p tail is out of range. On
  *         failure the state is unchanged.
  */
-uint8_t asdf_physical_allocate(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
-                                 asdf_physical_dev_t tail, uint8_t initial_value);
+bool asdf_physical_allocate(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
+                            asdf_physical_dev_t tail, uint8_t initial_value);
 
 /**
  * Wait for the width of a short output pulse, through the platform.

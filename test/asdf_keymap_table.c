@@ -74,7 +74,7 @@ const asdf_keymap_t *asdf_keymap_descriptor(uint8_t index)
   return (index < NUM_KEYMAP_SLOTS) ? keymap_table[index] : NULL;
 }
 
-uint8_t asdf_keymap_valid(uint8_t index)
+bool asdf_keymap_valid(uint8_t index)
 {
   return NULL != asdf_keymap_descriptor(index);
 }

@@ -27,6 +27,7 @@
 #if !defined(ASDF_VIRTUAL_H)
 #define ASDF_VIRTUAL_H
 
+#include <stdbool.h>
 #include "asdf_physical.h"
 
 /**
@@ -76,6 +77,12 @@ typedef enum {
  * Each keymap specifies an array of these, applied with
  * asdf_virtual_assign().
  */
+/**
+ * The idle value of an output whose active value is @p active_value (0u or
+ * 1u): the initial value of an output that pulses to its active value.
+ */
+#define ASDF_IDLE_VALUE(active_value) (((active_value) == 0u) ? 1u : 0u)
+
 typedef struct {
   asdf_virtual_dev_t virtual_device;
   asdf_physical_dev_t physical_device;
@@ -183,13 +190,13 @@ void asdf_virtual_activate(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtua
  * @param function       Function applied when the virtual output is
  *                       activated.
  * @param initial_value  Initial value of the physical output.
- * @return 1 if assigned; 0 if @p virtual_out is V_NULL or out of range, or if
- *         @p physical_out is PHYSICAL_NO_OUT, out of range, or already
+ * @return true if assigned; false if @p virtual_out is V_NULL or out of range,
+ *         or if @p physical_out is PHYSICAL_NO_OUT, out of range, or already
  *         assigned. On failure the state is unchanged.
  */
-uint8_t asdf_virtual_assign(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
-                              asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
-                              uint8_t initial_value);
+bool asdf_virtual_assign(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
+                         asdf_physical_dev_t physical_out, asdf_virtual_function_t function,
+                         uint8_t initial_value);
 
 /**
  * Drive every physical output, assigned or not, to its shadow value.

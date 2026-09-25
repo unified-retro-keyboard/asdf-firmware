@@ -33,6 +33,7 @@
 #if !defined(ASDF_ACTIONS_H)
 #define ASDF_ACTIONS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_arch.h" // FLASH
@@ -346,19 +347,20 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param);
 
 /** Designated initializers for the built-in entries of the action table. */
 #define ASDF_BUILTIN_ACTIONS                                                                       \
-  [ACTION_NOTHING] = asdf_action_nothing, [ACTION_SEND_CODE] = asdf_action_send_code,              \
-  [ACTION_SEND_REPEATABLE_CODE] = asdf_action_send_repeatable_code,                                \
-  [ACTION_SHIFT] = asdf_action_shift, [ACTION_SHIFT_RELEASE] = asdf_action_shift_release,          \
-  [ACTION_SHIFTLOCK_ON] = asdf_action_shiftlock_on,                                                \
-  [ACTION_SHIFTLOCK_TOGGLE] = asdf_action_shiftlock_toggle, [ACTION_CAPS] = asdf_action_caps,      \
-  [ACTION_CTRL] = asdf_action_ctrl, [ACTION_CTRL_RELEASE] = asdf_action_ctrl_release,              \
-  [ACTION_REPEAT] = asdf_action_repeat, [ACTION_REPEAT_RELEASE] = asdf_action_repeat_release,      \
-  [ACTION_MAPSEL_SET] = asdf_action_mapsel_set, [ACTION_MAPSEL_CLEAR] = asdf_action_mapsel_clear,  \
-  [ACTION_STROBE_POSITIVE] = asdf_action_strobe_positive,                                          \
-  [ACTION_STROBE_NEGATIVE] = asdf_action_strobe_negative,                                          \
-  [ACTION_AUTOREPEAT_ON] = asdf_action_autorepeat_on,                                              \
-  [ACTION_AUTOREPEAT_OFF] = asdf_action_autorepeat_off, [ACTION_VIRTUAL] = asdf_action_virtual,    \
-  [ACTION_KEYMAP_ID] = asdf_action_keymap_id
+  [ACTION_NOTHING] = &asdf_action_nothing, [ACTION_SEND_CODE] = &asdf_action_send_code,            \
+  [ACTION_SEND_REPEATABLE_CODE] = &asdf_action_send_repeatable_code,                               \
+  [ACTION_SHIFT] = &asdf_action_shift, [ACTION_SHIFT_RELEASE] = &asdf_action_shift_release,        \
+  [ACTION_SHIFTLOCK_ON] = &asdf_action_shiftlock_on,                                               \
+  [ACTION_SHIFTLOCK_TOGGLE] = &asdf_action_shiftlock_toggle, [ACTION_CAPS] = &asdf_action_caps,    \
+  [ACTION_CTRL] = &asdf_action_ctrl, [ACTION_CTRL_RELEASE] = &asdf_action_ctrl_release,            \
+  [ACTION_REPEAT] = &asdf_action_repeat, [ACTION_REPEAT_RELEASE] = &asdf_action_repeat_release,    \
+  [ACTION_MAPSEL_SET] = &asdf_action_mapsel_set,                                                   \
+  [ACTION_MAPSEL_CLEAR] = &asdf_action_mapsel_clear,                                               \
+  [ACTION_STROBE_POSITIVE] = &asdf_action_strobe_positive,                                         \
+  [ACTION_STROBE_NEGATIVE] = &asdf_action_strobe_negative,                                         \
+  [ACTION_AUTOREPEAT_ON] = &asdf_action_autorepeat_on,                                             \
+  [ACTION_AUTOREPEAT_OFF] = &asdf_action_autorepeat_off, [ACTION_VIRTUAL] = &asdf_action_virtual,  \
+  [ACTION_KEYMAP_ID] = &asdf_action_keymap_id
 
 /**
  * Key initializers for keymap matrices.
@@ -369,7 +371,8 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param);
  * be omitted, and is then 0.
  */
 #define ASDF_KEY(press_fn, press_param, release_fn, release_param)                                 \
-  { (press_fn), (press_param), (release_fn), (release_param) }
+  { (uint8_t) (press_fn), (uint8_t) (press_param), (uint8_t) (release_fn),                          \
+    (uint8_t) (release_param) }
 
 // A key that sends code, and autorepeats while held.
 #define KEY_SEND(code) ASDF_KEY(ACTION_SEND_REPEATABLE_CODE, (code), ACTION_NOTHING, 0)
@@ -416,10 +419,10 @@ void asdf_action(asdf_t *kb, uint8_t fn, uint8_t param);
  * they are configuration actions. No side effects.
  *
  * @param fn  Action number.
- * @return 1 if @p fn is ACTION_MAPSEL_SET, ACTION_STROBE_POSITIVE, or
- *         ACTION_AUTOREPEAT_ON; 0 otherwise.
+ * @return true if @p fn is ACTION_MAPSEL_SET, ACTION_STROBE_POSITIVE, or
+ *         ACTION_AUTOREPEAT_ON; false otherwise.
  */
-uint8_t asdf_is_configuration_action(uint8_t fn);
+bool asdf_is_configuration_action(uint8_t fn);
 
 #endif /* !defined (ASDF_ACTIONS_H) */
 

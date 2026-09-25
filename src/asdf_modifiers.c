@@ -1,4 +1,4 @@
-// -*-mode : C;
+// -*- mode: C; tab-width: 2 ; indent-tabs-mode: nil -*-
 /**
  * @file asdf_modifiers.c
  *
@@ -29,6 +29,7 @@
 // You should have received a copy of the GNU General Public License along with
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf_modifiers.h"
 
@@ -37,18 +38,6 @@
 // indicator LEDs is left to the caller (see asdf_sync_lock_leds), using
 // asdf_modifier_shift_locked() and asdf_modifier_caps_locked(). The public
 // contracts are in asdf_modifiers.h.
-
-/**
- * Keymap for each combination of active modifiers, indexed by a bitmap of
- * ASDF_MODIFIERS_*_MASK. Defines the precedence of combined modifiers: CTRL
- * overrides SHIFT and CAPS, and SHIFT overrides CAPS.
- */
-static const modifier_index_t modifier_mapping[] = { MOD_PLAIN_MAP, // 0x00: no modifiers
-                                                     MOD_SHIFT_MAP, // 0x01: only SHIFT active
-                                                     MOD_CAPS_MAP,  // 0x02: only CAPS active
-                                                     MOD_SHIFT_MAP, // 0x03: CAPS and SHIFT active
-                                                     MOD_CTRL_MAP,  // CTRL overrides SHIFT and CAPS
-                                                     MOD_CTRL_MAP,  MOD_CTRL_MAP, MOD_CTRL_MAP };
 
 /**
  * Set SHIFT, SHIFTLOCK, CAPSLOCK, and CTRL to off.
@@ -159,11 +148,11 @@ void asdf_modifier_ctrl_deactivate(asdf_modifier_state_t *mods)
  * No side effects.
  *
  * @param mods  Modifier state to query.
- * @return 1 if the SHIFTLOCK bit is set, else 0.
+ * @return true if the SHIFTLOCK bit is set, else false.
  */
-uint8_t asdf_modifier_shift_locked(const asdf_modifier_state_t *mods)
+bool asdf_modifier_shift_locked(const asdf_modifier_state_t *mods)
 {
-  return (mods->shift & SHIFT_LOCKED_ST) != 0;
+  return (mods->shift & SHIFT_LOCKED_ST) != 0u;
 }
 
 /**
@@ -172,9 +161,9 @@ uint8_t asdf_modifier_shift_locked(const asdf_modifier_state_t *mods)
  * No side effects.
  *
  * @param mods  Modifier state to query.
- * @return 1 if CAPSLOCK is on, else 0.
+ * @return true if CAPSLOCK is on, else false.
  */
-uint8_t asdf_modifier_caps_locked(const asdf_modifier_state_t *mods)
+bool asdf_modifier_caps_locked(const asdf_modifier_state_t *mods)
 {
   return mods->caps != CAPS_OFF_ST;
 }
@@ -196,15 +185,26 @@ uint8_t asdf_modifier_caps_locked(const asdf_modifier_state_t *mods)
  */
 modifier_index_t asdf_modifier_index(const asdf_modifier_state_t *mods)
 {
-  uint8_t active_modifiers = 0;
+  // Keymap for each combination of active modifiers, indexed by a bitmap of
+  // ASDF_MODIFIERS_*_MASK. Defines the precedence of combined modifiers: CTRL
+  // overrides SHIFT and CAPS, and SHIFT overrides CAPS.
+  static const modifier_index_t modifier_mapping[] = {
+    MOD_PLAIN_MAP, // 0x00: no modifiers
+    MOD_SHIFT_MAP, // 0x01: only SHIFT active
+    MOD_CAPS_MAP,  // 0x02: only CAPS active
+    MOD_SHIFT_MAP, // 0x03: CAPS and SHIFT active
+    MOD_CTRL_MAP,  // CTRL overrides SHIFT and CAPS
+    MOD_CTRL_MAP,  MOD_CTRL_MAP, MOD_CTRL_MAP
+  };
+  uint8_t active_modifiers = 0u;
 
-  if (mods->shift) {
+  if (mods->shift != SHIFT_OFF_ST) {
     active_modifiers |= ASDF_MODIFIERS_SHIFT_MASK;
   }
-  if (mods->caps) {
+  if (mods->caps != CAPS_OFF_ST) {
     active_modifiers |= ASDF_MODIFIERS_CAPS_MASK;
   }
-  if (mods->ctrl) {
+  if (mods->ctrl != CTRL_OFF_ST) {
     active_modifiers |= ASDF_MODIFIERS_CTRL_MASK;
   }
 

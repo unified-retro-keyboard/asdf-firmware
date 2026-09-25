@@ -26,6 +26,7 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf_ring.h"
 
@@ -43,16 +44,16 @@
  * @param ring      Ring to initialize.
  * @param storage   Array of at least @p capacity codes.
  * @param capacity  Number of codes the ring can hold.
- * @return 1 on success; 0 if @p storage is NULL or @p capacity is 0.
+ * @return true on success; false if @p storage is NULL or @p capacity is 0.
  *
  * Complexity: 4
  */
-uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capacity)
+bool asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capacity)
 {
-  uint8_t valid = (NULL != storage) && (capacity > 0);
+  bool valid = (NULL != storage) && (capacity > 0u);
 
   ring->storage = valid ? storage : NULL;
-  ring->capacity = valid ? capacity : 0;
+  ring->capacity = valid ? capacity : 0u;
   ring->head = 0;
   ring->count = 0;
   ring->dropped = 0;
@@ -71,8 +72,7 @@ uint8_t asdf_ring_init(asdf_ring_t *ring, asdf_keycode_t *storage, uint8_t capac
  */
 static void asdf_ring_drop(asdf_ring_t *ring, uint8_t n)
 {
-  ring->dropped = (ring->dropped > (uint8_t) (UINT8_MAX - n)) ? (uint8_t) UINT8_MAX
-                                                              : (uint8_t) (ring->dropped + n);
+  ring->dropped = (ring->dropped > (0xFFu - n)) ? 0xFFu : (uint8_t) (ring->dropped + n);
 }
 
 /**
@@ -105,18 +105,18 @@ static void asdf_ring_store(asdf_ring_t *ring, asdf_keycode_t code)
  *
  * @param ring  Ring to append to.
  * @param code  Code to queue.
- * @return 1 if the code was queued; 0 if the ring was full.
+ * @return true if the code was queued; false if the ring was full.
  *
  * Complexity: 2
  */
-uint8_t asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code)
+bool asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code)
 {
   if (ring->count >= ring->capacity) {
     asdf_ring_drop(ring, 1);
-    return 0;
+    return false;
   }
   asdf_ring_store(ring, code);
-  return 1;
+  return true;
 }
 
 /**
@@ -127,20 +127,22 @@ uint8_t asdf_ring_put(asdf_ring_t *ring, asdf_keycode_t code)
  * @param ring    Ring to append to.
  * @param first   First code.
  * @param second  Second code.
- * @return 1 if both codes were queued; 0 if the ring did not have room for
- *         both.
+ * @return true if both codes were queued; false if the ring did not have room
+ *         for both.
  *
  * Complexity: 2
  */
-uint8_t asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode_t second)
+bool asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode_t second)
 {
-  if (ring->capacity - ring->count < 2) {
+  uint8_t room = (uint8_t) (ring->capacity - ring->count);
+
+  if (room < 2u) {
     asdf_ring_drop(ring, 2);
-    return 0;
+    return false;
   }
   asdf_ring_store(ring, first);
   asdf_ring_store(ring, second);
-  return 1;
+  return true;
 }
 
 /**
@@ -150,14 +152,14 @@ uint8_t asdf_ring_put_pair(asdf_ring_t *ring, asdf_keycode_t first, asdf_keycode
  *
  * @param ring  Ring to read from.
  * @param code  Receives the code; not written if the ring is empty.
- * @return 1 if a code was removed; 0 if the ring was empty.
+ * @return true if a code was removed; false if the ring was empty.
  *
  * Complexity: 3
  */
-uint8_t asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code)
+bool asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code)
 {
-  if (!ring->count) {
-    return 0;
+  if (ring->count == 0u) {
+    return false;
   }
   *code = ring->storage[ring->head];
   ring->head++;
@@ -165,7 +167,7 @@ uint8_t asdf_ring_get(asdf_ring_t *ring, asdf_keycode_t *code)
     ring->head = 0;
   }
   ring->count--;
-  return 1;
+  return true;
 }
 
 /**

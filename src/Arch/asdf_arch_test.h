@@ -29,6 +29,7 @@
 
 #include <string.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
@@ -91,9 +92,9 @@ void asdf_arch_set_neg_strobe(void);
  *
  * No side effects.
  *
- * @return Nonzero if the strobe polarity is positive; 0 if it is negative.
+ * @return true if the strobe polarity is positive; false if it is negative.
  */
-uint8_t asdf_arch_is_strobe_positive(void);
+bool asdf_arch_is_strobe_positive(void);
 
 // Output setters. Each records its value in the emulated outputs and advances
 // that output's pulse detector.
@@ -294,10 +295,10 @@ asdf_keycode_t asdf_arch_get_sent_code(void);
  *
  * No side effects.
  *
- * @return TRUE if a code was sent since the last asdf_arch_get_sent_code() or
+ * @return true if a code was sent since the last asdf_arch_get_sent_code() or
  *         reset; FALSE otherwise.
  */
-uint8_t asdf_arch_was_code_sent(void);
+bool asdf_arch_was_code_sent(void);
 
 /**
  * Resets the emulated hardware.
@@ -347,7 +348,7 @@ void asdf_arch_test_tick_isr(void);
  */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
-  if (arch->ticks < UINT8_MAX) {
+  if (arch->ticks < 0xFFu) {
     arch->ticks++;
   }
 }

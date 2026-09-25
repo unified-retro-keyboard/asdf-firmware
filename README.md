@@ -121,11 +121,13 @@ The presets are:
   UndefinedBehaviorSanitizer; any finding fails the test.
 - **`test-coverage`**: the host unit tests with coverage, followed by a gcovr
   report of the portable core's coverage.
-- **`lint`**: PC-lint Plus over the core and the production keymaps; any
-  message fails the build. Needs a licensed PC-lint Plus: set `PCLP` to the
-  `pclp64_linux` executable. Policy and deviations are in `lint/asdf.lnt`
-  (`lint/avr.lnt` adds the avr-gcc extensions); deviations for a single line
-  are `//lint` comments there.
+- **`lint`**: PC-lint Plus, with MISRA C:2025 checking, over the core and the
+  production keymaps; any message fails the build. Needs a licensed PC-lint
+  Plus: set `PCLP` to the `pclp64_linux` executable. Lint policy is in
+  `lint/asdf.lnt` (`lint/avr.lnt` adds the avr-gcc extensions) and MISRA
+  checking in `lint/misra.lnt`; MISRA deviations are recorded in
+  `lint/MISRA-DEVIATIONS.md`. Deviations for a single line are `//lint`
+  comments there.
 - **`lint-atmega328p`**, **`lint-atmega2560`**, **`lint-pic32cm_pl10_q64`**,
   **`lint-pic32cm_pl10_dip28`**: PC-lint Plus over each firmware, with that
   target's compiler, so type sizes (16-bit `int` on AVR) match the device.

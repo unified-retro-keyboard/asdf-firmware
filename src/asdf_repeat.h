@@ -26,6 +26,7 @@
 #if !defined(ASDF_REPEAT_H)
 #define ASDF_REPEAT_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf_config.h"
 
@@ -135,9 +136,9 @@ void asdf_repeat_auto_on(asdf_repeat_state_t *repeat);
  * No side effects.
  *
  * @param repeat  Repeat state to query.
- * @return 1 if the base mode is REPEAT_AUTO, else 0.
+ * @return true if the base mode is REPEAT_AUTO, else false.
  */
-uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat);
+bool asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat);
 
 /**
  * REPEAT pressed: switch to REPEAT_ON.
@@ -167,9 +168,9 @@ void asdf_repeat_deactivate(asdf_repeat_state_t *repeat);
  * Counts down and may reload the timer in @p repeat.
  *
  * @param repeat  Repeat state to update.
- * @return 1 when the current key should repeat, else 0.
+ * @return true when the current key should repeat, else false.
  */
-uint8_t asdf_repeat(asdf_repeat_state_t *repeat);
+bool asdf_repeat(asdf_repeat_state_t *repeat);
 
 /**
  * Advance the repeat timer by @p elapsed ticks.
@@ -181,9 +182,9 @@ uint8_t asdf_repeat(asdf_repeat_state_t *repeat);
  *
  * @param repeat   Repeat state to update.
  * @param elapsed  Ticks (ms) since the last call.
- * @return 1 when the current key should repeat, else 0.
+ * @return true when the current key should repeat, else false.
  */
-uint8_t asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed);
+bool asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed);
 
 #endif // !defined (ASDF_REPEAT_H)
 

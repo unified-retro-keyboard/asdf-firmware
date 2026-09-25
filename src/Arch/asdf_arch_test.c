@@ -25,6 +25,7 @@
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
@@ -40,75 +41,14 @@ typedef enum {
   NUM_PULSE_EVENTS
 } pulse_event_t;
 
-// Pulse detector transitions: a pulse is a transition, a pulse delay, then a
-// transition back. A delay without a preceding transition, a second delay, or
-// no transition after the delay is an error. Error states have no row here.
-static pulse_state_t pulse_transition_table[PD_ST_NUM_VALID_PULSE_STATES][NUM_PULSE_EVENTS] =
-  {
-   [PD_ST_INITIAL_STATE] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_PULSE_FROM_INITIAL_STATE,
-   },
-   [PD_ST_STABLE_LOW] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY,
-   },
-   [PD_ST_STABLE_HIGH] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY,
-   },
-   [PD_ST_TRANSITION_LOW] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_PULSE_DELAY_LOW,
-   },
-   [PD_ST_TRANSITION_HIGH] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_PULSE_DELAY_HIGH,
-   },
-   [PD_ST_PULSE_DELAY_LOW] =
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_PULSE_LOW_DETECTED,
-    [PULSE_EVENT_SET_LOW] = PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_DOUBLE_DELAY,
-   },
-   [PD_ST_PULSE_DELAY_HIGH] = 
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY,
-    [PULSE_EVENT_SET_LOW] = PD_ST_PULSE_HIGH_DETECTED,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_DOUBLE_DELAY,
-   },
-   [PD_ST_PULSE_HIGH_DETECTED] = 
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY
-   },
-   [PD_ST_PULSE_LOW_DETECTED] = 
-   {
-    [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
-    [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
-    [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY
-   },
-  };
-
 // Emulated output values and their pulse detectors, indexed by physical device.
-static uint8_t outputs[ASDF_PHYSICAL_NUM_RESOURCES];
+static uint8_t output_values[ASDF_PHYSICAL_NUM_RESOURCES];
 static pulse_state_t pulses[ASDF_PHYSICAL_NUM_RESOURCES];
 
-static uint8_t strobe_is_positive;
+static bool strobe_is_positive;
 
 static asdf_keycode_t code_register;
-static uint8_t code_sent;
+static bool code_sent;
 
 /**
  * Emulates sending a code.
@@ -121,7 +61,7 @@ static uint8_t code_sent;
 void asdf_arch_send_code(asdf_keycode_t code)
 {
   code_register = code;
-  code_sent = 1;
+  code_sent = true;
 }
 
 /**
@@ -133,7 +73,7 @@ void asdf_arch_send_code(asdf_keycode_t code)
  */
 asdf_keycode_t asdf_arch_get_sent_code(void)
 {
-  code_sent = 0;
+  code_sent = false;
   return code_register;
 }
 
@@ -145,7 +85,7 @@ asdf_keycode_t asdf_arch_get_sent_code(void)
  * @return The code-sent flag: TRUE if a code was sent since the last
  *         asdf_arch_get_sent_code() or reset.
  */
-uint8_t asdf_arch_was_code_sent(void){
+bool asdf_arch_was_code_sent(void){
   return code_sent;
 }
 
@@ -164,6 +104,68 @@ uint8_t asdf_arch_was_code_sent(void){
  */
 static pulse_state_t pulse_detect(pulse_state_t current_state, pulse_event_t event)
 {
+  // Pulse detector transitions: a pulse is a transition, a pulse delay, then a
+  // transition back. A delay without a preceding transition, a second delay, or
+  // no transition after the delay is an error. Error states have no row here.
+  static const pulse_state_t
+    pulse_transition_table[PD_ST_NUM_VALID_PULSE_STATES][NUM_PULSE_EVENTS] =
+    {
+     [PD_ST_INITIAL_STATE] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_PULSE_FROM_INITIAL_STATE,
+     },
+     [PD_ST_STABLE_LOW] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY,
+     },
+     [PD_ST_STABLE_HIGH] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY,
+     },
+     [PD_ST_TRANSITION_LOW] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_PULSE_DELAY_LOW,
+     },
+     [PD_ST_TRANSITION_HIGH] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_PULSE_DELAY_HIGH,
+     },
+     [PD_ST_PULSE_DELAY_LOW] =
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_PULSE_LOW_DETECTED,
+      [PULSE_EVENT_SET_LOW] = PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_DOUBLE_DELAY,
+     },
+     [PD_ST_PULSE_DELAY_HIGH] = 
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY,
+      [PULSE_EVENT_SET_LOW] = PD_ST_PULSE_HIGH_DETECTED,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_DOUBLE_DELAY,
+     },
+     [PD_ST_PULSE_HIGH_DETECTED] = 
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_TRANSITION_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_STABLE_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY
+     },
+     [PD_ST_PULSE_LOW_DETECTED] = 
+     {
+      [PULSE_EVENT_SET_HIGH] = PD_ST_STABLE_HIGH,
+      [PULSE_EVENT_SET_LOW] = PD_ST_TRANSITION_LOW,
+      [PULSE_EVENT_DELAY] = PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY
+     },
+    };
+
   pulse_state_t next_state = current_state;
 
   // advance state if current state is valid (not an error state)
@@ -185,11 +187,11 @@ static pulse_state_t pulse_detect(pulse_state_t current_state, pulse_event_t eve
  *
  * Complexity: 2
  */
-static void set_output(asdf_physical_dev_t output_dev, uint8_t value)
+static void record_output(asdf_physical_dev_t output_dev, uint8_t value)
 {
-  pulse_event_t pulse_event = value ? PULSE_EVENT_SET_HIGH : PULSE_EVENT_SET_LOW;
+  pulse_event_t pulse_event = (value != 0u) ? PULSE_EVENT_SET_HIGH : PULSE_EVENT_SET_LOW;
 
-  outputs[output_dev] = value;
+  output_values[output_dev] = value;
   pulses[output_dev] = pulse_detect(pulses[output_dev], pulse_event);
 }
 
@@ -202,7 +204,7 @@ static void set_output(asdf_physical_dev_t output_dev, uint8_t value)
  */
 void asdf_arch_null_output(uint8_t value)
 {
-  set_output(PHYSICAL_NO_OUT, value);
+  record_output(PHYSICAL_NO_OUT, value);
 }
 
 
@@ -215,7 +217,7 @@ void asdf_arch_null_output(uint8_t value)
  */
 void asdf_arch_led1_set(uint8_t value)
 {
-  set_output(PHYSICAL_LED1, value);
+  record_output(PHYSICAL_LED1, value);
 }
 
 /**
@@ -227,7 +229,7 @@ void asdf_arch_led1_set(uint8_t value)
  */
 void asdf_arch_led2_set(uint8_t value)
 {
-  set_output(PHYSICAL_LED2, value);
+  record_output(PHYSICAL_LED2, value);
 }
 
 /**
@@ -239,7 +241,7 @@ void asdf_arch_led2_set(uint8_t value)
  */
 void asdf_arch_led3_set(uint8_t value)
 {
-  set_output(PHYSICAL_LED3, value);
+  record_output(PHYSICAL_LED3, value);
 }
 
 /**
@@ -251,7 +253,7 @@ void asdf_arch_led3_set(uint8_t value)
  */
 void asdf_arch_out1_set(uint8_t value)
 {
-  set_output(PHYSICAL_OUT1, value);
+  record_output(PHYSICAL_OUT1, value);
 }
 
 /**
@@ -262,7 +264,7 @@ void asdf_arch_out1_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out1_open_hi_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_HI, value);
+{record_output(PHYSICAL_OUT1_OPEN_HI, value);
 }
 
 /**
@@ -273,7 +275,7 @@ void asdf_arch_out1_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out1_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT1_OPEN_LO, value);
+{record_output(PHYSICAL_OUT1_OPEN_LO, value);
 }
 
 /**
@@ -285,7 +287,7 @@ void asdf_arch_out1_open_lo_set(uint8_t value)
  */
 void asdf_arch_out2_set(uint8_t value)
 {
-  set_output(PHYSICAL_OUT2, value);
+  record_output(PHYSICAL_OUT2, value);
 }
 
 
@@ -297,7 +299,7 @@ void asdf_arch_out2_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out2_open_hi_set(uint8_t value)
-{set_output(PHYSICAL_OUT2_OPEN_HI, value);
+{record_output(PHYSICAL_OUT2_OPEN_HI, value);
 }
 
 /**
@@ -308,7 +310,7 @@ void asdf_arch_out2_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out2_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT2_OPEN_LO, value);
+{record_output(PHYSICAL_OUT2_OPEN_LO, value);
 }
 
 /**
@@ -320,7 +322,7 @@ void asdf_arch_out2_open_lo_set(uint8_t value)
  */
 void asdf_arch_out3_set(uint8_t value)
 {
-  set_output(PHYSICAL_OUT3, value);
+  record_output(PHYSICAL_OUT3, value);
 }
 
 /**
@@ -331,7 +333,7 @@ void asdf_arch_out3_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out3_open_hi_set(uint8_t value)
-{set_output(PHYSICAL_OUT3_OPEN_HI, value);
+{record_output(PHYSICAL_OUT3_OPEN_HI, value);
 }
 
 /**
@@ -342,7 +344,7 @@ void asdf_arch_out3_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out3_open_lo_set(uint8_t value)
-{set_output(PHYSICAL_OUT3_OPEN_LO, value);
+{record_output(PHYSICAL_OUT3_OPEN_LO, value);
 }
 
 /**
@@ -355,7 +357,7 @@ void asdf_arch_out3_open_lo_set(uint8_t value)
  */
 uint8_t asdf_arch_check_output(asdf_physical_dev_t device)
 {
-  return outputs[device];
+  return output_values[device];
 }
 
 /**
@@ -368,7 +370,7 @@ uint8_t asdf_arch_check_output(asdf_physical_dev_t device)
  */
 uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device)
 {
-  return pulses[device];
+  return (uint8_t) pulses[device];
 }
 
 /**
@@ -380,7 +382,7 @@ uint8_t asdf_arch_check_pulse(asdf_physical_dev_t device)
  */
 static void asdf_arch_pulse_delay(void)
 {
-  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
+  for (uint8_t i = 0u; i < (uint8_t) ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     pulses[i] = pulse_detect(pulses[i], PULSE_EVENT_DELAY);
   }
 }
@@ -402,7 +404,7 @@ void asdf_arch_pulse_delay_short(void)
  */
 void asdf_arch_set_pos_strobe(void)
 {
-  strobe_is_positive = 1;
+  strobe_is_positive = true;
 }
 
 /**
@@ -412,7 +414,7 @@ void asdf_arch_set_pos_strobe(void)
  */
 void asdf_arch_set_neg_strobe(void)
 {
-  strobe_is_positive = 0;
+  strobe_is_positive = false;
 }
 
 /**
@@ -420,9 +422,9 @@ void asdf_arch_set_neg_strobe(void)
  *
  * No side effects.
  *
- * @return 1 if the strobe polarity is positive; 0 if it is negative.
+ * @return true if the strobe polarity is positive; false if it is negative.
  */
-uint8_t asdf_arch_is_strobe_positive(void)
+bool asdf_arch_is_strobe_positive(void)
 {
   return strobe_is_positive;
 }
@@ -438,14 +440,14 @@ uint8_t asdf_arch_is_strobe_positive(void)
  */
 void asdf_arch_test_reset(void)
 {
-  for (uint8_t i = 0; i < ASDF_PHYSICAL_NUM_RESOURCES; i++) {
-    outputs[i] = 0;
+  for (uint8_t i = 0u; i < (uint8_t) ASDF_PHYSICAL_NUM_RESOURCES; i++) {
+    output_values[i] = 0;
     pulses[i] = PD_ST_INITIAL_STATE;
   }
 
   // initially, no keycodes have been sent via asdf_arch_send_code:
-  code_sent = 0;
-  strobe_is_positive = 0;
+  code_sent = false;
+  strobe_is_positive = false;
 }
 
 
@@ -513,7 +515,7 @@ static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uin
 {
   (void) user;
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
-    set_output(output, value);
+    record_output(output, value);
   }
 }
 
@@ -523,14 +525,12 @@ static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uin
  * Records the strobe polarity.
  *
  * @param user      Platform context; unused.
- * @param positive  Nonzero for positive polarity; zero for negative.
- *
- * Complexity: 2
+ * @param positive  True for positive polarity; zero for negative.
  */
-static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
+static void arch_platform_set_strobe_polarity(void *user, bool positive)
 {
   (void) user;
-  strobe_is_positive = positive ? 1 : 0;
+  strobe_is_positive = positive;
 }
 
 /**
@@ -561,12 +561,12 @@ static void arch_platform_reset(void *user)
 
 const asdf_platform_t asdf_arch_platform = {
   .user = NULL,
-  .read_row = arch_platform_read_row,
-  .send_code = arch_platform_send_code,
-  .set_output = arch_platform_set_output,
-  .set_strobe_polarity = arch_platform_set_strobe_polarity,
-  .pulse_delay_short = arch_platform_pulse_delay_short,
-  .reset = arch_platform_reset,
+  .read_row = &arch_platform_read_row,
+  .send_code = &arch_platform_send_code,
+  .set_output = &arch_platform_set_output,
+  .set_strobe_polarity = &arch_platform_set_strobe_polarity,
+  .pulse_delay_short = &arch_platform_pulse_delay_short,
+  .reset = &arch_platform_reset,
 };
 
 /**

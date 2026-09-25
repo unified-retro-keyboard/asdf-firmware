@@ -24,6 +24,7 @@
 #if !defined(ASDF_MODIFIERS_H)
 #define ASDF_MODIFIERS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 // The active modifiers form a bitmap that indexes the precedence table in
@@ -37,37 +38,27 @@
 // and entry 3 of the table selects the map for that combination (the SHIFT
 // map). A combination with its own behavior would name its own map there; a
 // combination that behaves like one of its modifiers names that modifier's map.
-#define ASDF_MODIFIERS_SHIFT_POS 0
-#define ASDF_MODIFIERS_CAPS_POS 1
-#define ASDF_MODIFIERS_CTRL_POS 2
+#define ASDF_MODIFIERS_SHIFT_POS 0u
+#define ASDF_MODIFIERS_CAPS_POS 1u
+#define ASDF_MODIFIERS_CTRL_POS 2u
 
 #define ASDF_MODIFIERS_SHIFT_MASK (1U << ASDF_MODIFIERS_SHIFT_POS)
 #define ASDF_MODIFIERS_CAPS_MASK (1U << ASDF_MODIFIERS_CAPS_POS)
 #define ASDF_MODIFIERS_CTRL_MASK (1U << ASDF_MODIFIERS_CTRL_POS)
 
-/**
- * SHIFT and SHIFTLOCK state: bit 0 is SHIFT (held), bit 1 is SHIFTLOCK.
- */
-typedef enum {
-  SHIFT_OFF_ST = 0,
-  SHIFT_ON_ST = 1,
-  SHIFT_LOCKED_ST = 2,
-  SHIFT_BOTH_ST = 3 // Never explicitly set. SHIFT and SHIFTLOCK together.
+/** SHIFT and SHIFTLOCK state bits, in asdf_modifier_state_t.shift. */
+#define SHIFT_OFF_ST 0u
+#define SHIFT_ON_ST 1u     ///< SHIFT held
+#define SHIFT_LOCKED_ST 2u ///< SHIFTLOCK on
+#define SHIFT_BOTH_ST 3u   ///< SHIFT and SHIFTLOCK together; never set explicitly
 
-} shift_state_t;
+/** CAPSLOCK state, in asdf_modifier_state_t.caps. */
+#define CAPS_OFF_ST 0u
+#define CAPS_LOCKED_ST 1u
 
-/**
- * CAPSLOCK state.
- */
-typedef enum {
-  CAPS_OFF_ST = 0,
-  CAPS_LOCKED_ST = 1,
-} caps_state_t;
-
-/**
- * CTRL state.
- */
-typedef enum { CTRL_OFF_ST = 0, CTRL_ON_ST = 1 } ctrl_state_t;
+/** CTRL state, in asdf_modifier_state_t.ctrl. */
+#define CTRL_OFF_ST 0u
+#define CTRL_ON_ST 1u
 
 /**
  * Keymaps selectable by the modifiers: PLAIN (no modifier), SHIFT, CAPS, and
@@ -102,7 +93,7 @@ typedef enum {
  * CAPSLOCK toggles on each press and ignores release. CTRL is on while held.
  *
  * Invariants, after asdf_modifiers_init() and any sequence of operations:
- * - shift is a shift_state_t (0 to 3)
+ * - shift is a combination of SHIFT_*_ST bits (0 to 3)
  * - caps is CAPS_OFF_ST or CAPS_LOCKED_ST
  * - ctrl is CTRL_OFF_ST or CTRL_ON_ST
  * - asdf_modifier_index() returns a value < ASDF_MOD_NUM_MODIFIERS
@@ -119,9 +110,9 @@ typedef enum {
  * @endcode
  */
 typedef struct {
-  uint8_t shift; ///< shift_state_t: SHIFT and SHIFTLOCK bits
-  uint8_t caps;  ///< caps_state_t
-  uint8_t ctrl;  ///< ctrl_state_t
+  uint8_t shift; ///< SHIFT_*_ST: SHIFT and SHIFTLOCK bits
+  uint8_t caps;  ///< CAPS_*_ST
+  uint8_t ctrl;  ///< CTRL_*_ST
 } asdf_modifier_state_t;
 
 /**
@@ -205,9 +196,9 @@ void asdf_modifier_ctrl_deactivate(asdf_modifier_state_t *mods);
  * True in both SHIFT_LOCKED_ST and SHIFT_BOTH_ST. No side effects.
  *
  * @param mods  Modifier state to query.
- * @return 1 if SHIFTLOCK is on, else 0.
+ * @return true if SHIFTLOCK is on, else false.
  */
-uint8_t asdf_modifier_shift_locked(const asdf_modifier_state_t *mods);
+bool asdf_modifier_shift_locked(const asdf_modifier_state_t *mods);
 
 /**
  * Whether CAPSLOCK is on, for driving the CAPSLOCK LED.
@@ -215,9 +206,9 @@ uint8_t asdf_modifier_shift_locked(const asdf_modifier_state_t *mods);
  * No side effects.
  *
  * @param mods  Modifier state to query.
- * @return 1 if CAPSLOCK is on, else 0.
+ * @return true if CAPSLOCK is on, else false.
  */
-uint8_t asdf_modifier_caps_locked(const asdf_modifier_state_t *mods);
+bool asdf_modifier_caps_locked(const asdf_modifier_state_t *mods);
 
 /**
  * Keymap selected by the active modifiers.

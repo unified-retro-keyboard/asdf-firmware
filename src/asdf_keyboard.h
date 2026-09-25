@@ -30,6 +30,7 @@
 #if !defined(ASDF_KEYBOARD_H)
 #define ASDF_KEYBOARD_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
@@ -51,7 +52,7 @@
  * - every debounce counter is in 1..ASDF_DEBOUNCE_TIME_MS
  * - last_key_row and last_key_col are both 0xff (no repeating key) or both
  *   name a key; in the latter case that key's bit in stable_rows is set
- * - repeat_armed is 0, provided asdf_arm_repeat() is called only from press
+ * - repeat_armed is false, provided asdf_arm_repeat() is called only from press
  *   actions
  * - keymap.current is a valid keymap index
  * - platform is never NULL
@@ -78,7 +79,7 @@ struct asdf_keyboard {
   asdf_key_t repeat_key;                                     ///< the repeating key
   uint8_t last_key_row;                                      ///< ... and its position
   uint8_t last_key_col;
-  uint8_t repeat_armed; ///< set by a press action to make its key repeat
+  bool repeat_armed;    ///< set by a press action to make its key repeat
 
   // Output queues. System messages have priority over typed keycodes.
   asdf_ring_t keycodes;
@@ -187,10 +188,10 @@ void asdf_tick(asdf_t *kb, uint8_t elapsed_ms);
  *
  * @param kb    Keyboard to take the code from.
  * @param code  Receives the code; not written when none is taken.
- * @return 1 if a code was taken into @p code; 0 if none is queued or output is
- *         paused after a message character.
+ * @return true if a code was taken into @p code; false if none is queued or
+ *         output is paused after a message character.
  */
-uint8_t asdf_next_code(asdf_t *kb, asdf_keycode_t *code);
+bool asdf_next_code(asdf_t *kb, asdf_keycode_t *code);
 
 /**
  * Send a code to the host through the keyboard's platform, immediately.
@@ -209,10 +210,10 @@ void asdf_send_code(asdf_t *kb, asdf_keycode_t code);
  *
  * @param kb    Keyboard to queue on.
  * @param code  Code to queue.
- * @return 1 if queued; 0 if the keycode queue was full, in which case the
- *         code is dropped and counted (see asdf_dropped_codes()).
+ * @return true if queued; false if the keycode queue was full, in which case
+ *         the code is dropped and counted (see asdf_dropped_codes()).
  */
-uint8_t asdf_put_code(asdf_t *kb, asdf_keycode_t code);
+bool asdf_put_code(asdf_t *kb, asdf_keycode_t code);
 
 /**
  * Queue a system message character for output.
@@ -227,7 +228,7 @@ uint8_t asdf_put_code(asdf_t *kb, asdf_keycode_t code);
  *         the character (or both CR and LF) is dropped and counted (see
  *         asdf_dropped_messages()).
  */
-int asdf_putc(asdf_t *kb, char c);
+int asdf_putc(asdf_t *kb, char c); //lint !e970 D12
 
 /**
  * Number of typed keycodes dropped because the keycode queue was full.
@@ -294,9 +295,9 @@ void asdf_arm_repeat(asdf_t *kb);
  * Drives the strobe output through the platform.
  *
  * @param kb        Keyboard to configure.
- * @param positive  Nonzero for a positive (idle low) strobe; 0 for negative.
+ * @param positive  True for a positive (idle low) strobe; false for negative.
  */
-void asdf_set_strobe_polarity(asdf_t *kb, uint8_t positive);
+void asdf_set_strobe_polarity(asdf_t *kb, bool positive);
 
 /**
  * Re-apply held configuration switches after a keymap switch.

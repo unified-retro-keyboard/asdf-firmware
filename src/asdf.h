@@ -37,8 +37,8 @@
 #define ASDF_INVALID_CODE 0x100
 
 // Maximum key matrix size. ASDF_MAX_COLS must fit in asdf_cols_t.
-#define ASDF_MAX_COLS 8
-#define ASDF_MAX_ROWS 16
+#define ASDF_MAX_COLS 8u
+#define ASDF_MAX_ROWS 16u
 
 /**
  * The state of one row of the key matrix, one bit per column.

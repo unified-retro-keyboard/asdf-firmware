@@ -31,8 +31,7 @@
 
 // The keyboard's hardware, and the keyboard. The board owns both, and the tick
 // interrupt below.
-static asdf_arch_t arch;
-static asdf_t keyboard;
+static asdf_arch_t hardware;
 
 /**
  * The 1 ms tick interrupt.
@@ -42,7 +41,7 @@ static asdf_t keyboard;
  */
 ASDF_ARCH_TICK_ISR
 {
-  asdf_arch_count_tick(&arch);
+  asdf_arch_count_tick(&hardware);
 }
 
 /**
@@ -69,14 +68,16 @@ ASDF_ARCH_TICK_ISR
  */
 int main(void)
 {
+  static asdf_t keyboard;
+
   // initialize the hardware, then the keyboard logic:
-  asdf_arch_init(&arch);
-  asdf_init(&keyboard, &arch.platform);
+  asdf_arch_init(&hardware);
+  asdf_init(&keyboard, &hardware.platform);
 
-  while (1) {
-    uint8_t elapsed_ms = asdf_arch_tick(&arch);
+  for (;;) {
+    uint8_t elapsed_ms = asdf_arch_tick(&hardware);
 
-    if (elapsed_ms) {
+    if (elapsed_ms > 0u) {
       asdf_process(&keyboard, elapsed_ms);
     }
   }

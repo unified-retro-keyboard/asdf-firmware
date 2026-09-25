@@ -35,7 +35,7 @@
 // ASCII: 8-bit parallel output on PA16..PA23.
 #define ASCII_GROUP 0u
 #define ASCII_SHIFT 16u
-#define ASCII_MASK (0xFFu << ASCII_SHIFT)
+#define ASCII_MASK ((uint32_t) 0xFFu << ASCII_SHIFT)
 // Strobe: PA24.
 #define STROBE_GROUP 0u
 #define STROBE_PIN 24u

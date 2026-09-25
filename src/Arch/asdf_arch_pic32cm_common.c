@@ -87,8 +87,9 @@ void arch_delay_us(uint16_t us)
 {
   volatile uint32_t loops = ((uint32_t) us * (F_CPU / 1000000u)) / 4u;
 
-  while (loops--) {
-    __asm volatile("nop");
+  while (loops > 0u) {
+    __NOP();
+    loops--;
   }
 }
 

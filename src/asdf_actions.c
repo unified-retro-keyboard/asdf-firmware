@@ -25,6 +25,7 @@
 //
 
 #include <stddef.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_actions.h"
@@ -64,19 +65,15 @@ void asdf_action(asdf_t *kb, uint8_t fn, uint8_t param)
  * No side effects.
  *
  * @param fn  Action number.
- * @return 1 if @p fn is ACTION_MAPSEL_SET, ACTION_STROBE_POSITIVE, or
- *         ACTION_AUTOREPEAT_ON; 0 otherwise.
+ * @return true if @p fn is ACTION_MAPSEL_SET, ACTION_STROBE_POSITIVE, or
+ *         ACTION_AUTOREPEAT_ON; false otherwise.
  *
- * Complexity: 2
+ * Complexity: 3
  */
-uint8_t asdf_is_configuration_action(uint8_t fn)
+bool asdf_is_configuration_action(uint8_t fn)
 {
-  switch (fn) {
-    case ACTION_MAPSEL_SET:
-    case ACTION_STROBE_POSITIVE:
-    case ACTION_AUTOREPEAT_ON: return 1;
-    default: return 0;
-  }
+  return (fn == (uint8_t) ACTION_MAPSEL_SET) || (fn == (uint8_t) ACTION_STROBE_POSITIVE) ||
+         (fn == (uint8_t) ACTION_AUTOREPEAT_ON);
 }
 
 // The built-in actions. Actions that take no parameter ignore it. SHIFT, SHIFT
@@ -90,7 +87,7 @@ uint8_t asdf_is_configuration_action(uint8_t fn)
  * @param kb     Keyboard to act on.
  * @param param  Ignored.
  */
-void asdf_action_nothing(asdf_t *kb, uint8_t param)
+void asdf_action_nothing(asdf_t *kb, uint8_t param) //lint !e818 D16
 {
   (void) kb;
   (void) param;
@@ -263,7 +260,7 @@ void asdf_action_repeat_release(asdf_t *kb, uint8_t param)
  */
 void asdf_action_mapsel_set(asdf_t *kb, uint8_t bit)
 {
-  asdf_keymaps_request_bit(&kb->keymap, (uint8_t) (1u << (bit & 7)), 1);
+  asdf_keymaps_request_bit(&kb->keymap, (uint8_t) (1u << (bit & 7u)), true);
 }
 
 /**
@@ -276,7 +273,7 @@ void asdf_action_mapsel_set(asdf_t *kb, uint8_t bit)
  */
 void asdf_action_mapsel_clear(asdf_t *kb, uint8_t bit)
 {
-  asdf_keymaps_request_bit(&kb->keymap, (uint8_t) (1u << (bit & 7)), 0);
+  asdf_keymaps_request_bit(&kb->keymap, (uint8_t) (1u << (bit & 7u)), false);
 }
 
 /**
@@ -290,7 +287,7 @@ void asdf_action_mapsel_clear(asdf_t *kb, uint8_t bit)
 void asdf_action_strobe_positive(asdf_t *kb, uint8_t param)
 {
   (void) param;
-  asdf_set_strobe_polarity(kb, 1);
+  asdf_set_strobe_polarity(kb, true);
 }
 
 /**
@@ -304,7 +301,7 @@ void asdf_action_strobe_positive(asdf_t *kb, uint8_t param)
 void asdf_action_strobe_negative(asdf_t *kb, uint8_t param)
 {
   (void) param;
-  asdf_set_strobe_polarity(kb, 0);
+  asdf_set_strobe_polarity(kb, false);
 }
 
 /**
@@ -346,7 +343,7 @@ void asdf_action_autorepeat_off(asdf_t *kb, uint8_t param)
  */
 void asdf_action_virtual(asdf_t *kb, uint8_t virtual_out)
 {
-  asdf_virtual_activate(&kb->outputs, (asdf_virtual_dev_t) virtual_out);
+  asdf_virtual_activate(&kb->outputs, (asdf_virtual_dev_t) virtual_out); //lint !e9030 D15
 }
 
 /**
@@ -368,9 +365,9 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param)
   (void) param;
   const asdf_keymap_t *keymap = asdf_keymap_descriptor(kb->keymap.current);
 
-  if (keymap) {
+  if (keymap != NULL) {
     const char *message = (const char *) FLASH_READ_PTR(&keymap->id_message);
-    if (message) {
+    if (message != NULL) {
       asdf_print_flash(kb, message);
     }
   }

@@ -43,6 +43,9 @@ Highlights
 - Replaced older block-style headers with modern Doxygen headers, improving
   readability.
 
+- The code is checked with PC-lint Plus against MISRA C:2025, with each
+  deviation recorded in ``lint/MISRA-DEVIATIONS.md``.
+
 Details
 ~~~~~~~
 
@@ -66,6 +69,9 @@ Details
 - *Feature*: The typed platform interface (``asdf_platform_t``) replaces the
   cast hook table.
 - *Feature*: Messages print from flash; nanoprintf is dropped.
+- *Feature*: Predicates and flags are ``bool``, and the platform's
+  ``set_strobe_polarity`` callback takes a ``bool``. Platform adapters and
+  applications written for earlier versions need the same change.
 - *Build*: ATmega88P dropped: four-byte keys no longer fit its 8 KB flash. The
   ATmega328P, 168P, 2560, 1280 and 640 remain.
 - *Build*: Builds now need `uv <https://docs.astral.sh/uv/>`_ to run the keymap
@@ -80,6 +86,8 @@ Details
   licensed PC-lint Plus.
 - *Build*: Removed the unused OSI 542 row reader (``asdf_arch_osi_read_row``)
   from the ATmega2560 and PIC32CM Q64 adapters.
+- *Build*: The lint presets check MISRA C:2025 (``lint/misra.lnt``);
+  deviations are recorded in ``lint/MISRA-DEVIATIONS.md``.
 - *Test*: Host tests also run under AddressSanitizer and
   UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
 - *Test*: Randomized key event tests check state invariants on three

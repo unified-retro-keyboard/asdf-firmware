@@ -46,7 +46,7 @@
 // ASCII: 8-bit parallel output on PA08..PA15.
 #define ASCII_GROUP 0u
 #define ASCII_SHIFT 8u
-#define ASCII_MASK (0xFFu << ASCII_SHIFT)
+#define ASCII_MASK ((uint32_t) 0xFFu << ASCII_SHIFT)
 // LEDs (active low) on PA16/PA17/PA18.
 #define LED1_GROUP 0u
 #define LED1_PIN 16u

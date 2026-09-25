@@ -32,6 +32,7 @@
 #include <avr/interrupt.h>
 #include <util/atomic.h>
 #include <util/delay.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 #include "asdf_config.h"
@@ -85,10 +86,10 @@ static inline void clear_bit(volatile uint8_t *port, uint8_t bit)
  */
 static void arch_timer0_config(uint32_t bits)
 {
-  TCCR0B = 0; // first turn off timer.
-  TCCR0A = (bits >> TMR0A_POS) & 0xff;
-  TIMSK0 = (bits >> TMR0IMSK_POS) & 0xff;
-  TCCR0B = (bits >> TMR0B_POS) & 0xff; // Set the mode (and turn on timer) last
+  TCCR0B = 0u; // first turn off timer.
+  TCCR0A = (uint8_t) ((bits >> TMR0A_POS) & 0xFFu);
+  TIMSK0 = (uint8_t) ((bits >> TMR0IMSK_POS) & 0xFFu);
+  TCCR0B = (uint8_t) ((bits >> TMR0B_POS) & 0xFFu); // Set the mode (and turn on timer) last
 }
 
 /**
@@ -123,7 +124,7 @@ uint8_t asdf_arch_tick(asdf_arch_t *arch)
   uint8_t retval;
 
   // read and clear as one step, so a tick counted between them is not lost
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) //lint !e9036 !e9192 !e9194 !e9197 D18
   {
     retval = arch->ticks;
     arch->ticks = 0;
@@ -173,7 +174,7 @@ static void asdf_arch_init_leds(void)
  */
 static void asdf_arch_led1_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     clear_bit(&ASDF_LED1_PORT, ASDF_LED1_BIT);
   }
   else {
@@ -195,7 +196,7 @@ static void asdf_arch_led1_set(uint8_t value)
  */
 static void asdf_arch_led2_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_LED2_PORT, ASDF_LED2_BIT);
   }
   else {
@@ -217,7 +218,7 @@ static void asdf_arch_led2_set(uint8_t value)
  */
 static void asdf_arch_led3_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_LED3_PORT, ASDF_LED3_BIT);
   }
   else {
@@ -240,7 +241,7 @@ static void asdf_arch_led3_set(uint8_t value)
  */
 static void asdf_arch_out1_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_OUT1_PORT, ASDF_OUT1_BIT);
   }
   else {
@@ -262,7 +263,7 @@ static void asdf_arch_out1_set(uint8_t value)
  */
 static void asdf_arch_out1_open_hi_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     clear_bit(&ASDF_OUT1_DDR, ASDF_OUT1_BIT);
     set_bit(&ASDF_OUT1_PORT, ASDF_OUT1_BIT);
   }
@@ -283,7 +284,7 @@ static void asdf_arch_out1_open_hi_set(uint8_t value)
  */
 static void asdf_arch_out1_open_lo_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_OUT1_PORT, ASDF_OUT1_BIT);
     set_bit(&ASDF_OUT1_DDR, ASDF_OUT1_BIT);
   }
@@ -307,7 +308,7 @@ static void asdf_arch_out1_open_lo_set(uint8_t value)
  */
 static void asdf_arch_out2_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     clear_bit(&ASDF_OUT2_PORT, ASDF_OUT2_BIT);
   }
   else {
@@ -369,7 +370,7 @@ static void asdf_arch_out2_open_lo_set(uint8_t value)
  */
 static void asdf_arch_out3_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_OUT3_PORT, ASDF_OUT3_BIT);
   }
   else {
@@ -391,7 +392,7 @@ static void asdf_arch_out3_set(uint8_t value)
  */
 static void asdf_arch_out3_open_hi_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     clear_bit(&ASDF_OUT3_DDR, ASDF_OUT3_BIT);
     set_bit(&ASDF_OUT3_PORT, ASDF_OUT3_BIT);
   }
@@ -412,7 +413,7 @@ static void asdf_arch_out3_open_hi_set(uint8_t value)
  */
 static void asdf_arch_out3_open_lo_set(uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     set_bit(&ASDF_OUT3_PORT, ASDF_OUT3_BIT);
     set_bit(&ASDF_OUT3_DDR, ASDF_OUT3_BIT);
   }
@@ -521,7 +522,7 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
 
   // first, output the new row value:
   ASDF_ROW_PORT = (uint8_t) ((ASDF_ROW_PORT & ~ASDF_ROW_MASK)
-                             | ((row & ASDF_ROW_MASK) << ASDF_ROW_OFFSET));
+                             | (uint8_t) ((row & ASDF_ROW_MASK) << ASDF_ROW_OFFSET));
 
 
   // read in the columns.  Set LOAD mode and pulse clock.
@@ -571,29 +572,13 @@ static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
   // the strobe and return it to the idle level set by the strobe polarity.
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 
-  _delay_us(ASDF_STROBE_LENGTH_US);
+  _delay_us(ASDF_STROBE_LENGTH_US); //lint !e9034 D18: _delay_us takes a double
 
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 }
 
-// Output handlers, indexed by physical output, kept in flash.
-typedef void (*asdf_arch_output_handler_t)(uint8_t);
-
-static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
-  [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
-  [PHYSICAL_OUT1] = &asdf_arch_out1_set,
-  [PHYSICAL_OUT2] = &asdf_arch_out2_set,
-  [PHYSICAL_OUT3] = &asdf_arch_out3_set,
-  [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
-  [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
-  [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
-  [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
-  [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
-  [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
-  [PHYSICAL_LED1] = &asdf_arch_led1_set,
-  [PHYSICAL_LED2] = &asdf_arch_led2_set,
-  [PHYSICAL_LED3] = &asdf_arch_led3_set,
-};
+// An output handler: drives one physical output to a value.
+typedef void (*asdf_arch_output_handler_t)(uint8_t value);
 
 /**
  * Drives a physical output through its handler.
@@ -608,6 +593,24 @@ static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_
  */
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
+  // Output handlers, indexed by physical output, kept in flash.
+  static const asdf_arch_output_handler_t FLASH
+    output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
+    [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
+    [PHYSICAL_OUT1] = &asdf_arch_out1_set,
+    [PHYSICAL_OUT2] = &asdf_arch_out2_set,
+    [PHYSICAL_OUT3] = &asdf_arch_out3_set,
+    [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
+    [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
+    [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
+    [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
+    [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
+    [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
+    [PHYSICAL_LED1] = &asdf_arch_led1_set,
+    [PHYSICAL_LED2] = &asdf_arch_led2_set,
+    [PHYSICAL_LED3] = &asdf_arch_led3_set,
+  };
+
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
     // copied out of flash, rather than cast from a data pointer
     asdf_arch_output_handler_t handler;
@@ -692,12 +695,12 @@ static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uin
  * Sets the strobe pin to the idle level of the chosen polarity.
  *
  * @param user      Platform context (the keyboard's asdf_arch_t); unused.
- * @param positive  Nonzero for a positive strobe (idles low); zero for a
+ * @param positive  True for a positive strobe (idles low); false for a
  *                  negative strobe (idles high).
  *
  * Complexity: 2
  */
-static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
+static void arch_platform_set_strobe_polarity(void *user, bool positive)
 {
   (void) user;
   if (positive) {
@@ -718,7 +721,7 @@ static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
 static void arch_platform_pulse_delay_short(void *user)
 {
   (void) user;
-  _delay_us(ASDF_PULSE_DELAY_SHORT_US);
+  _delay_us(ASDF_PULSE_DELAY_SHORT_US); //lint !e9034 D18: _delay_us takes a double
 }
 
 /**
@@ -751,12 +754,12 @@ void asdf_arch_init(asdf_arch_t *arch)
   cli();
 
   arch->platform.user = arch;
-  arch->platform.read_row = arch_platform_read_row;
-  arch->platform.send_code = arch_platform_send_code;
-  arch->platform.set_output = arch_platform_set_output;
-  arch->platform.set_strobe_polarity = arch_platform_set_strobe_polarity;
-  arch->platform.pulse_delay_short = arch_platform_pulse_delay_short;
-  arch->platform.reset = arch_platform_reset;
+  arch->platform.read_row = &arch_platform_read_row;
+  arch->platform.send_code = &arch_platform_send_code;
+  arch->platform.set_output = &arch_platform_set_output;
+  arch->platform.set_strobe_polarity = &arch_platform_set_strobe_polarity;
+  arch->platform.pulse_delay_short = &arch_platform_pulse_delay_short;
+  arch->platform.reset = &arch_platform_reset;
 
   // clear the tick count;
   arch->ticks = 0;

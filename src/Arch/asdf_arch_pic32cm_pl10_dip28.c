@@ -12,6 +12,7 @@
  * Part of the Unified Keyboard Project ASDF keyboard firmware.
  */
 
+#include <stdbool.h>
 #include "asdf_arch.h"
 #include "asdf_config.h" // ASDF_DEFAULT_DATA_POLARITY, ASDF_PULSE_DELAY_SHORT_US
 #include <stddef.h>
@@ -35,7 +36,7 @@
  * bit is read before the clock pulse that shifts in the next. A pressed key
  * reads low, so each bit is inverted.
  *
- * Complexity: 2
+ * Complexity: 3
  */
 static asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
@@ -52,7 +53,9 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
 
   for (uint8_t i = 0; i < ASDF_MAX_COLS; i++) {
     // invert: a pressed key reads low on the serial data line
-    cols |= (asdf_cols_t)((uint8_t)(!pin_read(COL_GROUP, COL_PIN)) << i);
+    if (!pin_read(COL_GROUP, COL_PIN)) {
+      cols |= (asdf_cols_t) (1u << i);
+    }
     pin_set(COLCLK_GROUP, COLCLK_PIN);
     pin_clear(COLCLK_GROUP, COLCLK_PIN);
   }
@@ -130,7 +133,11 @@ static void asdf_arch_set_neg_strobe(void)
  */
 static void asdf_arch_led1_set(uint8_t value)
 {
-  value ? pin_clear(LED1_GROUP, LED1_PIN) : pin_set(LED1_GROUP, LED1_PIN);
+  if (value != 0u) {
+    pin_clear(LED1_GROUP, LED1_PIN);
+  } else {
+    pin_set(LED1_GROUP, LED1_PIN);
+  }
 }
 
 /**
@@ -144,7 +151,11 @@ static void asdf_arch_led1_set(uint8_t value)
  */
 static void asdf_arch_led2_set(uint8_t value)
 {
-  value ? pin_clear(LED2_GROUP, LED2_PIN) : pin_set(LED2_GROUP, LED2_PIN);
+  if (value != 0u) {
+    pin_clear(LED2_GROUP, LED2_PIN);
+  } else {
+    pin_set(LED2_GROUP, LED2_PIN);
+  }
 }
 
 /**
@@ -158,7 +169,11 @@ static void asdf_arch_led2_set(uint8_t value)
  */
 static void asdf_arch_led3_set(uint8_t value)
 {
-  value ? pin_clear(LED3_GROUP, LED3_PIN) : pin_set(LED3_GROUP, LED3_PIN);
+  if (value != 0u) {
+    pin_clear(LED3_GROUP, LED3_PIN);
+  } else {
+    pin_set(LED3_GROUP, LED3_PIN);
+  }
 }
 
 /**
@@ -174,7 +189,11 @@ static void asdf_arch_led3_set(uint8_t value)
  */
 static inline void out_set(uint8_t g, uint8_t b, uint8_t value)
 {
-  value ? pin_set(g, b) : pin_clear(g, b);
+  if (value != 0u) {
+    pin_set(g, b);
+  } else {
+    pin_clear(g, b);
+  }
   pin_dir_out(g, b);
 }
 
@@ -198,7 +217,7 @@ static inline void out_set(uint8_t g, uint8_t b, uint8_t value)
  */
 static inline void out_open_hi(uint8_t g, uint8_t b, uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     pin_dir_in(g, b);
   }
   else {
@@ -223,7 +242,7 @@ static inline void out_open_hi(uint8_t g, uint8_t b, uint8_t value)
  */
 static inline void out_open_lo(uint8_t g, uint8_t b, uint8_t value)
 {
-  if (value) {
+  if (value != 0u) {
     pin_set(g, b);
     pin_dir_out(g, b);
   }
@@ -352,23 +371,8 @@ static void asdf_arch_init_hardware(void)
 }
 
 // Output handlers, indexed by physical output.
-typedef void (*asdf_arch_output_handler_t)(uint8_t);
+typedef void (*asdf_arch_output_handler_t)(uint8_t value);
 
-static const asdf_arch_output_handler_t output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
-  [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
-  [PHYSICAL_OUT1] = &asdf_arch_out1_set,
-  [PHYSICAL_OUT2] = &asdf_arch_out2_set,
-  [PHYSICAL_OUT3] = &asdf_arch_out3_set,
-  [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
-  [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
-  [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
-  [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
-  [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
-  [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
-  [PHYSICAL_LED1] = &asdf_arch_led1_set,
-  [PHYSICAL_LED2] = &asdf_arch_led2_set,
-  [PHYSICAL_LED3] = &asdf_arch_led3_set,
-};
 
 /**
  * Drives a physical output through its handler.
@@ -383,6 +387,23 @@ static const asdf_arch_output_handler_t output_handlers[ASDF_PHYSICAL_NUM_RESOUR
  */
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
+  // Output handlers, indexed by physical output.
+  static const asdf_arch_output_handler_t output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
+    [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
+    [PHYSICAL_OUT1] = &asdf_arch_out1_set,
+    [PHYSICAL_OUT2] = &asdf_arch_out2_set,
+    [PHYSICAL_OUT3] = &asdf_arch_out3_set,
+    [PHYSICAL_OUT1_OPEN_HI] = &asdf_arch_out1_open_hi_set,
+    [PHYSICAL_OUT2_OPEN_HI] = &asdf_arch_out2_open_hi_set,
+    [PHYSICAL_OUT3_OPEN_HI] = &asdf_arch_out3_open_hi_set,
+    [PHYSICAL_OUT1_OPEN_LO] = &asdf_arch_out1_open_lo_set,
+    [PHYSICAL_OUT2_OPEN_LO] = &asdf_arch_out2_open_lo_set,
+    [PHYSICAL_OUT3_OPEN_LO] = &asdf_arch_out3_open_lo_set,
+    [PHYSICAL_LED1] = &asdf_arch_led1_set,
+    [PHYSICAL_LED2] = &asdf_arch_led2_set,
+    [PHYSICAL_LED3] = &asdf_arch_led3_set,
+  };
+
   if (output < ASDF_PHYSICAL_NUM_RESOURCES) {
     output_handlers[output](value);
   }
@@ -466,12 +487,12 @@ static void arch_platform_set_output(void *user, asdf_physical_dev_t output, uin
  * Sets the strobe pin to the idle level of the chosen polarity.
  *
  * @param user      Platform context (the keyboard's asdf_arch_t); unused.
- * @param positive  Nonzero for a positive strobe (idles low); zero for a
+ * @param positive  True for a positive strobe (idles low); false for a
  *                  negative strobe (idles high).
  *
  * Complexity: 2
  */
-static void arch_platform_set_strobe_polarity(void *user, uint8_t positive)
+static void arch_platform_set_strobe_polarity(void *user, bool positive)
 {
   (void) user;
   if (positive) {
@@ -519,12 +540,12 @@ static void arch_platform_reset(void *user) { asdf_arch_reset(user); }
 void asdf_arch_init(asdf_arch_t *arch)
 {
   arch->platform.user = arch;
-  arch->platform.read_row = arch_platform_read_row;
-  arch->platform.send_code = arch_platform_send_code;
-  arch->platform.set_output = arch_platform_set_output;
-  arch->platform.set_strobe_polarity = arch_platform_set_strobe_polarity;
-  arch->platform.pulse_delay_short = arch_platform_pulse_delay_short;
-  arch->platform.reset = arch_platform_reset;
+  arch->platform.read_row = &arch_platform_read_row;
+  arch->platform.send_code = &arch_platform_send_code;
+  arch->platform.set_output = &arch_platform_set_output;
+  arch->platform.set_strobe_polarity = &arch_platform_set_strobe_polarity;
+  arch->platform.pulse_delay_short = &arch_platform_pulse_delay_short;
+  arch->platform.reset = &arch_platform_reset;
   arch->ticks = 0;
 
   asdf_arch_init_hardware();

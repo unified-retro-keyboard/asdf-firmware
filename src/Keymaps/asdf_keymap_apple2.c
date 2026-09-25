@@ -49,11 +49,13 @@ static const asdf_virtual_initializer_t FLASH apple2_outputs[] = {
 
   // assign RESET output to the virtual RESET output, configure to produce a
   // short pulse when activated
-  { APPLE_VIRTUAL_RESET, APPLE_RESET_OUTPUT, V_PULSE_SHORT, !APPLE_RESET_ACTIVE_VALUE },
+  { APPLE_VIRTUAL_RESET, APPLE_RESET_OUTPUT, V_PULSE_SHORT,
+    ASDF_IDLE_VALUE(APPLE_RESET_ACTIVE_VALUE) },
 
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
   // a long pulse when activated
-  { APPLE_VIRTUAL_CLR_SCR, APPLE_CLR_SCR_OUTPUT, V_PULSE_LONG, !APPLE_CLR_SCR_ACTIVE_VALUE },
+  { APPLE_VIRTUAL_CLR_SCR, APPLE_CLR_SCR_OUTPUT, V_PULSE_LONG,
+    ASDF_IDLE_VALUE(APPLE_CLR_SCR_ACTIVE_VALUE) },
 };
 
 // For Apple 2, start with CAPS active.

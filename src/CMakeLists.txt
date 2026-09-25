@@ -4,6 +4,7 @@ include(${CMAKE_SOURCE_DIR}/cmake/asdf_keymap_gen.cmake)
 include(../keymap_list.cmake)
 
 create_keymap_table("${keymap_list}" keymap_table)
+create_keymap_slots("${keymap_list}" keymap_slots)
 create_keymap_report("${keymap_list}" keymap_report)
 create_keymap_declarations("${keymap_list}" keymap_declarations)
 

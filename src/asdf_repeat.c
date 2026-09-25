@@ -23,6 +23,7 @@
 // You should have received a copy of the GNU General Public License along with
 // this program. If not, see <https://www.gnu.org/licenses/>.
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf_repeat.h"
 
@@ -42,7 +43,8 @@
  */
 void asdf_repeat_init(asdf_repeat_state_t *repeat)
 {
-  repeat->mode = repeat->base_mode = ASDF_DEFAULT_REPEAT_STATE;
+  repeat->base_mode = ASDF_DEFAULT_REPEAT_STATE;
+  repeat->mode = repeat->base_mode;
   repeat->timer = (uint16_t) repeat->mode;
 }
 
@@ -74,7 +76,8 @@ void asdf_repeat_auto_off(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_OFF;
   if (REPEAT_ON != repeat->mode) {
-    repeat->timer = repeat->mode = repeat->base_mode;
+    repeat->mode = repeat->base_mode;
+    repeat->timer = (uint16_t) repeat->mode;
   }
 }
 
@@ -93,7 +96,8 @@ void asdf_repeat_auto_on(asdf_repeat_state_t *repeat)
 {
   repeat->base_mode = REPEAT_AUTO;
   if (REPEAT_ON != repeat->mode) {
-    repeat->timer = repeat->mode = repeat->base_mode;
+    repeat->mode = repeat->base_mode;
+    repeat->timer = (uint16_t) repeat->mode;
   }
 }
 
@@ -112,8 +116,8 @@ void asdf_repeat_auto_on(asdf_repeat_state_t *repeat)
  */
 void asdf_repeat_activate(asdf_repeat_state_t *repeat)
 {
-  if (repeat->timer > REPEAT_ON || REPEAT_OFF == repeat->mode) {
-    repeat->timer = REPEAT_ON;
+  if ((repeat->timer > (uint16_t) REPEAT_ON) || (REPEAT_OFF == repeat->mode)) {
+    repeat->timer = (uint16_t) REPEAT_ON;
   }
   repeat->mode = REPEAT_ON;
 }
@@ -131,7 +135,8 @@ void asdf_repeat_activate(asdf_repeat_state_t *repeat)
  */
 void asdf_repeat_deactivate(asdf_repeat_state_t *repeat)
 {
-  repeat->timer = repeat->mode = repeat->base_mode;
+  repeat->mode = repeat->base_mode;
+  repeat->timer = (uint16_t) repeat->mode;
 }
 
 /**
@@ -140,9 +145,9 @@ void asdf_repeat_deactivate(asdf_repeat_state_t *repeat)
  * No side effects.
  *
  * @param repeat  Repeat state to query.
- * @return 1 if the base mode is REPEAT_AUTO, else 0.
+ * @return true if the base mode is REPEAT_AUTO, else false.
  */
-uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat)
+bool asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat)
 {
   return (repeat->base_mode == REPEAT_AUTO);
 }
@@ -153,10 +158,10 @@ uint8_t asdf_repeat_is_autorepeat_enabled(const asdf_repeat_state_t *repeat)
  * Counts down and may reload the timer in @p repeat.
  *
  * @param repeat  Repeat state to update.
- * @return 1 when the timer expires and the last code should be repeated to the
- *         output, else 0.
+ * @return true when the timer expires and the last code should be repeated to
+ *         the output, else false.
  */
-uint8_t asdf_repeat(asdf_repeat_state_t *repeat)
+bool asdf_repeat(asdf_repeat_state_t *repeat)
 {
   return asdf_repeat_advance(repeat, 1);
 }
@@ -170,25 +175,25 @@ uint8_t asdf_repeat(asdf_repeat_state_t *repeat)
  *
  * @param repeat   Repeat state to update.
  * @param elapsed  Ticks (ms) since the last call.
- * @return 1 when the timer expires and the current key should repeat; 0 when
- *         the timer is stopped (REPEAT_OFF) or has not yet expired.
+ * @return true when the timer expires and the current key should repeat; false
+ *         when the timer is stopped (REPEAT_OFF) or has not yet expired.
  *
  * A zero timer means REPEAT_OFF: the timer does not run. Time beyond expiry is
  * not carried over into the next interval.
  *
  * Complexity: 3
  */
-uint8_t asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed)
+bool asdf_repeat_advance(asdf_repeat_state_t *repeat, uint8_t elapsed)
 {
-  if (!repeat->timer) {
-    return 0;
+  if (repeat->timer == 0u) {
+    return false;
   }
   if (repeat->timer > elapsed) {
     repeat->timer -= elapsed;
-    return 0;
+    return false;
   }
-  repeat->timer = REPEAT_ON;
-  return 1;
+  repeat->timer = (uint16_t) REPEAT_ON;
+  return true;
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

@@ -50,6 +50,7 @@
 #if !defined(ASDF_SIMPLE_H)
 #define ASDF_SIMPLE_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include "asdf.h"
 
@@ -85,9 +86,9 @@ void asdf_poll(void);
  * available until asdf_read() takes it. Side effects: when no code is held,
  * takes the next ready code from the keyboard and holds it for asdf_read().
  *
- * @return Nonzero if a code is ready; 0 if not.
+ * @return true if a code is ready; false if not.
  */
-uint8_t asdf_available(void);
+bool asdf_available(void);
 
 /**
  * Take the next code.

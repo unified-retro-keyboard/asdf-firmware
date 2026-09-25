@@ -41,6 +41,18 @@ function(create_keymap_table keymaps keymap_table)
   set(${keymap_table} "${temp_string}" PARENT_SCOPE)
 endfunction(create_keymap_table)
 
+function(create_keymap_slots keymaps keymap_slots)
+  # the registry's size: one past the highest keymap number
+  set(slots 0)
+  foreach(keymap IN LISTS keymaps)
+    string(REGEX REPLACE "<.+:(.+)>" "\\1" number "${keymap}")
+    if(number GREATER_EQUAL slots)
+      math(EXPR slots "${number} + 1")
+    endif()
+  endforeach()
+  set(${keymap_slots} ${slots} PARENT_SCOPE)
+endfunction(create_keymap_slots)
+
 function(create_keymap_declarations keymaps keymap_decl)
   # each keymap's header declares its descriptor
   list(TRANSFORM keymaps REPLACE "<\(.+\):\(.+\)>" "#include \"asdf_keymap_\\1.h\"" OUTPUT_VARIABLE temp_list)

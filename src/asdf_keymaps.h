@@ -31,6 +31,7 @@
 #if !defined(ASDF_KEYMAPS_H)
 #define ASDF_KEYMAPS_H
 
+#include <stdbool.h>
 #include "asdf.h"
 #include "asdf_actions.h"
 #include "asdf_virtual.h"
@@ -66,8 +67,8 @@ typedef struct {
 #define ASDF_NUM_ELEMENTS(array) ((uint8_t)(sizeof(array) / sizeof((array)[0])))
 
 /** Flags in asdf_keymap_t.flags. */
-#define ASDF_KEYMAP_CAPS_ON 0x01         // start with CAPSLOCK on
-#define ASDF_KEYMAP_NEGATIVE_STROBE 0x02 // start with negative output strobe
+#define ASDF_KEYMAP_CAPS_ON 0x01u        // start with CAPSLOCK on
+#define ASDF_KEYMAP_NEGATIVE_STROBE 0x02u// start with negative output strobe
 
 /**
  * A keymap descriptor.
@@ -163,12 +164,12 @@ typedef struct {
  * @param modifier_index  Modifier state the matrix is used for.
  * @param num_rows        Rows in @p matrix, at most ASDF_MAX_ROWS.
  * @param num_cols        Columns in @p matrix, at most ASDF_MAX_COLS.
- * @return 1 if the matrix was set; 0 if @p modifier_index, @p num_rows, or
- *         @p num_cols is out of range.
+ * @return true if the matrix was set; false if @p modifier_index, @p num_rows,
+ *         or @p num_cols is out of range.
  */
-uint8_t asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
-                               modifier_index_t modifier_index, uint8_t num_rows,
-                               uint8_t num_cols);
+bool asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
+                          modifier_index_t modifier_index, uint8_t num_rows,
+                          uint8_t num_cols);
 
 /**
  * Number of rows in the matrix for a modifier state.
@@ -202,13 +203,13 @@ uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
  * @param keymap          Keymap state to query.
  * @param row             Key row.
  * @param col             Key column.
- * @param modifier_index  Modifier state (a modifier_index_t).
+ * @param modifier_index  Modifier state.
  * @return The key at @p row, @p col in the matrix for @p modifier_index; a key
  *         that does nothing (KEY_NOTHING) if @p modifier_index, @p row, or
  *         @p col is out of range, or no matrix is set.
  */
 asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
-                                  uint8_t modifier_index);
+                                  modifier_index_t modifier_index);
 
 /**
  * Set or clear bits of the requested keymap number.
@@ -221,7 +222,7 @@ asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, 
  * @param bit     Mask of the bits to change, normally one ASDF_KEYMAP_BIT_n.
  * @param set     Nonzero to set the bits, 0 to clear them.
  */
-void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, uint8_t set);
+void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, bool set);
 
 /**
  * Select the first keymap: the lowest-numbered keymap that exists.

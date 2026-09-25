@@ -200,8 +200,11 @@ def matrix_rows(name, spec, num_rows, num_cols):
             raise KeymapError(
                 "%s: row %s has %d keys, more than %d columns" % (name, row, len(keys), num_cols)
             )
+        # Each key is designated by its column, so a short row is a sparse
+        # initialization rather than a partial one (MISRA C Rule 9.3).
         result[row] = [
-            key_initializer(key, "%s[%s][%d]" % (name, row, col)) for col, key in enumerate(keys)
+            "[%d] = %s" % (col, key_initializer(key, "%s[%s][%d]" % (name, row, col)))
+            for col, key in enumerate(keys)
         ]
     return result
 
@@ -234,16 +237,16 @@ def generate(source, stem):
          "#define %s" % guard, ""]
     h += header_includes + [""]
     c = [banner("c", "Key matrices"), "", '#include "%s.h"' % stem, ""]
-    # Short and missing rows are zero-filled, and a zero key is KEY_NOTHING(0)
+    # Keys left out of a row are zero, and a zero key is KEY_NOTHING(0)
     # (ACTION_NOTHING is 0). The _fit typedefs exist only to fail compilation.
-    c.append("//lint -e785 zero-filled keys are KEY_NOTHING(0)")
+    c.append("//lint -e785 keys not designated are zero: KEY_NOTHING(0)")
     c.append("//lint -esym(751, *_fit) compile-time size checks, never referenced")
     c.append("")
 
     # The matrices must fit the scanner: a negative array size fails to compile.
     check = re.sub(r"[^A-Za-z0-9]", "_", stem)
-    c.append("typedef char %s_rows_fit[(%s) <= ASDF_MAX_ROWS ? 1 : -1];" % (check, rows_c))
-    c.append("typedef char %s_cols_fit[(%s) <= ASDF_MAX_COLS ? 1 : -1];" % (check, cols_c))
+    c.append("typedef char %s_rows_fit[((uint16_t) (%s) <= ASDF_MAX_ROWS) ? 1 : -1];" % (check, rows_c))
+    c.append("typedef char %s_cols_fit[((uint16_t) (%s) <= ASDF_MAX_COLS) ? 1 : -1];" % (check, cols_c))
     c.append("")
 
     for name, spec in source["maps"].items():

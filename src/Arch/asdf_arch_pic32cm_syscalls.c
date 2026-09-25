@@ -15,6 +15,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+//lint -e970 -e818 D12: newlib's system-call signatures, for the rest of this module
+
 // newlib calls these by name; it declares none of them in its headers.
 void *_sbrk(ptrdiff_t incr);
 int _close(int file);
@@ -29,7 +31,6 @@ int _getpid(void);
 
 //lint -esym(526, end) -esym(2701, end) defined by the linker script
 extern char end; // first address past .bss / start of heap (linker script)
-static char *heap_end = &end;
 
 /**
  * Grows the heap.
@@ -45,8 +46,10 @@ static char *heap_end = &end;
  */
 void *_sbrk(ptrdiff_t incr)
 {
+  static char *heap_end = &end;
   char *prev = heap_end;
-  heap_end += incr;
+
+  heap_end = &heap_end[incr];
   return prev;
 }
 

@@ -36,10 +36,10 @@
 #pragma GCC diagnostic ignored "-Woverride-init"
 #pragma GCC diagnostic ignored "-Wpedantic"
 const asdf_action_fn_t FLASH asdf_action_table[ASDF_NUM_ACTION_SLOTS] = {
-  [0 ... ASDF_NUM_ACTION_SLOTS - 1] = asdf_action_nothing,
+  [0 ... ASDF_NUM_ACTION_SLOTS - 1] = &asdf_action_nothing,
   ASDF_BUILTIN_ACTIONS,
-  [ACTION_APPLESOFT_KEYBOARD_TEST] = applesoft_keyboard_test,
-  [ACTION_ACE1000_KEYBOARD_TEST] = ace1000_keyboard_test,
+  [ACTION_APPLESOFT_KEYBOARD_TEST] = &applesoft_keyboard_test,
+  [ACTION_ACE1000_KEYBOARD_TEST] = &ace1000_keyboard_test,
 };
 #pragma GCC diagnostic pop
 

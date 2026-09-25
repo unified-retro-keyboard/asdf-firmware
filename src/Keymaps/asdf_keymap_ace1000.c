@@ -53,11 +53,13 @@ static const asdf_virtual_initializer_t FLASH ace1000_outputs[] = {
 
   // assign RESET output to the virtual RESET output, configure to produce a
   // short pulse when activated
-  { ACE1000_VIRTUAL_RESET, ACE1000_RESET_OUTPUT, V_PULSE_SHORT, !ACE1000_RESET_ACTIVE_VALUE },
+  { ACE1000_VIRTUAL_RESET, ACE1000_RESET_OUTPUT, V_PULSE_SHORT,
+    ASDF_IDLE_VALUE(ACE1000_RESET_ACTIVE_VALUE) },
 
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
   // a long pulse when activated
-  { ACE1000_VIRTUAL_CLR_SCR, ACE1000_CLR_SCR_OUT, V_PULSE_LONG, !ACE1000_CLR_SCR_ACTIVE_VALUE },
+  { ACE1000_VIRTUAL_CLR_SCR, ACE1000_CLR_SCR_OUT, V_PULSE_LONG,
+    ASDF_IDLE_VALUE(ACE1000_CLR_SCR_ACTIVE_VALUE) },
 };
 
 // The ACE 1000 starts with caps lock on.

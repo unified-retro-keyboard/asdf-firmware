@@ -45,12 +45,12 @@
 // Timer 0 definitions
 // Define fields for register A, B, interrupt mask as 8-bit masks, and
 // as masks offset into a combined config word
-#define TMR0A_POS 0
-#define TMR0B_POS 8
-#define TMR0IMSK_POS 16
-#define TMR0A (1L << TMR0A_POS)
-#define TMR0B (1L << TMR0B_POS)
-#define TMR0IMSK (1L << TMR0IMSK_POS)
+#define TMR0A_POS 0u
+#define TMR0B_POS 8u
+#define TMR0IMSK_POS 16u
+#define TMR0A (1UL << TMR0A_POS)
+#define TMR0B (1UL << TMR0B_POS)
+#define TMR0IMSK (1UL << TMR0IMSK_POS)
 
 #define TIMER0_COM_A_DISCONNECTED 0
 #define TIMER0_COM_B_DISCONNECTED 0
@@ -79,14 +79,14 @@
 //   // Use TMRX_* definitions to configure timer with config function
 //   processor_timer4_config(TMRX_WFM_CTC | TMRX_INT_ON_CMPA);
 //
-#define TMRXA_POS 0
-#define TMRXB_POS 8
-#define TMRXC_POS 16
-#define TMRXIMSK_POS 24
-#define TMRXA (1L << TMRXA_POS)
-#define TMRXB (1L << TMRXB_POS)
-#define TMRXC (1L << TMRXC_POS)
-#define TMRXIMSK (1L << TMRXIMSK_POS)
+#define TMRXA_POS 0u
+#define TMRXB_POS 8u
+#define TMRXC_POS 16u
+#define TMRXIMSK_POS 24u
+#define TMRXA (1UL << TMRXA_POS)
+#define TMRXB (1UL << TMRXB_POS)
+#define TMRXC (1UL << TMRXC_POS)
+#define TMRXIMSK (1UL << TMRXIMSK_POS)
 
 // 16-bit timer reg A - Datasheet 17.11.1, p. 154
 #define TMRXA_CMPA_CLR_MATCH_SET_BOTTOM (1 << COM1A1)
@@ -264,8 +264,8 @@
 
 #define PIN_INPUT 0
 #define PIN_OUTPUT 1
-#define ALL_INPUTS 0
-#define ALL_OUTPUTS 0xff
+#define ALL_INPUTS 0x00u
+#define ALL_OUTPUTS 0xFFu
 #define ALL_PULLUPS 0xff
 
 #define ASDF_HIROW_PORT PORTA
@@ -364,7 +364,7 @@ typedef struct {
  */
 static inline void asdf_arch_count_tick(asdf_arch_t *arch)
 {
-  if (arch->ticks < UINT8_MAX) {
+  if (arch->ticks < 0xFFu) {
     arch->ticks++;
   }
 }

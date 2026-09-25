@@ -208,7 +208,7 @@ void keymap2_ctrl_gives_ctrl_values(void)
 void keymap1_capsmap_plain_maps_to_caps(void)
 {
   // set bit 0 to select keymap 1
-  asdf_keymaps_request_bit(&kb.keymap, ASDF_KEYMAP_BIT_0, 1);
+  asdf_keymaps_request_bit(&kb.keymap, ASDF_KEYMAP_BIT_0, true);
   TEST1CAPS(alpha_sample.row, alpha_sample.col);
   TEST1CAPS(num_sample.row, num_sample.col);
 }

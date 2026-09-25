@@ -48,11 +48,13 @@ static const asdf_virtual_initializer_t FLASH classic_outputs[] = {
 
   // assign RESET output to the virtual RESET output, configure to produce a
   // short pulse when activated
-  { CLASSIC_VIRTUAL_RESET, CLASSIC_RESET_OUTPUT, V_PULSE_SHORT, !CLASSIC_RESET_ACTIVE_VALUE },
+  { CLASSIC_VIRTUAL_RESET, CLASSIC_RESET_OUTPUT, V_PULSE_SHORT,
+    ASDF_IDLE_VALUE(CLASSIC_RESET_ACTIVE_VALUE) },
 
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
   // a long pulse when activated
-  { CLASSIC_VIRTUAL_CLR_SCR, CLASSIC_CLR_SCR_OUT, V_PULSE_LONG, !CLASSIC_CLR_SCR_ACTIVE_VALUE },
+  { CLASSIC_VIRTUAL_CLR_SCR, CLASSIC_CLR_SCR_OUT, V_PULSE_LONG,
+    ASDF_IDLE_VALUE(CLASSIC_CLR_SCR_ACTIVE_VALUE) },
 };
 
 const asdf_keymap_t FLASH classic_keymap = {
