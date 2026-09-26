@@ -77,9 +77,9 @@ static void asdf_ring_drop(asdf_ring_t *ring, uint8_t n)
  */
 static void asdf_ring_store(asdf_ring_t *ring, asdf_keycode_t code)
 {
-  uint8_t room_to_end = (uint8_t)(ring->capacity - ring->head);
-  uint8_t tail = (ring->count < room_to_end) ? (uint8_t)(ring->head + ring->count)
-                                             : (uint8_t)(ring->count - room_to_end);
+  uint8_t room_to_end = (uint8_t) (ring->capacity - ring->head);
+  uint8_t tail = (ring->count < room_to_end) ? (uint8_t) (ring->head + ring->count)
+                                             : (uint8_t) (ring->count - room_to_end);
 
   ring->storage[tail] = code;
   ring->count++;

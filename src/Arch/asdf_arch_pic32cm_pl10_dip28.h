@@ -27,7 +27,7 @@
 
 // DIP switch is on row 8
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
-#define ASDF_ARCH_DIPSWITCH_ROW 8
+#define ASDF_ARCH_DIPSWITCH_ROW  8
 
 // --- pin map (PIC32CM6408PL10028, SPDIP-28) ---
 // Provisional: any in-package PA pin compiles; the real SPDIP-28 pinout (which
@@ -35,35 +35,35 @@
 // Rows: 4-bit encoded value -> external 74LS138 decoder, PA00..PA03.
 #define ROW_GROUP 0u
 #define ROW_SHIFT 0u
-#define ROW_MASK 0x0000000Fu
+#define ROW_MASK  0x0000000Fu
 // Columns: serial shift-register read. PA04 data in, PA05 clock, PA06 mode.
-#define COL_GROUP 0u
-#define COL_PIN 4u
-#define COLCLK_GROUP 0u
-#define COLCLK_PIN 5u
+#define COL_GROUP     0u
+#define COL_PIN       4u
+#define COLCLK_GROUP  0u
+#define COLCLK_PIN    5u
 #define COLMODE_GROUP 0u
-#define COLMODE_PIN 6u
+#define COLMODE_PIN   6u
 // Strobe: PA07.
 #define STROBE_GROUP 0u
-#define STROBE_PIN 7u
+#define STROBE_PIN   7u
 // ASCII: 8-bit parallel output on PA08..PA15.
 #define ASCII_GROUP 0u
 #define ASCII_SHIFT 8u
-#define ASCII_MASK ((uint32_t) 0xFFu << ASCII_SHIFT)
+#define ASCII_MASK  ((uint32_t) 0xFFu << ASCII_SHIFT)
 // LEDs (active low) on PA16/PA17/PA18.
 #define LED1_GROUP 0u
-#define LED1_PIN 16u
+#define LED1_PIN   16u
 #define LED2_GROUP 0u
-#define LED2_PIN 17u
+#define LED2_PIN   17u
 #define LED3_GROUP 0u
-#define LED3_PIN 18u
+#define LED3_PIN   18u
 // OUT1-3 on PA19/PA20/PA21.
 #define OUT1_GROUP 0u
-#define OUT1_PIN 19u
+#define OUT1_PIN   19u
 #define OUT2_GROUP 0u
-#define OUT2_PIN 20u
+#define OUT2_PIN   20u
 #define OUT3_GROUP 0u
-#define OUT3_PIN 21u
+#define OUT3_PIN   21u
 
 // --- public API (mirrors asdf_arch_atmega328p.h) ---
 /**

@@ -59,7 +59,10 @@ void asdf_begin(void)
  * keyboard, which advances its timers and scans the key matrix once. Codes
  * generated are queued on the keyboard for asdf_available().
  */
-void asdf_poll(void) { asdf_update(&keyboard, asdf_arch_tick(&arch)); }
+void asdf_poll(void)
+{
+  asdf_update(&keyboard, asdf_arch_tick(&arch));
+}
 
 /**
  * Report whether a code is ready to read.

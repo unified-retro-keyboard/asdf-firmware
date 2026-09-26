@@ -50,8 +50,7 @@ typedef void (*asdf_platform_send_code_t)(void *user, asdf_keycode_t code);
  * @param output  Output to drive.
  * @param value   Level to drive: nonzero for high, 0 for low.
  */
-typedef void (*asdf_platform_set_output_t)(void *user, asdf_physical_dev_t output,
-                                           uint8_t value);
+typedef void (*asdf_platform_set_output_t)(void *user, asdf_physical_dev_t output, uint8_t value);
 
 /**
  * Set the idle level of the output strobe.

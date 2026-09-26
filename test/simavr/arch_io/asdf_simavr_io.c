@@ -5,10 +5,10 @@
 
 const asdf_io_map_t *asdf_io_pick(const char *target)
 {
-    if (!strcmp(target, "atmega328p") ||
-        !strcmp(target, "atmega168p")) return &asdf_io_familyA;
-    if (!strcmp(target, "atmega640") ||
-        !strcmp(target, "atmega1280") ||
-        !strcmp(target, "atmega2560")) return &asdf_io_familyB;
-    return 0;
+  if (!strcmp(target, "atmega328p") || !strcmp(target, "atmega168p"))
+    return &asdf_io_familyA;
+  if (!strcmp(target, "atmega640") || !strcmp(target, "atmega1280")
+      || !strcmp(target, "atmega2560"))
+    return &asdf_io_familyB;
+  return 0;
 }

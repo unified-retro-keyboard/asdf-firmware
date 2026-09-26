@@ -30,30 +30,30 @@ static const char FLASH ace1000_id_message[] = "[Keymap: ace1000]\n";
 
 static const asdf_virtual_initializer_t FLASH ace1000_outputs[] = {
   // Assign power LED to virtual power LED, and initialize to ON
-  { ACE1000_VIRTUAL_POWER_LED, ACE1000_POWER_LED, V_NOFUNC, ACE1000_POWER_LED_INIT_VALUE },
+  { ACE1000_VIRTUAL_POWER_LED, ACE1000_POWER_LED,    V_NOFUNC,      ACE1000_POWER_LED_INIT_VALUE },
 
   // Assign CAPS LED to virtual CAPS LED, and initialize to the INIT value, to
   // match the initial CAPSLOCK state. The capslock state code will alter the
   // virtual LED according to the state.
-  { VCAPS_LED, ACE1000_CAPS_LED, V_NOFUNC, ACE1000_CAPS_LED_INIT_VALUE },
+  { VCAPS_LED,                 ACE1000_CAPS_LED,     V_NOFUNC,      ACE1000_CAPS_LED_INIT_VALUE  },
 
   // assign RESET output to the virtual RESET output, configure to produce a
   // short pulse when activated
-  { ACE1000_VIRTUAL_RESET, ACE1000_RESET_OUTPUT, V_PULSE_SHORT,
-    ASDF_IDLE_VALUE(ACE1000_RESET_ACTIVE_VALUE) },
+  { ACE1000_VIRTUAL_RESET,     ACE1000_RESET_OUTPUT, V_PULSE_SHORT,
+   ASDF_IDLE_VALUE(ACE1000_RESET_ACTIVE_VALUE)                                                   },
 
   // assign the CLRSCR output to the virtual CLRSCR output, configure to produce
   // a long pulse when activated
-  { ACE1000_VIRTUAL_CLR_SCR, ACE1000_CLR_SCR_OUT, V_PULSE_LONG,
-    ASDF_IDLE_VALUE(ACE1000_CLR_SCR_ACTIVE_VALUE) },
+  { ACE1000_VIRTUAL_CLR_SCR,   ACE1000_CLR_SCR_OUT,  V_PULSE_LONG,
+   ASDF_IDLE_VALUE(ACE1000_CLR_SCR_ACTIVE_VALUE)                                                 },
 };
 
 // The ACE 1000 starts with caps lock on.
 const asdf_keymap_t FLASH ace1000_keymap = {
   .maps = { [MOD_PLAIN_MAP] = &ace1000_plain_matrix[0][0],
-            [MOD_SHIFT_MAP] = &ace1000_shift_matrix[0][0],
-            [MOD_CAPS_MAP] = &ace1000_caps_matrix[0][0],
-            [MOD_CTRL_MAP] = &ace1000_ctrl_matrix[0][0] },
+           [MOD_SHIFT_MAP] = &ace1000_shift_matrix[0][0],
+           [MOD_CAPS_MAP] = &ace1000_caps_matrix[0][0],
+           [MOD_CTRL_MAP] = &ace1000_ctrl_matrix[0][0] },
   .rows = ACE1000_NUM_ROWS,
   .cols = ACE1000_NUM_COLS,
   .print_delay_ms = ASDF_ACE1000_PRINT_SPEED,

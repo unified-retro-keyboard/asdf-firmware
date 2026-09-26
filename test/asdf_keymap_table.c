@@ -56,4 +56,3 @@ bool asdf_keymap_valid(uint8_t index)
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
-

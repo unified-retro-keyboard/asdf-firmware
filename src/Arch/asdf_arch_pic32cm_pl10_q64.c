@@ -43,7 +43,7 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
     (PORT_REGS->GROUP[ROW_GROUP].PORT_OUT & ~ROW_MASK) | one_hot;
   arch_delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US);
 
-  return (asdf_cols_t)((~PORT_REGS->GROUP[COL_GROUP].PORT_IN) & COL_MASK);
+  return (asdf_cols_t) ((~PORT_REGS->GROUP[COL_GROUP].PORT_IN) & COL_MASK);
 }
 
 /**
@@ -63,7 +63,8 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
  */
 static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
 {
-  uint32_t ascii = ((uint32_t)((uint8_t)(code ^ arch->data_polarity)) << ASCII_SHIFT) & ASCII_MASK;
+  uint32_t ascii =
+    ((uint32_t) ((uint8_t) (code ^ arch->data_polarity)) << ASCII_SHIFT) & ASCII_MASK;
 
   PORT_REGS->GROUP[ASCII_GROUP].PORT_OUT =
     (PORT_REGS->GROUP[ASCII_GROUP].PORT_OUT & ~ASCII_MASK) | ascii;
@@ -80,7 +81,10 @@ static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
  *
  * @param value  Ignored.
  */
-static void asdf_arch_null_output(uint8_t value) { (void) value; }
+static void asdf_arch_null_output(uint8_t value)
+{
+  (void) value;
+}
 
 /**
  * Sets the strobe to positive polarity.
@@ -119,7 +123,8 @@ static void asdf_arch_led1_set(uint8_t value)
 {
   if (value != 0u) {
     pin_clear(LED1_GROUP, LED1_PIN);
-  } else {
+  }
+  else {
     pin_set(LED1_GROUP, LED1_PIN);
   }
 }
@@ -137,7 +142,8 @@ static void asdf_arch_led2_set(uint8_t value)
 {
   if (value != 0u) {
     pin_clear(LED2_GROUP, LED2_PIN);
-  } else {
+  }
+  else {
     pin_set(LED2_GROUP, LED2_PIN);
   }
 }
@@ -155,7 +161,8 @@ static void asdf_arch_led3_set(uint8_t value)
 {
   if (value != 0u) {
     pin_clear(LED3_GROUP, LED3_PIN);
-  } else {
+  }
+  else {
     pin_set(LED3_GROUP, LED3_PIN);
   }
 }
@@ -175,7 +182,8 @@ static inline void out_set(uint8_t g, uint8_t b, uint8_t value)
 {
   if (value != 0u) {
     pin_set(g, b);
-  } else {
+  }
+  else {
     pin_clear(g, b);
   }
   pin_dir_out(g, b);
@@ -242,7 +250,10 @@ static inline void out_open_lo(uint8_t g, uint8_t b, uint8_t value)
  *
  * @param value  Nonzero drives OUT1 high; zero drives it low.
  */
-static void asdf_arch_out1_set(uint8_t value) { out_set(OUT1_GROUP, OUT1_PIN, value); }
+static void asdf_arch_out1_set(uint8_t value)
+{
+  out_set(OUT1_GROUP, OUT1_PIN, value);
+}
 
 /**
  * Drives OUT1 as an open-collector output.
@@ -251,7 +262,10 @@ static void asdf_arch_out1_set(uint8_t value) { out_set(OUT1_GROUP, OUT1_PIN, va
  *
  * @param value  Nonzero releases OUT1 to hi-z; zero drives it low.
  */
-static void asdf_arch_out1_open_hi_set(uint8_t value) { out_open_hi(OUT1_GROUP, OUT1_PIN, value); }
+static void asdf_arch_out1_open_hi_set(uint8_t value)
+{
+  out_open_hi(OUT1_GROUP, OUT1_PIN, value);
+}
 
 /**
  * Drives OUT1 as an open-emitter output.
@@ -260,7 +274,10 @@ static void asdf_arch_out1_open_hi_set(uint8_t value) { out_open_hi(OUT1_GROUP, 
  *
  * @param value  Nonzero drives OUT1 high; zero releases it to hi-z.
  */
-static void asdf_arch_out1_open_lo_set(uint8_t value) { out_open_lo(OUT1_GROUP, OUT1_PIN, value); }
+static void asdf_arch_out1_open_lo_set(uint8_t value)
+{
+  out_open_lo(OUT1_GROUP, OUT1_PIN, value);
+}
 
 /**
  * Drives OUT2 as a push-pull output.
@@ -269,7 +286,10 @@ static void asdf_arch_out1_open_lo_set(uint8_t value) { out_open_lo(OUT1_GROUP, 
  *
  * @param value  Nonzero drives OUT2 high; zero drives it low.
  */
-static void asdf_arch_out2_set(uint8_t value) { out_set(OUT2_GROUP, OUT2_PIN, value); }
+static void asdf_arch_out2_set(uint8_t value)
+{
+  out_set(OUT2_GROUP, OUT2_PIN, value);
+}
 
 /**
  * Drives OUT2 as an open-collector output.
@@ -278,7 +298,10 @@ static void asdf_arch_out2_set(uint8_t value) { out_set(OUT2_GROUP, OUT2_PIN, va
  *
  * @param value  Nonzero releases OUT2 to hi-z; zero drives it low.
  */
-static void asdf_arch_out2_open_hi_set(uint8_t value) { out_open_hi(OUT2_GROUP, OUT2_PIN, value); }
+static void asdf_arch_out2_open_hi_set(uint8_t value)
+{
+  out_open_hi(OUT2_GROUP, OUT2_PIN, value);
+}
 
 /**
  * Drives OUT2 as an open-emitter output.
@@ -287,7 +310,10 @@ static void asdf_arch_out2_open_hi_set(uint8_t value) { out_open_hi(OUT2_GROUP, 
  *
  * @param value  Nonzero drives OUT2 high; zero releases it to hi-z.
  */
-static void asdf_arch_out2_open_lo_set(uint8_t value) { out_open_lo(OUT2_GROUP, OUT2_PIN, value); }
+static void asdf_arch_out2_open_lo_set(uint8_t value)
+{
+  out_open_lo(OUT2_GROUP, OUT2_PIN, value);
+}
 
 /**
  * Drives OUT3 as a push-pull output.
@@ -296,7 +322,10 @@ static void asdf_arch_out2_open_lo_set(uint8_t value) { out_open_lo(OUT2_GROUP, 
  *
  * @param value  Nonzero drives OUT3 high; zero drives it low.
  */
-static void asdf_arch_out3_set(uint8_t value) { out_set(OUT3_GROUP, OUT3_PIN, value); }
+static void asdf_arch_out3_set(uint8_t value)
+{
+  out_set(OUT3_GROUP, OUT3_PIN, value);
+}
 
 /**
  * Drives OUT3 as an open-collector output.
@@ -305,7 +334,10 @@ static void asdf_arch_out3_set(uint8_t value) { out_set(OUT3_GROUP, OUT3_PIN, va
  *
  * @param value  Nonzero releases OUT3 to hi-z; zero drives it low.
  */
-static void asdf_arch_out3_open_hi_set(uint8_t value) { out_open_hi(OUT3_GROUP, OUT3_PIN, value); }
+static void asdf_arch_out3_open_hi_set(uint8_t value)
+{
+  out_open_hi(OUT3_GROUP, OUT3_PIN, value);
+}
 
 /**
  * Drives OUT3 as an open-emitter output.
@@ -314,7 +346,10 @@ static void asdf_arch_out3_open_hi_set(uint8_t value) { out_open_hi(OUT3_GROUP, 
  *
  * @param value  Nonzero drives OUT3 high; zero releases it to hi-z.
  */
-static void asdf_arch_out3_open_lo_set(uint8_t value) { out_open_lo(OUT3_GROUP, OUT3_PIN, value); }
+static void asdf_arch_out3_open_lo_set(uint8_t value)
+{
+  out_open_lo(OUT3_GROUP, OUT3_PIN, value);
+}
 
 /**
  * Sets up the clock, the tick timer and the pins.
@@ -402,7 +437,8 @@ static void asdf_arch_reset(asdf_arch_t *arch)
     (PORT_REGS->GROUP[ASCII_GROUP].PORT_OUT & ~ASCII_MASK)
     | (((uint32_t) arch->data_polarity << ASCII_SHIFT) & ASCII_MASK);
 
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) { //lint !e506 !e774 build-time configuration
+  if (ASDF_DEFAULT_STROBE_POLARITY
+      == ASDF_POSITIVE_POLARITY) { // lint !e506 !e774 build-time configuration
     asdf_arch_set_pos_strobe();
   }
   else {
@@ -499,7 +535,10 @@ static void arch_platform_pulse_delay_short(void *user)
  *
  * @param user  Platform context: the keyboard's asdf_arch_t.
  */
-static void arch_platform_reset(void *user) { asdf_arch_reset(user); }
+static void arch_platform_reset(void *user)
+{
+  asdf_arch_reset(user);
+}
 
 /**
  * Sets up the keyboard hardware and the platform embedded in arch.

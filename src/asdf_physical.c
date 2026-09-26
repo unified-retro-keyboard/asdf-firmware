@@ -97,8 +97,7 @@ static void physical_write(asdf_physical_state_t *phys, asdf_physical_dev_t devi
  *
  * Complexity: 2
  */
-void asdf_physical_set(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
-                         uint8_t value)
+void asdf_physical_set(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out, uint8_t value)
 {
   if (physical_index_valid(physical_out)) {
     physical_write(phys, physical_out, value);
@@ -192,7 +191,8 @@ static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state
 
   while ((next_out != PHYSICAL_NO_OUT) && (next_out != device)) {
     current_out = next_out;
-    next_out = phys->next[current_out]; //lint !e661 next[] holds only valid indexes (asdf_physical_state_t invariant)
+    next_out = phys->next[current_out]; // lint !e661 next[] holds only valid indexes
+                                        // (asdf_physical_state_t invariant)
   }
 
   return (PHYSICAL_NO_OUT == next_out) ? ASDF_PHYSICAL_NUM_RESOURCES : current_out;
@@ -211,7 +211,7 @@ static asdf_physical_dev_t physical_device_predecessor(const asdf_physical_state
  * Complexity: 2
  */
 asdf_physical_dev_t asdf_physical_next_device(const asdf_physical_state_t *phys,
-                                                asdf_physical_dev_t device)
+                                              asdf_physical_dev_t device)
 {
   return (device < ASDF_PHYSICAL_NUM_RESOURCES) ? phys->next[device] : PHYSICAL_NO_OUT;
 }
@@ -296,7 +296,7 @@ void asdf_physical_init(asdf_physical_state_t *phys, const struct asdf_platform 
   for (uint8_t i = 0u; i < (uint8_t) ASDF_PHYSICAL_NUM_RESOURCES; i++) {
     uint8_t next = i + 1u;
     phys->shadow[i] = ASDF_VIRTUAL_OUT_DEFAULT_VALUE;
-    phys->next[i] = (asdf_physical_dev_t) next; //lint !e9030 D15
+    phys->next[i] = (asdf_physical_dev_t) next; // lint !e9030 D15
   }
 
   // The last element is left pointing beyond the end of the table by the loop

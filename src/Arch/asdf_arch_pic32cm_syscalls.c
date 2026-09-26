@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-//lint -e970 -e818 D12: newlib's system-call signatures, for the rest of this module
+// lint -e970 -e818 D12: newlib's system-call signatures, for the rest of this module
 
 // newlib calls these by name; it declares none of them in its headers.
 void *_sbrk(ptrdiff_t incr);
@@ -32,7 +32,7 @@ void _exit(int status) __attribute__((noreturn));
 int _kill(int pid, int sig);
 int _getpid(void);
 
-//lint -esym(526, end) -esym(2701, end) defined by the linker script
+// lint -esym(526, end) -esym(2701, end) defined by the linker script
 extern char end; // first address past .bss / start of heap (linker script)
 
 /**
@@ -194,4 +194,7 @@ int _kill(int pid, int sig)
  *
  * @return 1.
  */
-int _getpid(void) { return 1; }
+int _getpid(void)
+{
+  return 1;
+}

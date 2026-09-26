@@ -7,7 +7,7 @@
 static asdf_repeat_state_t rep;
 
 #define REPEAT_TIMED_OUT 10000
-#define NUM_REPETITIONS 10
+#define NUM_REPETITIONS  10
 
 uint32_t count_repeat_ticks(uint32_t timeout)
 {

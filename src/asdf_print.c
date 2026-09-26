@@ -33,7 +33,7 @@ void asdf_print_flash(asdf_t *kb, const char *str)
   char c = (char) FLASH_READ(p);
 
   while (c != '\0') {
-    (void)asdf_putc(kb, c);
+    (void) asdf_putc(kb, c);
     p++;
     c = (char) FLASH_READ(p);
   }

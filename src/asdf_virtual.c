@@ -111,7 +111,7 @@ static void virtual_map(asdf_physical_state_t *phys, asdf_physical_dev_t device,
  * Complexity: 4
  */
 void asdf_virtual_action(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
-                           asdf_virtual_function_t function)
+                         asdf_virtual_function_t function)
 {
   if (!virtual_index_valid(virtual_out)) {
     return;
@@ -245,7 +245,7 @@ void asdf_virtual_init(asdf_virtual_state_t *virt, const struct asdf_platform *p
 void asdf_virtual_sync(asdf_virtual_state_t *virt)
 {
   for (uint8_t i = 0u; i < (uint8_t) ASDF_PHYSICAL_NUM_RESOURCES; i++) {
-    asdf_physical_assert(&virt->physical, (asdf_physical_dev_t) i); //lint !e9030 D15
+    asdf_physical_assert(&virt->physical, (asdf_physical_dev_t) i); // lint !e9030 D15
   }
 }
 
@@ -268,7 +268,8 @@ void asdf_virtual_tick(asdf_virtual_state_t *virt, uint8_t elapsed)
       if (elapsed >= virt->pulse_ticks[i]) {
         virt->pulse_ticks[i] = 0;
         virtual_map(&virt->physical, virt->physical_device[i], MAP_TOGGLE);
-      } else {
+      }
+      else {
         virt->pulse_ticks[i] -= elapsed;
       }
     }

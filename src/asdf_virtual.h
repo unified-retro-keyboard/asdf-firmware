@@ -143,7 +143,7 @@ void asdf_virtual_init(asdf_virtual_state_t *virt, const struct asdf_platform *p
  * @param function     Function to apply.
  */
 void asdf_virtual_action(asdf_virtual_state_t *virt, asdf_virtual_dev_t virtual_out,
-                           asdf_virtual_function_t function);
+                         asdf_virtual_function_t function);
 
 /**
  * Apply a virtual output's assigned function to its physical outputs.

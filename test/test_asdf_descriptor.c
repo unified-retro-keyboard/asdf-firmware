@@ -81,7 +81,6 @@ void test_each_scan_action_runs_each_scan(void)
 }
 
 
-
 int main(void)
 {
   UNITY_BEGIN();

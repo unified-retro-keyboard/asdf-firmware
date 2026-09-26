@@ -21,7 +21,7 @@
 #include "asdf_actions.h"
 
 #define ACTION_APPLESOFT_KEYBOARD_TEST (ASDF_KEYMAP_ACTIONS + 0)
-#define ACTION_ACE1000_KEYBOARD_TEST (ASDF_KEYMAP_ACTIONS + 1)
+#define ACTION_ACE1000_KEYBOARD_TEST   (ASDF_KEYMAP_ACTIONS + 1)
 
 // Keys for the keymap-provided actions, run on press.
 #define KEY_APPLESOFT_KEYBOARD_TEST(unused)                                                        \

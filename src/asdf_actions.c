@@ -58,8 +58,8 @@ void asdf_action(asdf_t *kb, uint8_t fn, uint8_t param)
  */
 bool asdf_is_configuration_action(uint8_t fn)
 {
-  return (fn == (uint8_t) ACTION_MAPSEL_SET) || (fn == (uint8_t) ACTION_STROBE_POSITIVE) ||
-         (fn == (uint8_t) ACTION_AUTOREPEAT_ON);
+  return (fn == (uint8_t) ACTION_MAPSEL_SET) || (fn == (uint8_t) ACTION_STROBE_POSITIVE)
+         || (fn == (uint8_t) ACTION_AUTOREPEAT_ON);
 }
 
 // The built-in actions. Actions that take no parameter ignore it. SHIFT, SHIFT
@@ -73,7 +73,7 @@ bool asdf_is_configuration_action(uint8_t fn)
  * @param kb     Keyboard to act on.
  * @param param  Ignored.
  */
-void asdf_action_nothing(asdf_t *kb, uint8_t param) //lint !e818 D16
+void asdf_action_nothing(asdf_t *kb, uint8_t param) // lint !e818 D16
 {
   (void) kb;
   (void) param;
@@ -87,7 +87,10 @@ void asdf_action_nothing(asdf_t *kb, uint8_t param) //lint !e818 D16
  * @param kb    Keyboard to act on.
  * @param code  Code to queue.
  */
-void asdf_action_send_code(asdf_t *kb, uint8_t code) { (void)asdf_put_code(kb, code); }
+void asdf_action_send_code(asdf_t *kb, uint8_t code)
+{
+  (void) asdf_put_code(kb, code);
+}
 
 /**
  * Send a code from a key that autorepeats.
@@ -100,7 +103,7 @@ void asdf_action_send_code(asdf_t *kb, uint8_t code) { (void)asdf_put_code(kb, c
  */
 void asdf_action_send_repeatable_code(asdf_t *kb, uint8_t code)
 {
-  (void)asdf_put_code(kb, code);
+  (void) asdf_put_code(kb, code);
   asdf_arm_repeat(kb);
 }
 
@@ -329,7 +332,7 @@ void asdf_action_autorepeat_off(asdf_t *kb, uint8_t param)
  */
 void asdf_action_virtual(asdf_t *kb, uint8_t virtual_out)
 {
-  asdf_virtual_activate(&kb->outputs, (asdf_virtual_dev_t) virtual_out); //lint !e9030 D15
+  asdf_virtual_activate(&kb->outputs, (asdf_virtual_dev_t) virtual_out); // lint !e9030 D15
 }
 
 /**

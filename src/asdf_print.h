@@ -10,7 +10,7 @@
  */
 // SPDX-License-Identifier: MIT
 
-#if !defined (ASDF_PRINT_H)
+#if !defined(ASDF_PRINT_H)
 #define ASDF_PRINT_H
 
 #include "asdf.h"

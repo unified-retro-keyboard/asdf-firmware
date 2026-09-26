@@ -72,7 +72,6 @@ void test_toggle_virtual_output(void)
   // toggle back low.
   asdf_virtual_action(&kb.outputs, VOUT1, V_TOGGLE);
   TEST_ASSERT_EQUAL_INT32(0, asdf_arch_check_output(PHYSICAL_OUT1));
-
 }
 
 void test_pulse_high_virtual_output(void)

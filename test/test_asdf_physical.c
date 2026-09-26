@@ -88,8 +88,7 @@ void invalid_devices_are_ignored(void)
   asdf_physical_assert(&phys, ASDF_PHYSICAL_NUM_RESOURCES);
   TEST_ASSERT_EQUAL_INT(PHYSICAL_NO_OUT,
                         asdf_physical_next_device(&phys, ASDF_PHYSICAL_NUM_RESOURCES));
-  TEST_ASSERT_FALSE(
-    asdf_physical_allocate(&phys, ASDF_PHYSICAL_NUM_RESOURCES, PHYSICAL_NO_OUT, 0));
+  TEST_ASSERT_FALSE(asdf_physical_allocate(&phys, ASDF_PHYSICAL_NUM_RESOURCES, PHYSICAL_NO_OUT, 0));
 }
 
 // Two physical states track allocation and shadow values independently, and
@@ -137,18 +136,18 @@ void emulated_output_setters_are_distinct(void)
     void (*set)(uint8_t value);
     asdf_physical_dev_t dev;
   } setters[] = {
-    { asdf_arch_out1_set, PHYSICAL_OUT1 },
+    { asdf_arch_out1_set,         PHYSICAL_OUT1         },
     { asdf_arch_out1_open_hi_set, PHYSICAL_OUT1_OPEN_HI },
     { asdf_arch_out1_open_lo_set, PHYSICAL_OUT1_OPEN_LO },
-    { asdf_arch_out2_set, PHYSICAL_OUT2 },
+    { asdf_arch_out2_set,         PHYSICAL_OUT2         },
     { asdf_arch_out2_open_hi_set, PHYSICAL_OUT2_OPEN_HI },
     { asdf_arch_out2_open_lo_set, PHYSICAL_OUT2_OPEN_LO },
-    { asdf_arch_out3_set, PHYSICAL_OUT3 },
+    { asdf_arch_out3_set,         PHYSICAL_OUT3         },
     { asdf_arch_out3_open_hi_set, PHYSICAL_OUT3_OPEN_HI },
     { asdf_arch_out3_open_lo_set, PHYSICAL_OUT3_OPEN_LO },
-    { asdf_arch_led1_set, PHYSICAL_LED1 },
-    { asdf_arch_led2_set, PHYSICAL_LED2 },
-    { asdf_arch_led3_set, PHYSICAL_LED3 },
+    { asdf_arch_led1_set,         PHYSICAL_LED1         },
+    { asdf_arch_led2_set,         PHYSICAL_LED2         },
+    { asdf_arch_led3_set,         PHYSICAL_LED3         },
   };
 
   for (unsigned i = 0; i < sizeof(setters) / sizeof(setters[0]); i++) {

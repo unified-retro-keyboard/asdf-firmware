@@ -31,7 +31,6 @@
 #include "asdf_keymaps.h"
 
 
-
 #define APPLE2_PRINT_DELAY 40 // msec
 
 

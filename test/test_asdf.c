@@ -145,7 +145,6 @@ asdf_cols_t asdf_arch_read_row(uint8_t row)
 }
 
 
-
 // No repsonse to a keypress before it is debounced.
 void pressing_a_gives_nothing_before_debounce(void)
 {
@@ -508,7 +507,6 @@ int main(void)
   RUN_TEST(holding_a_briefly_then_holding_b_gives_a_and_repeats_b);
   RUN_TEST(holding_a_then_holding_b_autorepeats_a_then_autorepeats_b);
   RUN_TEST(repeating_with_a_then_adding_b_repeats_a_then_repeats_b);
-
 
 
   return UNITY_END();

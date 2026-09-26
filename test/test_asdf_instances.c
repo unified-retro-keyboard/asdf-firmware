@@ -17,19 +17,25 @@
 #include "test_asdf_keymap_defs.h"
 
 #define SCRIPT_TICKS 20000
-#define MAX_LOG 2048
+#define MAX_LOG      2048
 
 // Keys the scripts may toggle, in the test keymaps: letters, SHIFT, CAPS, CTRL,
 // REPEAT, SHIFTLOCK, and the DIP switch for keymap select bit 1 (keymap 0 <->
 // keymap 2).
 static const uint8_t script_keys[][2] = {
-  { 1, 6 }, { 1, 5 }, { 1, 7 }, { 2, 4 }, { 3, 3 }, { 4, 4 }, { 4, 6 }, // a z q b h t e
-  { 0, 1 },                                                             // SHIFT
-  { 0, 4 },                                                             // CAPS
-  { 0, 6 },                                                             // CTRL
-  { 5, 0 },                                                             // REPEAT
-  { 5, 2 },                                                             // SHIFTLOCK
-  { TEST_NUM_ROWS - 1, 1 },                                             // DIP: keymap bit 1
+  { 1,                 6 },
+  { 1,                 5 },
+  { 1,                 7 },
+  { 2,                 4 },
+  { 3,                 3 },
+  { 4,                 4 },
+  { 4,                 6 }, // a z q b h t e
+  { 0,                 1 }, // SHIFT
+  { 0,                 4 }, // CAPS
+  { 0,                 6 }, // CTRL
+  { 5,                 0 }, // REPEAT
+  { 5,                 2 }, // SHIFTLOCK
+  { TEST_NUM_ROWS - 1, 1 }, // DIP: keymap bit 1
 };
 #define NUM_SCRIPT_KEYS (sizeof(script_keys) / sizeof(script_keys[0]))
 
@@ -69,7 +75,8 @@ static void runner_tick(runner_t *r)
     const uint8_t *key = script_keys[(roll >> 8) % NUM_SCRIPT_KEYS];
     if (r->hw.matrix[key[0]] & (1u << key[1])) {
       fake_platform_release(&r->hw, key[0], key[1]);
-    } else {
+    }
+    else {
       fake_platform_press(&r->hw, key[0], key[1]);
     }
   }
@@ -94,8 +101,7 @@ static void check_same(const runner_t *solo, const runner_t *paired)
   TEST_ASSERT_TRUE(solo->log_len > 0);
   TEST_ASSERT_EQUAL_UINT16(solo->log_len, paired->log_len);
   TEST_ASSERT_EQUAL_UINT8_ARRAY(solo->log, paired->log, solo->log_len);
-  TEST_ASSERT_EQUAL_MEMORY(&solo->kb.modifiers, &paired->kb.modifiers,
-                           sizeof(solo->kb.modifiers));
+  TEST_ASSERT_EQUAL_MEMORY(&solo->kb.modifiers, &paired->kb.modifiers, sizeof(solo->kb.modifiers));
   TEST_ASSERT_EQUAL_UINT8(solo->kb.keymap.current, paired->kb.keymap.current);
 }
 

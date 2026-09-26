@@ -198,7 +198,7 @@ void pair_wraps_around_end_of_storage(void)
   asdf_ring_put(&ring, 'b');
   asdf_ring_put(&ring, 'c');
   asdf_ring_get(&ring, &code);
-  asdf_ring_get(&ring, &code); // head at 2, one code ('c') queued
+  asdf_ring_get(&ring, &code);                           // head at 2, one code ('c') queued
   TEST_ASSERT_TRUE(asdf_ring_put_pair(&ring, '1', '2')); // slots 3 and 0
 
   const char expected[] = "c12";

@@ -11,7 +11,7 @@
 // SPDX-License-Identifier: MIT
 
 
-#if !defined (ASDF_ARCH_H)
+#if !defined(ASDF_ARCH_H)
 #define ASDF_ARCH_H
 
 #include <string.h>
@@ -25,37 +25,36 @@
 #include "asdf_virtual.h"
 
 
-
 // Pulse detector states, reported by asdf_arch_check_pulse(). Each emulated
 // output has a detector that recognizes a pulse as a transition, a pulse delay,
 // then a transition back: low, high, delay, low gives PD_ST_PULSE_HIGH_DETECTED.
 // A sequence that is not a valid pulse leaves the detector in an error state,
 // where it stays until reset.
 typedef enum {
-              PD_ST_INITIAL_STATE = 0,
-              PD_ST_STABLE_LOW = 1,
-              PD_ST_STABLE_HIGH = 2,
-              PD_ST_TRANSITION_LOW = 3,
-              PD_ST_TRANSITION_HIGH = 4,
-              PD_ST_PULSE_DELAY_LOW = 5,
-              PD_ST_PULSE_DELAY_HIGH = 6,
-              PD_ST_PULSE_HIGH_DETECTED = 7,
-              PD_ST_PULSE_LOW_DETECTED = 8,
-              PD_ST_NUM_VALID_PULSE_STATES = 9, // error states follow
-              PD_ST_ERROR_DOUBLE_DELAY = 10,
-              PD_ST_ERROR_DOUBLE_SET = 11,
-              PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY = 12, 
-              PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY = 13,
-              PD_ST_ERROR_DOUBLE_TRANSITION = 14, // fast pulse without delay
-              PD_ST_ERROR_PULSE_FROM_INITIAL_STATE = 15,
+  PD_ST_INITIAL_STATE = 0,
+  PD_ST_STABLE_LOW = 1,
+  PD_ST_STABLE_HIGH = 2,
+  PD_ST_TRANSITION_LOW = 3,
+  PD_ST_TRANSITION_HIGH = 4,
+  PD_ST_PULSE_DELAY_LOW = 5,
+  PD_ST_PULSE_DELAY_HIGH = 6,
+  PD_ST_PULSE_HIGH_DETECTED = 7,
+  PD_ST_PULSE_LOW_DETECTED = 8,
+  PD_ST_NUM_VALID_PULSE_STATES = 9, // error states follow
+  PD_ST_ERROR_DOUBLE_DELAY = 10,
+  PD_ST_ERROR_DOUBLE_SET = 11,
+  PD_ST_ERROR_NO_TRANSITION_BEFORE_DELAY = 12,
+  PD_ST_ERROR_NO_TRANSITION_AFTER_DELAY = 13,
+  PD_ST_ERROR_DOUBLE_TRANSITION = 14, // fast pulse without delay
+  PD_ST_ERROR_PULSE_FROM_INITIAL_STATE = 15,
 } pulse_state_t;
 
 #define FLASH
-#define FLASH_READ(a) (*(a))
-#define FLASH_READ_PTR(a) (*(a))
-#define FLASH_MEMCPY(dst, src, n) memcpy((dst), (src), (n))
-#define FLASH_READ_MATRIX_ELEMENT(mat,row,col) (mat)[(row)][(col)]
-#define FLASH_STRING(s) (s)
+#define FLASH_READ(a)                            (*(a))
+#define FLASH_READ_PTR(a)                        (*(a))
+#define FLASH_MEMCPY(dst, src, n)                memcpy((dst), (src), (n))
+#define FLASH_READ_MATRIX_ELEMENT(mat, row, col) (mat)[(row)][(col)]
+#define FLASH_STRING(s)                          (s)
 
 // Strobe polarity setters. The emulation records the polarity only; there is no
 // strobe pin.
@@ -359,4 +358,3 @@ uint8_t asdf_arch_tick(asdf_arch_t *arch);
 
 //-------|---------|---------+---------+---------+---------+---------+---------+
 // Above line is 80 columns, and should display completely in the editor.
-

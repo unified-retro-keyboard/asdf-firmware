@@ -16,9 +16,9 @@
 // The keyboard under test.
 static asdf_t kb;
 
-#define TESTALPHA 'a'
-#define TESTNUM '2'
-#define TESTKEYMAP_TAG PLAIN_MATRIX_1
+#define TESTALPHA       'a'
+#define TESTNUM         '2'
+#define TESTKEYMAP_TAG  PLAIN_MATRIX_1
 #define NUM_DIPSWITCHES 4
 
 // row: row number
@@ -29,10 +29,10 @@ static asdf_t kb;
 // modifier_name: name of the modifier to be accessed within the map.
 #define TESTMAP(row, col, keymap_name, defnum, mapindex, modifier_name)                            \
   do {                                                                                             \
-    asdf_keymaps_select(&kb, ASDF_##mapindex##_MAP_INDEX);                                       \
-    uint16_t expected = test_key_value(keymap_name##_##modifier_name##_matrix[(row)][(col)]);    \
-    uint16_t result = test_get_code(&kb, (row), (col), MOD_##modifier_name##_MAP);        \
-    uint16_t map_id = test_get_code(&kb, 0, 0, MOD_##modifier_name##_MAP);                \
+    asdf_keymaps_select(&kb, ASDF_##mapindex##_MAP_INDEX);                                         \
+    uint16_t expected = test_key_value(keymap_name##_##modifier_name##_matrix[(row)][(col)]);      \
+    uint16_t result = test_get_code(&kb, (row), (col), MOD_##modifier_name##_MAP);                 \
+    uint16_t map_id = test_get_code(&kb, 0, 0, MOD_##modifier_name##_MAP);                         \
     TEST_ASSERT_EQUAL_INT32((uint32_t) expected, (uint32_t) result);                               \
     TEST_ASSERT_EQUAL_INT32((uint32_t) modifier_name##_MATRIX_##defnum, (uint32_t) map_id);        \
   } while (0)
@@ -53,25 +53,25 @@ static asdf_t kb;
 // check against the "test" keymaps
 #define TEST0PLAIN(row, col) TEST0MAP((row), (col), PLAIN)
 #define TEST0SHIFT(row, col) TEST0MAP((row), (col), SHIFT)
-#define TEST0CAPS(row, col) TEST0MAP((row), (col), CAPS)
-#define TEST0CTRL(row, col) TEST0MAP((row), (col), CTRL)
+#define TEST0CAPS(row, col)  TEST0MAP((row), (col), CAPS)
+#define TEST0CTRL(row, col)  TEST0MAP((row), (col), CTRL)
 
 #define TEST1PLAIN(row, col) TEST1MAP((row), (col), PLAIN)
 #define TEST1SHIFT(row, col) TEST1MAP((row), (col), SHIFT)
-#define TEST1CAPS(row, col) TEST1MAP((row), (col), CAPS)
-#define TEST1CTRL(row, col) TEST1MAP((row), (col), CTRL)
+#define TEST1CAPS(row, col)  TEST1MAP((row), (col), CAPS)
+#define TEST1CTRL(row, col)  TEST1MAP((row), (col), CTRL)
 
 // check against the "test2" keymaps
 
 #define TEST2PLAIN(row, col) TEST2MAP((row), (col), PLAIN)
 #define TEST2SHIFT(row, col) TEST2MAP((row), (col), SHIFT)
-#define TEST2CAPS(row, col) TEST2MAP((row), (col), CAPS)
-#define TEST2CTRL(row, col) TEST2MAP((row), (col), CTRL)
+#define TEST2CAPS(row, col)  TEST2MAP((row), (col), CAPS)
+#define TEST2CTRL(row, col)  TEST2MAP((row), (col), CTRL)
 
 #define TEST3PLAIN(row, col) TEST3MAP((row), (col), PLAIN)
 #define TEST3SHIFT(row, col) TEST3MAP((row), (col), SHIFT)
-#define TEST3CAPS(row, col) TEST3MAP((row), (col), CAPS)
-#define TEST3CTRL(row, col) TEST3MAP((row), (col), CTRL)
+#define TEST3CAPS(row, col)  TEST3MAP((row), (col), CAPS)
+#define TEST3CTRL(row, col)  TEST3MAP((row), (col), CTRL)
 
 typedef struct {
   int32_t row;
@@ -121,7 +121,6 @@ void setUp(void)
 
   temp = find_code(TESTKEYMAP_TAG);
   keymap_tag = *temp;
-
 }
 
 void tearDown(void) {}
@@ -215,14 +214,15 @@ void keymap1_capsmap_plain_maps_to_caps(void)
 
 void dip_switch_codes_are_in_last_row_test1_map(void)
 {
-  coord_t dip_switches[NUM_DIPSWITCHES] = { { .row = (TEST_NUM_ROWS - 1), .col = 0 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 1 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 2 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 3 } };
+  coord_t dip_switches[NUM_DIPSWITCHES] = {
+    { .row = (TEST_NUM_ROWS - 1), .col = 0 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 1 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 2 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 3 }
+  };
   for (uint8_t i = 0; i < NUM_DIPSWITCHES; i++) {
-    asdf_key_t key =
-      asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
-                             ASDF_TEST_PLAIN_MAP_INDEX);
+    asdf_key_t key = asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
+                                          ASDF_TEST_PLAIN_MAP_INDEX);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_SET, key.press_fn);
     TEST_ASSERT_EQUAL_INT(i, key.press_param);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_CLEAR, key.release_fn);
@@ -232,14 +232,15 @@ void dip_switch_codes_are_in_last_row_test1_map(void)
 
 void dip_switch_codes_are_in_last_row_test2_map(void)
 {
-  coord_t dip_switches[NUM_DIPSWITCHES] = { { .row = (TEST_NUM_ROWS - 1), .col = 0 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 1 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 2 },
-                                            { .row = (TEST_NUM_ROWS - 1), .col = 3 } };
+  coord_t dip_switches[NUM_DIPSWITCHES] = {
+    { .row = (TEST_NUM_ROWS - 1), .col = 0 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 1 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 2 },
+    { .row = (TEST_NUM_ROWS - 1), .col = 3 }
+  };
   for (uint8_t i = 0; i < NUM_DIPSWITCHES; i++) {
-    asdf_key_t key =
-      asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
-                             ASDF_TEST2_PLAIN_MAP_INDEX);
+    asdf_key_t key = asdf_keymaps_get_key(&kb.keymap, dip_switches[i].row, dip_switches[i].col,
+                                          ASDF_TEST2_PLAIN_MAP_INDEX);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_SET, key.press_fn);
     TEST_ASSERT_EQUAL_INT(i, key.press_param);
     TEST_ASSERT_EQUAL_INT(ACTION_MAPSEL_CLEAR, key.release_fn);

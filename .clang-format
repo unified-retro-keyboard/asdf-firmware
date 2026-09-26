@@ -1,8 +1,10 @@
-﻿---
+---
 BasedOnStyle: Mozilla
 AlignAfterOpenBracket: Align
 AlignOperands: 'true'
 AlignTrailingComments: 'true'
+AlignConsecutiveMacros: Consecutive
+AlignArrayOfStructures: Left
 AllowAllParametersOfDeclarationOnNextLine: 'false'
 AllowShortBlocksOnASingleLine: 'false'
 AllowShortCaseLabelsOnASingleLine: 'true'

@@ -38,11 +38,11 @@
 // Cortex-M flash is directly addressable: neutralize the AVR PROGMEM macros so
 // keymap tables are read as plain arrays.
 #define FLASH
-#define FLASH_READ(a) (*(a))
-#define FLASH_READ_PTR(a) (*(a))
-#define FLASH_MEMCPY(dst, src, n) memcpy((dst), (src), (n))
+#define FLASH_READ(a)                               (*(a))
+#define FLASH_READ_PTR(a)                           (*(a))
+#define FLASH_MEMCPY(dst, src, n)                   memcpy((dst), (src), (n))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) ((matrix)[(row)][(col)])
-#define FLASH_STRING(s) (s)
+#define FLASH_STRING(s)                             (s)
 
 // (group, bit) pin helpers over the PIC32CM PORT peripheral, using the
 // Harmony-style register names (PORT_REGS->GROUP[g].PORT_*). GROUP[0]=PA,
@@ -57,7 +57,10 @@
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTSET = ((uint32_t) 1u << b); }
+static inline void pin_set(uint8_t g, uint8_t b)
+{
+  PORT_REGS->GROUP[g].PORT_OUTSET = ((uint32_t) 1u << b);
+}
 /**
  * Drives an output pin low.
  *
@@ -67,7 +70,10 @@ static inline void pin_set(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTS
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTCLR = ((uint32_t) 1u << b); }
+static inline void pin_clear(uint8_t g, uint8_t b)
+{
+  PORT_REGS->GROUP[g].PORT_OUTCLR = ((uint32_t) 1u << b);
+}
 /**
  * Toggles an output pin.
  *
@@ -77,7 +83,10 @@ static inline void pin_clear(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OU
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_toggle(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_OUTTGL = ((uint32_t) 1u << b); }
+static inline void pin_toggle(uint8_t g, uint8_t b)
+{
+  PORT_REGS->GROUP[g].PORT_OUTTGL = ((uint32_t) 1u << b);
+}
 /**
  * Reads the level of a pin.
  *
@@ -100,7 +109,10 @@ static inline bool pin_read(uint8_t g, uint8_t b)
  * @param g  Port group (0 = PA, 1 = PB).
  * @param b  Bit (pin) number within the group.
  */
-static inline void pin_dir_out(uint8_t g, uint8_t b) { PORT_REGS->GROUP[g].PORT_DIRSET = ((uint32_t) 1u << b); }
+static inline void pin_dir_out(uint8_t g, uint8_t b)
+{
+  PORT_REGS->GROUP[g].PORT_DIRSET = ((uint32_t) 1u << b);
+}
 /**
  * Makes a pin an input.
  *

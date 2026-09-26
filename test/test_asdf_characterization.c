@@ -28,27 +28,27 @@ static asdf_t kb;
 
 // Key positions in the test keymap (ASDF_TEST_PLAIN_MAP) selected by
 // asdf_init(&kb).
-#define KEY_A_ROW 1
-#define KEY_A_COL 6
-#define KEY_CAPS_ROW 0
-#define KEY_CAPS_COL 4
-#define KEY_NOTHING_ROW 0
-#define KEY_NOTHING_COL 3
-#define KEY_REPEAT_ROW 5
-#define KEY_REPEAT_COL 0
-#define KEY_HERE_IS_ROW 5
-#define KEY_HERE_IS_COL 1
+#define KEY_A_ROW        1
+#define KEY_A_COL        6
+#define KEY_CAPS_ROW     0
+#define KEY_CAPS_COL     4
+#define KEY_NOTHING_ROW  0
+#define KEY_NOTHING_COL  3
+#define KEY_REPEAT_ROW   5
+#define KEY_REPEAT_COL   0
+#define KEY_HERE_IS_ROW  5
+#define KEY_HERE_IS_COL  1
 #define KEY_NOREPEAT_ROW 7 // NOREPEAT 0x7F
 #define KEY_NOREPEAT_COL 0
-#define KEY_CTRL_ROW 0
-#define KEY_CTRL_COL 6
-#define KEY_ESC1_ROW 0 // ASCII_ESC in the test CTRL map
-#define KEY_ESC1_COL 5
-#define KEY_ESC2_ROW 6 // ASCII_ESC in the test CTRL map
-#define KEY_ESC2_COL 2
-#define DIP_ROW (TEST_NUM_ROWS - 1)
+#define KEY_CTRL_ROW     0
+#define KEY_CTRL_COL     6
+#define KEY_ESC1_ROW     0 // ASCII_ESC in the test CTRL map
+#define KEY_ESC1_COL     5
+#define KEY_ESC2_ROW     6 // ASCII_ESC in the test CTRL map
+#define KEY_ESC2_COL     2
+#define DIP_ROW          (TEST_NUM_ROWS - 1)
 #define DIP_MAPSEL_1_COL 1
-#define DIP_STROBE_COL 6
+#define DIP_STROBE_COL   6
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
 
@@ -381,22 +381,19 @@ void invalid_virtual_assign_is_ignored(void)
 
 void invalid_keymap_row_and_col_return_nothing(void)
 {
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
-                        test_get_code(&kb, 200, 0, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
-                        test_get_code(&kb, 0, 200, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(&kb, 200, 0, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(&kb, 0, 200, MOD_PLAIN_MAP));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING),
                         test_get_code(&kb, TEST_NUM_ROWS, 0, MOD_PLAIN_MAP));
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING),
                         test_get_code(&kb, 0, TEST_NUM_COLS, MOD_PLAIN_MAP));
 }
 
 void invalid_keymap_modifier_returns_nothing(void)
 {
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING),
                         test_get_code(&kb, 0, 0, ASDF_MOD_NUM_MODIFIERS));
-  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), 
-                        test_get_code(&kb, 0, 0, 200));
+  TEST_ASSERT_EQUAL_INT(TEST_ACTION(ACTION_NOTHING), test_get_code(&kb, 0, 0, 200));
 }
 
 void invalid_virtual_devices_are_ignored(void)

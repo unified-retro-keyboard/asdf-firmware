@@ -33,7 +33,9 @@
 void ace1000_keyboard_test(asdf_t *kb, uint8_t param)
 {
   (void) param;
-  asdf_print(kb, "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = \";A:IFA<>3GOTO10\r");
+  asdf_print(kb,
+             "10GETA$(0):A=ASC(A$(0)):A$(1)=\"CTL+\"+CHR$(A + 64):?\"'\";A$(A<32);\"' = "
+             "\";A:IFA<>3GOTO10\r");
 }
 
 //-------|---------|---------+---------+---------+---------+---------+---------+

@@ -44,8 +44,8 @@
 #define ASDF_MESSAGE_BUFFER_SIZE 128
 
 // Ring buffer capacities are 8 bits (see asdf_ring.h).
-#if (ASDF_KEYCODE_BUFFER_SIZE < 1) || (ASDF_KEYCODE_BUFFER_SIZE > 255) \
-    || (ASDF_MESSAGE_BUFFER_SIZE < 1) || (ASDF_MESSAGE_BUFFER_SIZE > 255)
+#if (ASDF_KEYCODE_BUFFER_SIZE < 1) || (ASDF_KEYCODE_BUFFER_SIZE > 255)                             \
+  || (ASDF_MESSAGE_BUFFER_SIZE < 1) || (ASDF_MESSAGE_BUFFER_SIZE > 255)
 #error "ASDF buffer sizes must be between 1 and 255"
 #endif
 
@@ -59,7 +59,7 @@
 // time to wait before sending consecutive message characters to the host, to
 // ensure that messages are intact on hosts that poll the port without
 // buffering. (in msec)
-#define ASDF_MESSAGE_CHARACTER_DELAY 16 //msec
+#define ASDF_MESSAGE_CHARACTER_DELAY 16 // msec
 
 // time to hold down a key in milliseconds before autorepeat starts
 #define ASDF_AUTOREPEAT_TIME_MS 525 // 525 msec.

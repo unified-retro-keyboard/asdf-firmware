@@ -60,12 +60,12 @@
  */
 struct asdf_keyboard {
   // Key matrix scanner
-  asdf_cols_t stable_rows[ASDF_MAX_ROWS];                    ///< debounced key state
-  uint8_t debounce[ASDF_MAX_ROWS][ASDF_MAX_COLS];            ///< ticks left to debounce
-  asdf_key_t repeat_key;                                     ///< the repeating key
-  uint8_t last_key_row;                                      ///< ... and its position
+  asdf_cols_t stable_rows[ASDF_MAX_ROWS];         ///< debounced key state
+  uint8_t debounce[ASDF_MAX_ROWS][ASDF_MAX_COLS]; ///< ticks left to debounce
+  asdf_key_t repeat_key;                          ///< the repeating key
+  uint8_t last_key_row;                           ///< ... and its position
   uint8_t last_key_col;
-  bool repeat_armed;    ///< set by a press action to make its key repeat
+  bool repeat_armed; ///< set by a press action to make its key repeat
 
   // Output queues. System messages have priority over typed keycodes.
   asdf_ring_t keycodes;
@@ -214,7 +214,7 @@ bool asdf_put_code(asdf_t *kb, asdf_keycode_t code);
  *         the character (or both CR and LF) is dropped and counted (see
  *         asdf_dropped_messages()).
  */
-int asdf_putc(asdf_t *kb, char c); //lint !e970 D12
+int asdf_putc(asdf_t *kb, char c); // lint !e970 D12
 
 /**
  * Number of typed keycodes dropped because the keycode queue was full.

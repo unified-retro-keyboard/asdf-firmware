@@ -30,20 +30,20 @@
 
 // Define fields for register A, B, interrupt mask as 8-bit masks, and
 // as masks offset into a combined config word
-#define TMR0A_POS 0u
-#define TMR0B_POS 8u
+#define TMR0A_POS    0u
+#define TMR0B_POS    8u
 #define TMR0IMSK_POS 16u
-#define TMR0A (1UL << TMR0A_POS)
-#define TMR0B (1UL << TMR0B_POS)
-#define TMR0IMSK (1UL << TMR0IMSK_POS)
+#define TMR0A        (1UL << TMR0A_POS)
+#define TMR0B        (1UL << TMR0B_POS)
+#define TMR0IMSK     (1UL << TMR0IMSK_POS)
 
 #define TIMER0_COM_A_DISCONNECTED 0
 #define TIMER0_COM_B_DISCONNECTED 0
-#define TIMER0_WFM_CTC (TMR0A << WGM01)
-#define TIMER0_DIV64 ((TMR0B << CS01) | (TMR0B << CS00))
-#define TIMER0_INT_ON_COMA (TMR0IMSK << OCIE0A)
-#define TIMER0_INT_ON_COMB (TMR0IMSK << OCIE0B)
-#define TIMER0_INT_OV_ENABLE (TMR0IMSK << TOIE0)
+#define TIMER0_WFM_CTC            (TMR0A << WGM01)
+#define TIMER0_DIV64              ((TMR0B << CS01) | (TMR0B << CS00))
+#define TIMER0_INT_ON_COMA        (TMR0IMSK << OCIE0A)
+#define TIMER0_INT_ON_COMB        (TMR0IMSK << OCIE0B)
+#define TIMER0_INT_OV_ENABLE      (TMR0IMSK << TOIE0)
 
 // Macros for 16-bit timer 1. ATmega328P datasheet section 15, p. 108
 //
@@ -64,27 +64,27 @@
 //   // Use TMR1_* definitions to configure timer with config function
 //   timer1_config(TMR1_WFM_CTC | TMR1_INT_ON_CMPA);
 //
-#define TMR1A_POS 0u
-#define TMR1B_POS 8u
-#define TMR1C_POS 16u
+#define TMR1A_POS    0u
+#define TMR1B_POS    8u
+#define TMR1C_POS    16u
 #define TMR1IMSK_POS 24u
-#define TMR1A (1UL << TMR1A_POS)
-#define TMR1B (1UL << TMR1B_POS)
-#define TMR1C (1UL << TMR1C_POS)
-#define TMR1IMSK (1UL << TMR1IMSK_POS)
+#define TMR1A        (1UL << TMR1A_POS)
+#define TMR1B        (1UL << TMR1B_POS)
+#define TMR1C        (1UL << TMR1C_POS)
+#define TMR1IMSK     (1UL << TMR1IMSK_POS)
 
 // 16-bit timer reg A - Datasheet 17.11.1, p. 154
 #define TMR1A_CMPA_CLR_MATCH_SET_BOTTOM (1 << COM1A1)
 #define TMR1A_CMPB_CLR_MATCH_SET_BOTTOM (1 << COM1B1)
 #define TMR1A_CMPC_CLR_MATCH_SET_BOTTOM (1 << COM1C1)
-#define TMR1_CMPA_CLR_MATCH_SET_BOTTOM (TMR1A << COM1A1)
-#define TMR1_CMPB_CLR_MATCH_SET_BOTTOM (TMR1A << COM1B1)
-#define TMR1_CMPC_CLR_MATCH_SET_BOTTOM (TMR1A << COM1C1)
+#define TMR1_CMPA_CLR_MATCH_SET_BOTTOM  (TMR1A << COM1A1)
+#define TMR1_CMPB_CLR_MATCH_SET_BOTTOM  (TMR1A << COM1B1)
+#define TMR1_CMPC_CLR_MATCH_SET_BOTTOM  (TMR1A << COM1C1)
 
 // 16-bit timer reg B - Datasheet 17.11.6, p. 156
 
-#define TMR1B_IN_CAP_POS 0x40L
-#define TMR1B_IN_CAP_NEG 0L
+#define TMR1B_IN_CAP_POS          0x40L
+#define TMR1B_IN_CAP_NEG          0L
 #define TMR1B_IN_CAP_NOISE_CANCEL 0x80L
 
 // 16-bit timer reg C -- see datasheet, 17.11.9, p. 157
@@ -101,38 +101,38 @@
 #define TMR1_CMPA_DISCONNECTED 0L
 #define TMR1_CMPB_DISCONNECTED 0L
 #define TMR1_CMPC_DISCONNECTED 0L
-#define TMR1_INT_ON_CMPA (TMR1IM_INT_CMP_MATCH_A << TMR1IMSK_POS)
+#define TMR1_INT_ON_CMPA       (TMR1IM_INT_CMP_MATCH_A << TMR1IMSK_POS)
 
 // 16-bit timer clock modes - see Datasheet table 17-6,  p. 157
-#define TMR1B_OFF 0
-#define TMR1_OFF 0
-#define TMR1B_DIV1 (0x01L << CS10)
-#define TMR1B_DIV8 (0x02L << CS10)
-#define TMR1B_DIV64 (0x03L << CS10)
-#define TMR1B_DIV256 (0x04L << CS10)
-#define TMR1B_DIV1024 (0x05L << CS10)
+#define TMR1B_OFF              0
+#define TMR1_OFF               0
+#define TMR1B_DIV1             (0x01L << CS10)
+#define TMR1B_DIV8             (0x02L << CS10)
+#define TMR1B_DIV64            (0x03L << CS10)
+#define TMR1B_DIV256           (0x04L << CS10)
+#define TMR1B_DIV1024          (0x05L << CS10)
 #define TMR1B_EXT_FALLING_EDGE (0x06L << CS10)
-#define TMR1B_EXT_RISING_EDGE (0x07L << CS10)
-#define TMR1B_CLK_MASK 0x07L
-#define TMR1_DIV1 (TMR1B_DIV1 << TMR1B_POS)
-#define TMR1_DIV8 (TMR1B_DIV8 << TMR1B_POS)
-#define TMR1_DIV64 (TMR1B_DIV64 << TMR1B_POS)
-#define TMR1_DIV256 (TMR1B_DIV256 << TMR1B_POS)
-#define TMR1_DIV1024 (TMR1B_DIV1024 << TMR1B_POS)
-#define TMR1_EXT_FALLING_EDGE (TMR1B_EXT_FALLING_EDGE << TMR1B_POS)
-#define TMR1_EXT_RISING_EDGE (TMR1B_EXT_RISING_EDGE << TMR1B_POS)
+#define TMR1B_EXT_RISING_EDGE  (0x07L << CS10)
+#define TMR1B_CLK_MASK         0x07L
+#define TMR1_DIV1              (TMR1B_DIV1 << TMR1B_POS)
+#define TMR1_DIV8              (TMR1B_DIV8 << TMR1B_POS)
+#define TMR1_DIV64             (TMR1B_DIV64 << TMR1B_POS)
+#define TMR1_DIV256            (TMR1B_DIV256 << TMR1B_POS)
+#define TMR1_DIV1024           (TMR1B_DIV1024 << TMR1B_POS)
+#define TMR1_EXT_FALLING_EDGE  (TMR1B_EXT_FALLING_EDGE << TMR1B_POS)
+#define TMR1_EXT_RISING_EDGE   (TMR1B_EXT_RISING_EDGE << TMR1B_POS)
 
 #define TMR1B_EDGE_SEL_POSITIVE (1 << ICES1)
 #define TMR1B_EDGE_SEL_NEGATIVE 0L
-#define TMR1_EDGE_SEL_POSITIVE (TMR1B << ICES1)
-#define TMR1_EDGE_SEL_NEGATIVE 0L
+#define TMR1_EDGE_SEL_POSITIVE  (TMR1B << ICES1)
+#define TMR1_EDGE_SEL_NEGATIVE  0L
 
 // 16-bit waveform modes (across reg A and B) Datasheet Table 17.2, p 145
-#define TMR1_WFM_NORMAL 0L
-#define TMR1_WFM_PWM_PC8 (TMR1A << WGM10)                        // PWM Phase Correct 8-bit
-#define TMR1_WFM_PWM_PC9 (TMR1A << WGM11)                        // PWM Phase COrrect 9-bit
-#define TMR1_WFM_PWM_PC10 ((TMR1A << WGM11) | (TMR1A << WGM10))  // PWM Phase Correct 10-bit
-#define TMR1_WFM_CTC (TMR1B << WGM12)                            // CTC
+#define TMR1_WFM_NORMAL    0L
+#define TMR1_WFM_PWM_PC8   (TMR1A << WGM10)                      // PWM Phase Correct 8-bit
+#define TMR1_WFM_PWM_PC9   (TMR1A << WGM11)                      // PWM Phase COrrect 9-bit
+#define TMR1_WFM_PWM_PC10  ((TMR1A << WGM11) | (TMR1A << WGM10)) // PWM Phase Correct 10-bit
+#define TMR1_WFM_CTC       (TMR1B << WGM12)                      // CTC
 #define TMR1_WFM_PWM_FAST8 ((TMR1B << WGM12) | (TMR1A << WGM10)) // PWM Fast 8-bit
 #define TMR1_WFM_PWM_FAST9 ((TMR1B << WGM12) | (TMR1A << WGM11)) // PWM Fast 9-bit
 #define TMR1_WFM_PWM_FAST10                                                                        \
@@ -153,71 +153,71 @@
 
 // I/O port definitions:
 
-#define PIN_INPUT 0
-#define PIN_OUTPUT 1
-#define ALL_INPUTS 0x00u
+#define PIN_INPUT   0
+#define PIN_OUTPUT  1
+#define ALL_INPUTS  0x00u
 #define ALL_OUTPUTS 0xFFu
 
-#define ASDF_ROW_PORT PORTC
-#define ASDF_ROW_DDR DDRC
-#define ASDF_ROW_MASK 0x0fu
+#define ASDF_ROW_PORT   PORTC
+#define ASDF_ROW_DDR    DDRC
+#define ASDF_ROW_MASK   0x0fu
 #define ASDF_ROW_OFFSET 0u
 
-#define ASDF_COL_PORT PORTB
-#define ASDF_COL_PIN PINB
-#define ASDF_COL_DDR DDRB
-#define ASDF_COL_BIT 0
+#define ASDF_COL_PORT    PORTB
+#define ASDF_COL_PIN     PINB
+#define ASDF_COL_DDR     DDRB
+#define ASDF_COL_BIT     0
 #define ASDF_COL_PULLUPS 0 // disable weak pullup
 
 #define ASDF_COLCLK_PORT PORTB
 #define ASDF_COLCLK_PINS PINB
-#define ASDF_COLCLK_DDR DDRB
-#define ASDF_COLCLK_BIT 2
+#define ASDF_COLCLK_DDR  DDRB
+#define ASDF_COLCLK_BIT  2
 
 #define ASDF_COLMODE_PORT PORTB
 #define ASDF_COLMODE_PINS PINB
-#define ASDF_COLMODE_DDR DDRB
-#define ASDF_COLMODE_BIT 1
+#define ASDF_COLMODE_DDR  DDRB
+#define ASDF_COLMODE_BIT  1
 
 #define ASDF_ASCII_PORT PORTD
-#define ASDF_ASCII_DDR DDRD
+#define ASDF_ASCII_DDR  DDRD
 
 #define ASDF_LED1_PORT PORTC
-#define ASDF_LED1_DDR DDRC
-#define ASDF_LED1_BIT 4
+#define ASDF_LED1_DDR  DDRC
+#define ASDF_LED1_BIT  4
 
 #define ASDF_LED2_PORT PORTB
-#define ASDF_LED2_DDR DDRB
-#define ASDF_LED2_BIT 5
+#define ASDF_LED2_DDR  DDRB
+#define ASDF_LED2_BIT  5
 
 #define ASDF_LED3_PORT PORTB
-#define ASDF_LED3_DDR DDRB
-#define ASDF_LED3_BIT 4
+#define ASDF_LED3_DDR  DDRB
+#define ASDF_LED3_BIT  4
 
 #define ASDF_OUT1_PORT PORTC
-#define ASDF_OUT1_PIN PINC
-#define ASDF_OUT1_DDR DDRC
-#define ASDF_OUT1_BIT 5
+#define ASDF_OUT1_PIN  PINC
+#define ASDF_OUT1_DDR  DDRC
+#define ASDF_OUT1_BIT  5
 
 #define ASDF_OUT2_PORT PORTB
-#define ASDF_OUT2_PIN PINB
-#define ASDF_OUT2_DDR DDRB
-#define ASDF_OUT2_BIT 3
+#define ASDF_OUT2_PIN  PINB
+#define ASDF_OUT2_DDR  DDRB
+#define ASDF_OUT2_BIT  3
 
 #define ASDF_OUT3_PORT PORTB
-#define ASDF_OUT3_PIN PINB
-#define ASDF_OUT3_DDR DDRB
-#define ASDF_OUT3_BIT 7
+#define ASDF_OUT3_PIN  PINB
+#define ASDF_OUT3_DDR  DDRB
+#define ASDF_OUT3_BIT  7
 
 #define ASDF_STROBE_PORT PORTB
-#define ASDF_STROBE_PIN PINB
-#define ASDF_STROBE_DDR DDRB
-#define ASDF_STROBE_BIT 6
+#define ASDF_STROBE_PIN  PINB
+#define ASDF_STROBE_DDR  DDRB
+#define ASDF_STROBE_BIT  6
 
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
 
-#define FUSE_INTERNAL_8MHZ_OSC_0MS (FUSE_CKSEL0 | FUSE_CKSEL2 | FUSE_CKSEL3 | FUSE_SUT0 | FUSE_SUT1)
-#define FUSE_INTERNAL_8MHZ_OSC_4MS (FUSE_CKSEL0 | FUSE_CKSEL2 | FUSE_CKSEL3 | FUSE_SUT1)
+#define FUSE_INTERNAL_8MHZ_OSC_0MS  (FUSE_CKSEL0 | FUSE_CKSEL2 | FUSE_CKSEL3 | FUSE_SUT0 | FUSE_SUT1)
+#define FUSE_INTERNAL_8MHZ_OSC_4MS  (FUSE_CKSEL0 | FUSE_CKSEL2 | FUSE_CKSEL3 | FUSE_SUT1)
 #define FUSE_INTERNAL_8MHZ_OSC_65MS (FUSE_CKSEL0 | FUSE_CKSEL2 | FUSE_CKSEL3 | FUSE_SUT0)
 
 #define FLASH PROGMEM
@@ -225,9 +225,9 @@
 // not implemented with do-while(0) because this is a function call that returns
 // a value, and parameters are expanded inside the parameter list, so this will
 // be valid when substituting for function-like syntax.
-#define FLASH_READ(a) pgm_read_byte((a))
-#define FLASH_READ_PTR(a) pgm_read_ptr((a))
-#define FLASH_MEMCPY(dst, src, n) memcpy_P((dst), (src), (n))
+#define FLASH_READ(a)                               pgm_read_byte((a))
+#define FLASH_READ_PTR(a)                           pgm_read_ptr((a))
+#define FLASH_MEMCPY(dst, src, n)                   memcpy_P((dst), (src), (n))
 #define FLASH_READ_MATRIX_ELEMENT(matrix, row, col) pgm_read_byte(&((matrix)[(row)][(col)]))
 
 // Places a string literal in flash; read it back with FLASH_READ.

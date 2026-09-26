@@ -46,16 +46,16 @@
  * Complexity: 4
  */
 bool asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
-                          modifier_index_t modifier_index, uint8_t num_rows,
-                          uint8_t num_cols) {
-    if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) && (num_rows <= ASDF_MAX_ROWS) &&
-        (num_cols <= ASDF_MAX_COLS)) {
-        keymap->maps[modifier_index].matrix = matrix;
-        keymap->maps[modifier_index].rows = num_rows;
-        keymap->maps[modifier_index].cols = num_cols;
-        return true;
-    }
-    return false;
+                          modifier_index_t modifier_index, uint8_t num_rows, uint8_t num_cols)
+{
+  if ((modifier_index < ASDF_MOD_NUM_MODIFIERS) && (num_rows <= ASDF_MAX_ROWS)
+      && (num_cols <= ASDF_MAX_COLS)) {
+    keymap->maps[modifier_index].matrix = matrix;
+    keymap->maps[modifier_index].rows = num_rows;
+    keymap->maps[modifier_index].cols = num_cols;
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -69,9 +69,9 @@ bool asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
  *
  * Complexity: 2
  */
-uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
-                                modifier_index_t modifier_index) {
-    return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].rows : 0u;
+uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap, modifier_index_t modifier_index)
+{
+  return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].rows : 0u;
 }
 
 /**
@@ -85,9 +85,9 @@ uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
  *
  * Complexity: 2
  */
-uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
-                                modifier_index_t modifier_index) {
-    return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].cols : 0u;
+uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap, modifier_index_t modifier_index)
+{
+  return (modifier_index < ASDF_MOD_NUM_MODIFIERS) ? keymap->maps[modifier_index].cols : 0u;
 }
 
 /**
@@ -109,16 +109,17 @@ uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
  * Complexity: 5
  */
 asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
-                                  modifier_index_t modifier_index) {
-    asdf_key_t key = KEY_NOTHING(0);
+                                modifier_index_t modifier_index)
+{
+  asdf_key_t key = KEY_NOTHING(0);
 
-    if (modifier_index < ASDF_MOD_NUM_MODIFIERS) {
-        const asdf_keycode_map_t *map = &keymap->maps[modifier_index];
-        if ((map->matrix != NULL) && (row < map->rows) && (col < map->cols)) {
-            FLASH_MEMCPY(&key, &map->matrix[(row * map->cols) + col], sizeof(key));
-        }
+  if (modifier_index < ASDF_MOD_NUM_MODIFIERS) {
+    const asdf_keycode_map_t *map = &keymap->maps[modifier_index];
+    if ((map->matrix != NULL) && (row < map->rows) && (col < map->cols)) {
+      FLASH_MEMCPY(&key, &map->matrix[(row * map->cols) + col], sizeof(key));
     }
-    return key;
+  }
+  return key;
 }
 
 /**
@@ -132,23 +133,24 @@ asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, 
  *
  * Complexity: 2
  */
-static void asdf_keymaps_reset(asdf_t *kb) {
-    for (uint8_t i = 0u; i < (uint8_t)ASDF_MOD_NUM_MODIFIERS; i++) {
-        (void)asdf_keymaps_add_map(&kb->keymap, NULL,
-                                   (modifier_index_t)i, //lint !e9030 D15
-                                   0u, 0u);
-    }
+static void asdf_keymaps_reset(asdf_t *kb)
+{
+  for (uint8_t i = 0u; i < (uint8_t) ASDF_MOD_NUM_MODIFIERS; i++) {
+    (void) asdf_keymaps_add_map(&kb->keymap, NULL,
+                                (modifier_index_t) i, // lint !e9030 D15
+                                0u, 0u);
+  }
 
-    asdf_virtual_init(&kb->outputs, kb->base_platform);
+  asdf_virtual_init(&kb->outputs, kb->base_platform);
 
-    // Reset modifiers and repeat state, so each keymap starts from a known
-    // state regardless of the keymap it replaces.
-    asdf_modifiers_init(&kb->modifiers);
-    asdf_repeat_init(&kb->repeat);
+  // Reset modifiers and repeat state, so each keymap starts from a known
+  // state regardless of the keymap it replaces.
+  asdf_modifiers_init(&kb->modifiers);
+  asdf_repeat_init(&kb->repeat);
 
-    kb->keymap.each_scan = (uint8_t)ACTION_NOTHING;
-    kb->keymap.errors = 0u;
-    asdf_install_platform(kb, NULL);
+  kb->keymap.each_scan = (uint8_t) ACTION_NOTHING;
+  kb->keymap.errors = 0u;
+  asdf_install_platform(kb, NULL);
 }
 
 /**
@@ -160,10 +162,11 @@ static void asdf_keymaps_reset(asdf_t *kb) {
  *
  * Complexity: 2
  */
-static void asdf_keymaps_count_error(asdf_keymap_state_t *keymap) {
-    if (keymap->errors < 0xFFu) {
-        keymap->errors++;
-    }
+static void asdf_keymaps_count_error(asdf_keymap_state_t *keymap)
+{
+  if (keymap->errors < 0xFFu) {
+    keymap->errors++;
+  }
 }
 
 /**
@@ -183,46 +186,47 @@ static void asdf_keymaps_count_error(asdf_keymap_state_t *keymap) {
  *
  * Complexity: 9
  */
-static void asdf_keymaps_apply(asdf_t *kb, const asdf_keymap_t *keymap) {
-    asdf_keymap_t k;
-    FLASH_MEMCPY(&k, keymap, sizeof(k));
+static void asdf_keymaps_apply(asdf_t *kb, const asdf_keymap_t *keymap)
+{
+  asdf_keymap_t k;
+  FLASH_MEMCPY(&k, keymap, sizeof(k));
 
-    for (uint8_t m = 0u; m < (uint8_t)ASDF_MOD_NUM_MODIFIERS; m++) {
-        bool added = false;
-        if (k.maps[m] != NULL) {
-            added = asdf_keymaps_add_map(&kb->keymap, k.maps[m],
-                                         (modifier_index_t)m, //lint !e9030 D15
-                                         k.rows, k.cols);
-        }
-        if (!added) {
-            asdf_keymaps_count_error(&kb->keymap);
-        }
+  for (uint8_t m = 0u; m < (uint8_t) ASDF_MOD_NUM_MODIFIERS; m++) {
+    bool added = false;
+    if (k.maps[m] != NULL) {
+      added = asdf_keymaps_add_map(&kb->keymap, k.maps[m],
+                                   (modifier_index_t) m, // lint !e9030 D15
+                                   k.rows, k.cols);
     }
-
-    kb->print_delay_ms = k.print_delay_ms;
-
-    kb->keymap.each_scan = k.each_scan;
-
-    for (uint8_t i = 0; i < k.num_outputs; i++) {
-        asdf_virtual_initializer_t out;
-        FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
-        if (!asdf_virtual_assign(&kb->outputs, out.virtual_device, out.physical_device,
-                                   out.function, out.initial_value)) {
-            asdf_keymaps_count_error(&kb->keymap);
-        }
+    if (!added) {
+      asdf_keymaps_count_error(&kb->keymap);
     }
+  }
 
-    if ((k.flags & ASDF_KEYMAP_CAPS_ON) != 0u) {
-        asdf_modifier_capslock_activate(&kb->modifiers);
-        asdf_sync_lock_leds(kb);
-    }
-    if ((k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) != 0u) {
-        asdf_set_strobe_polarity(kb, false);
-    }
+  kb->print_delay_ms = k.print_delay_ms;
 
-    if (k.platform != NULL) {
-        asdf_install_platform(kb, k.platform);
+  kb->keymap.each_scan = k.each_scan;
+
+  for (uint8_t i = 0; i < k.num_outputs; i++) {
+    asdf_virtual_initializer_t out;
+    FLASH_MEMCPY(&out, &k.outputs[i], sizeof(out));
+    if (!asdf_virtual_assign(&kb->outputs, out.virtual_device, out.physical_device, out.function,
+                             out.initial_value)) {
+      asdf_keymaps_count_error(&kb->keymap);
     }
+  }
+
+  if ((k.flags & ASDF_KEYMAP_CAPS_ON) != 0u) {
+    asdf_modifier_capslock_activate(&kb->modifiers);
+    asdf_sync_lock_leds(kb);
+  }
+  if ((k.flags & ASDF_KEYMAP_NEGATIVE_STROBE) != 0u) {
+    asdf_set_strobe_polarity(kb, false);
+  }
+
+  if (k.platform != NULL) {
+    asdf_install_platform(kb, k.platform);
+  }
 }
 
 /**
@@ -241,19 +245,20 @@ static void asdf_keymaps_apply(asdf_t *kb, const asdf_keymap_t *keymap) {
  *
  * Complexity: 2
  */
-void asdf_keymaps_switch(asdf_t *kb, uint8_t index) {
-    if (asdf_keymap_valid(index)) {
-        kb->keymap.current = index;
-        kb->keymap.requested = index;
+void asdf_keymaps_switch(asdf_t *kb, uint8_t index)
+{
+  if (asdf_keymap_valid(index)) {
+    kb->keymap.current = index;
+    kb->keymap.requested = index;
 
-        asdf_keymaps_reset(kb);
-        kb->platform->reset(kb->platform->user);
+    asdf_keymaps_reset(kb);
+    kb->platform->reset(kb->platform->user);
 
-        asdf_keymaps_apply(kb, asdf_keymap_descriptor(index));
+    asdf_keymaps_apply(kb, asdf_keymap_descriptor(index));
 
-        asdf_apply_configuration(kb);
-        asdf_virtual_sync(&kb->outputs);
-    }
+    asdf_apply_configuration(kb);
+    asdf_virtual_sync(&kb->outputs);
+  }
 }
 
 /**
@@ -267,10 +272,11 @@ void asdf_keymaps_switch(asdf_t *kb, uint8_t index) {
  *
  * Complexity: 2
  */
-void asdf_keymaps_select(asdf_t *kb, uint8_t index) {
-    if (index != kb->keymap.current) {
-        asdf_keymaps_switch(kb, index);
-    }
+void asdf_keymaps_select(asdf_t *kb, uint8_t index)
+{
+  if (index != kb->keymap.current) {
+    asdf_keymaps_switch(kb, index);
+  }
 }
 
 /**
@@ -287,19 +293,20 @@ void asdf_keymaps_select(asdf_t *kb, uint8_t index) {
  *
  * Complexity: 4
  */
-void asdf_keymaps_init(asdf_t *kb) {
-    uint8_t index = 0;
+void asdf_keymaps_init(asdf_t *kb)
+{
+  uint8_t index = 0;
 
-    asdf_keymaps_reset(kb);
-    kb->keymap.current = 0;
-    kb->keymap.requested = 0;
+  asdf_keymaps_reset(kb);
+  kb->keymap.current = 0;
+  kb->keymap.requested = 0;
 
-    while (!asdf_keymap_valid(index) && (index < 0xFFu)) {
-        index++;
-    }
-    if (asdf_keymap_valid(index)) {
-        asdf_keymaps_switch(kb, index);
-    }
+  while (!asdf_keymap_valid(index) && (index < 0xFFu)) {
+    index++;
+  }
+  if (asdf_keymap_valid(index)) {
+    asdf_keymaps_switch(kb, index);
+  }
 }
 
 /**
@@ -315,12 +322,14 @@ void asdf_keymaps_init(asdf_t *kb) {
  *
  * Complexity: 2
  */
-void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, bool set) {
-    if (set) {
-        keymap->requested |= bit;
-    } else {
-        keymap->requested &= (uint8_t)~bit;
-    }
+void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, bool set)
+{
+  if (set) {
+    keymap->requested |= bit;
+  }
+  else {
+    keymap->requested &= (uint8_t) ~bit;
+  }
 }
 
 /**
@@ -334,8 +343,9 @@ void asdf_keymaps_request_bit(asdf_keymap_state_t *keymap, uint8_t bit, bool set
  *
  * @param kb  Keyboard to configure.
  */
-void asdf_keymaps_apply_request(asdf_t *kb) {
-    asdf_keymaps_select(kb, kb->keymap.requested);
+void asdf_keymaps_apply_request(asdf_t *kb)
+{
+  asdf_keymaps_select(kb, kb->keymap.requested);
 }
 
 

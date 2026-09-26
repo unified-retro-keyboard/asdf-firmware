@@ -1,4 +1,4 @@
-#include<stdint.h>
+#include <stdint.h>
 #include "asdf.h"
 #include "asdf_virtual.h"
 #include "asdf_physical.h"
@@ -43,7 +43,7 @@ uint32_t test_hook_readback(void)
 
 uint8_t test_hook_read_row(uint8_t val)
 {
-  return (uint8_t) val+2;
+  return (uint8_t) val + 2;
 }
 
 void test_hook_output(uint8_t val)

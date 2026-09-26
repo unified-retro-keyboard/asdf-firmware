@@ -11,7 +11,7 @@
 #include "asdf.h"
 #include "asdf_platform.h"
 
-#define FAKE_PLATFORM_ROWS ASDF_MAX_ROWS
+#define FAKE_PLATFORM_ROWS     ASDF_MAX_ROWS
 #define FAKE_PLATFORM_MAX_SENT 64
 
 typedef struct {

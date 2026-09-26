@@ -21,41 +21,41 @@
 #include "asdf_arch_pic32cm_common.h"
 #include "asdf.h"
 
-#define ASDF_STROBE_LENGTH_US 10              // strobe length in microseconds
+#define ASDF_STROBE_LENGTH_US              10 // strobe length in microseconds
 #define ASDF_KEYBOARD_ROW_SETTLING_TIME_US 4  // row settling time
 
 // DIP switch is on row 8
 #define ASDF_ARCH_DIP_SWITCH_ROW 8
-#define ASDF_ARCH_DIPSWITCH_ROW 8
+#define ASDF_ARCH_DIPSWITCH_ROW  8
 
 // --- pin map (PIC32CM6408PL10064, 64-pin); adjustable, SWCLK/SWDIO reserved ---
 // Rows: 16 one-hot active-low lines on PA00..PA15 (single masked write).
 #define ROW_GROUP 0u
-#define ROW_MASK 0x0000FFFFu
+#define ROW_MASK  0x0000FFFFu
 // Columns: 8 inverted inputs on PB00..PB07 (a pressed key pulls the line low).
 #define COL_GROUP 1u
-#define COL_MASK 0x000000FFu
+#define COL_MASK  0x000000FFu
 // ASCII: 8-bit parallel output on PA16..PA23.
 #define ASCII_GROUP 0u
 #define ASCII_SHIFT 16u
-#define ASCII_MASK ((uint32_t) 0xFFu << ASCII_SHIFT)
+#define ASCII_MASK  ((uint32_t) 0xFFu << ASCII_SHIFT)
 // Strobe: PA24.
 #define STROBE_GROUP 0u
-#define STROBE_PIN 24u
+#define STROBE_PIN   24u
 // LEDs (active low) on PB08/PB09/PB10.
 #define LED1_GROUP 1u
-#define LED1_PIN 8u
+#define LED1_PIN   8u
 #define LED2_GROUP 1u
-#define LED2_PIN 9u
+#define LED2_PIN   9u
 #define LED3_GROUP 1u
-#define LED3_PIN 10u
+#define LED3_PIN   10u
 // OUT1-3 on PB11/PB12/PB13.
 #define OUT1_GROUP 1u
-#define OUT1_PIN 11u
+#define OUT1_PIN   11u
 #define OUT2_GROUP 1u
-#define OUT2_PIN 12u
+#define OUT2_PIN   12u
 #define OUT3_GROUP 1u
-#define OUT3_PIN 13u
+#define OUT3_PIN   13u
 
 // --- public API (mirrors asdf_arch_atmega2560.h) ---
 /**

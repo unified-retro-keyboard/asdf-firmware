@@ -32,8 +32,9 @@
  */
 void asdf_arch_common_clock_init(void)
 {
-  OSCCTRL_REGS->OSCCTRL_OSCHFCTRL = (OSCCTRL_REGS->OSCCTRL_OSCHFCTRL & ~OSCCTRL_OSCHFCTRL_FRQSEL_Msk)
-                                    | OSCCTRL_OSCHFCTRL_FRQSEL(OSCCTRL_OSCHFCTRL_FRQSEL_24M_Val);
+  OSCCTRL_REGS->OSCCTRL_OSCHFCTRL =
+    (OSCCTRL_REGS->OSCCTRL_OSCHFCTRL & ~OSCCTRL_OSCHFCTRL_FRQSEL_Msk)
+    | OSCCTRL_OSCHFCTRL_FRQSEL(OSCCTRL_OSCHFCTRL_FRQSEL_24M_Val);
 
   // Wait for OSCHF to re-lock at the new frequency before relying on the clock.
   while ((OSCCTRL_REGS->OSCCTRL_STATUS & OSCCTRL_STATUS_OSCHFRDY_Msk) == 0u) {
@@ -49,7 +50,10 @@ void asdf_arch_common_clock_init(void)
  * period. The reload fits SysTick's 24-bit counter, so SysTick_Config()
  * cannot fail and its result is ignored.
  */
-void asdf_arch_common_tick_init(void) { (void) SysTick_Config(F_CPU / 1000u); }
+void asdf_arch_common_tick_init(void)
+{
+  (void) SysTick_Config(F_CPU / 1000u);
+}
 
 /**
  * Collects the ticks counted since the last call.
@@ -95,4 +99,3 @@ void arch_delay_us(uint16_t us)
     loops--;
   }
 }
-

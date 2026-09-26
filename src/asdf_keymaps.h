@@ -51,11 +51,11 @@ typedef struct {
 } asdf_keycode_map_t;
 
 /** Number of elements in an array, for the descriptor table counts. */
-#define ASDF_NUM_ELEMENTS(array) ((uint8_t)(sizeof(array) / sizeof((array)[0])))
+#define ASDF_NUM_ELEMENTS(array) ((uint8_t) (sizeof(array) / sizeof((array)[0])))
 
 /** Flags in asdf_keymap_t.flags. */
-#define ASDF_KEYMAP_CAPS_ON 0x01u        // start with CAPSLOCK on
-#define ASDF_KEYMAP_NEGATIVE_STROBE 0x02u// start with negative output strobe
+#define ASDF_KEYMAP_CAPS_ON         0x01u // start with CAPSLOCK on
+#define ASDF_KEYMAP_NEGATIVE_STROBE 0x02u // start with negative output strobe
 
 /**
  * A keymap descriptor.
@@ -155,8 +155,7 @@ typedef struct {
  *         or @p num_cols is out of range.
  */
 bool asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
-                          modifier_index_t modifier_index, uint8_t num_rows,
-                          uint8_t num_cols);
+                          modifier_index_t modifier_index, uint8_t num_rows, uint8_t num_cols);
 
 /**
  * Number of rows in the matrix for a modifier state.
@@ -167,8 +166,7 @@ bool asdf_keymaps_add_map(asdf_keymap_state_t *keymap, const asdf_key_t *matrix,
  * @param modifier_index  Modifier state.
  * @return Rows of that matrix; 0 if @p modifier_index is out of range.
  */
-uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
-                                modifier_index_t modifier_index);
+uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap, modifier_index_t modifier_index);
 
 /**
  * Number of columns in the matrix for a modifier state.
@@ -179,8 +177,7 @@ uint8_t asdf_keymaps_num_rows(const asdf_keymap_state_t *keymap,
  * @param modifier_index  Modifier state.
  * @return Columns of that matrix; 0 if @p modifier_index is out of range.
  */
-uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
-                                modifier_index_t modifier_index);
+uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap, modifier_index_t modifier_index);
 
 /**
  * Look up the key at a matrix position, copied out of flash.
@@ -196,7 +193,7 @@ uint8_t asdf_keymaps_num_cols(const asdf_keymap_state_t *keymap,
  *         @p col is out of range, or no matrix is set.
  */
 asdf_key_t asdf_keymaps_get_key(const asdf_keymap_state_t *keymap, uint8_t row, uint8_t col,
-                                  modifier_index_t modifier_index);
+                                modifier_index_t modifier_index);
 
 /**
  * Set or clear bits of the requested keymap number.

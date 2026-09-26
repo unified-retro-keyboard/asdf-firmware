@@ -63,35 +63,34 @@
 #define SOL_NUM_ROWS 13
 #define SOL_NUM_COLS 8
 
-#define SOL_KBD_VRESET VOUT1
-#define SOL_KBD_VBREAK VOUT2
-#define SOL_KBD_VLOCAL VOUT3
-#define SOL_KBD_LED_ON 1
+#define SOL_KBD_VRESET  VOUT1
+#define SOL_KBD_VBREAK  VOUT2
+#define SOL_KBD_VLOCAL  VOUT3
+#define SOL_KBD_LED_ON  1
 #define SOL_KBD_LED_OFF 0
 
 // The SOL manual (sec. 7.7.8) indicates shiftlock locks SHIFT on, and SHIFT
 // returns to unshifted. For Toggle behavior, change SHIFTLOCK_ON to
 // SHIFTLOCK_TOGGLE in asdf_keymap_sol_maps.yaml.
 
-#define SOL_ASCII_LOAD 0x8C
+#define SOL_ASCII_LOAD        0x8C
 #define SOL_ASCII_MODE_SELECT 0x80
-#define SOL_ASCII_UP_ARROW 0x97
-#define SOL_ASCII_LT_ARROW 0x81
-#define SOL_ASCII_RT_ARROW 0x93
-#define SOL_ASCII_DN_ARROW 0x9a
-#define SOL_ASCII_HOME 0x8e
-#define SOL_ASCII_CLEAR 0x8b
+#define SOL_ASCII_UP_ARROW    0x97
+#define SOL_ASCII_LT_ARROW    0x81
+#define SOL_ASCII_RT_ARROW    0x93
+#define SOL_ASCII_DN_ARROW    0x9a
+#define SOL_ASCII_HOME        0x8e
+#define SOL_ASCII_CLEAR       0x8b
 
 #define SOL_KBD_TTL_HIGH 1
-#define SOL_KBD_TTL_LOW 0
+#define SOL_KBD_TTL_LOW  0
 
 #define SOL_KBD_LED_UPPERCASE PHYSICAL_LED1
-#define SOL_KBD_LED_LOCAL PHYSICAL_LED2
+#define SOL_KBD_LED_LOCAL     PHYSICAL_LED2
 #define SOL_KBD_LED_SHIFTLOCK PHYSICAL_LED3
-#define SOL_KBD_TTLOUT_RESET PHYSICAL_OUT3_OPEN_HI // Emulate open collector output.
-#define SOL_KBD_TTLOUT_BREAK PHYSICAL_OUT2
-#define SOL_KBD_TTLOUT_LOCAL PHYSICAL_OUT1
-
+#define SOL_KBD_TTLOUT_RESET  PHYSICAL_OUT3_OPEN_HI // Emulate open collector output.
+#define SOL_KBD_TTLOUT_BREAK  PHYSICAL_OUT2
+#define SOL_KBD_TTLOUT_LOCAL  PHYSICAL_OUT1
 
 
 /** The Sol-20 keymap's descriptor, in flash. */

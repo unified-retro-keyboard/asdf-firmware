@@ -29,8 +29,8 @@ const asdf_keymap_t test2_caps_keymap = { TEST_MAPS(test2) };
 // Virtual output tests
 
 static const asdf_virtual_initializer_t vdevs_single_outputs[] = {
-  { VOUT1, PHYSICAL_OUT1, V_NOFUNC, 0 },      // single assignment
-  { VOUT2, PHYSICAL_OUT2, V_TOGGLE, 0 },      // single toggle
+  { VOUT1, PHYSICAL_OUT1, V_NOFUNC,      0 }, // single assignment
+  { VOUT2, PHYSICAL_OUT2, V_TOGGLE,      0 }, // single toggle
   { VOUT3, PHYSICAL_OUT3, V_PULSE_SHORT, 0 }, // single pulse
 };
 
@@ -46,10 +46,10 @@ static const asdf_virtual_initializer_t vdevs_triple_outputs[] = {
 };
 
 static const asdf_virtual_initializer_t vdevs_vcaps_outputs[] = {
-  { VCAPS_LED, PHYSICAL_LED1, V_NOFUNC, 0 },
-  { VSHIFT_LED, PHYSICAL_LED2, V_NOFUNC, 0 },
-  { VOUT2, PHYSICAL_OUT3, V_NOFUNC, 0 },
-  { VOUT2, ASDF_PHYSICAL_NUM_RESOURCES, V_NOFUNC, 0 }, // invalid; ignored
+  { VCAPS_LED,  PHYSICAL_LED1,               V_NOFUNC, 0 },
+  { VSHIFT_LED, PHYSICAL_LED2,               V_NOFUNC, 0 },
+  { VOUT2,      PHYSICAL_OUT3,               V_NOFUNC, 0 },
+  { VOUT2,      ASDF_PHYSICAL_NUM_RESOURCES, V_NOFUNC, 0 }, // invalid; ignored
 };
 
 const asdf_keymap_t test_vdevs_single_keymap = {

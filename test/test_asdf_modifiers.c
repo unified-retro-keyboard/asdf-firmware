@@ -9,7 +9,7 @@ static asdf_modifier_state_t mods;
 
 #define TESTMAP(a)                                                                                 \
   do {                                                                                             \
-    uint32_t map = (uint32_t) asdf_modifier_index(&mods);                                      \
+    uint32_t map = (uint32_t) asdf_modifier_index(&mods);                                          \
     TEST_ASSERT_EQUAL_INT((a), map);                                                               \
   } while (0);
 
@@ -132,7 +132,7 @@ void capslock_shiftlock_capslock_gives_shift(void)
 void capslock_shiftlock_shift_gives_caps(void)
 {
   asdf_modifier_capslock_activate(&mods);
-    TESTMAP(MOD_CAPS_MAP);
+  TESTMAP(MOD_CAPS_MAP);
 
   asdf_modifier_shiftlock_on_activate(&mods);
   TESTMAP(MOD_SHIFT_MAP);

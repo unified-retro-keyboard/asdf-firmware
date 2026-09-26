@@ -26,26 +26,26 @@
 // map). A combination with its own behavior would name its own map there; a
 // combination that behaves like one of its modifiers names that modifier's map.
 #define ASDF_MODIFIERS_SHIFT_POS 0u
-#define ASDF_MODIFIERS_CAPS_POS 1u
-#define ASDF_MODIFIERS_CTRL_POS 2u
+#define ASDF_MODIFIERS_CAPS_POS  1u
+#define ASDF_MODIFIERS_CTRL_POS  2u
 
 #define ASDF_MODIFIERS_SHIFT_MASK (1U << ASDF_MODIFIERS_SHIFT_POS)
-#define ASDF_MODIFIERS_CAPS_MASK (1U << ASDF_MODIFIERS_CAPS_POS)
-#define ASDF_MODIFIERS_CTRL_MASK (1U << ASDF_MODIFIERS_CTRL_POS)
+#define ASDF_MODIFIERS_CAPS_MASK  (1U << ASDF_MODIFIERS_CAPS_POS)
+#define ASDF_MODIFIERS_CTRL_MASK  (1U << ASDF_MODIFIERS_CTRL_POS)
 
 /** SHIFT and SHIFTLOCK state bits, in asdf_modifier_state_t.shift. */
-#define SHIFT_OFF_ST 0u
-#define SHIFT_ON_ST 1u     ///< SHIFT held
+#define SHIFT_OFF_ST    0u
+#define SHIFT_ON_ST     1u ///< SHIFT held
 #define SHIFT_LOCKED_ST 2u ///< SHIFTLOCK on
-#define SHIFT_BOTH_ST 3u   ///< SHIFT and SHIFTLOCK together; never set explicitly
+#define SHIFT_BOTH_ST   3u ///< SHIFT and SHIFTLOCK together; never set explicitly
 
 /** CAPSLOCK state, in asdf_modifier_state_t.caps. */
-#define CAPS_OFF_ST 0u
+#define CAPS_OFF_ST    0u
 #define CAPS_LOCKED_ST 1u
 
 /** CTRL state, in asdf_modifier_state_t.ctrl. */
 #define CTRL_OFF_ST 0u
-#define CTRL_ON_ST 1u
+#define CTRL_ON_ST  1u
 
 /**
  * Keymaps selectable by the modifiers: PLAIN (no modifier), SHIFT, CAPS, and

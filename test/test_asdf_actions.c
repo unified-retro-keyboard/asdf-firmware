@@ -19,8 +19,8 @@
 // The keyboard under test.
 static asdf_t kb;
 
-#define DIP_ROW_INDEX (TEST_NUM_ROWS - 1)
-#define STROBE_COL 6
+#define DIP_ROW_INDEX  (TEST_NUM_ROWS - 1)
+#define STROBE_COL     6
 #define AUTOREPEAT_COL 7
 
 static uint32_t key_matrix[TEST_NUM_ROWS];
@@ -41,7 +41,8 @@ static void drive_dip(uint8_t col, uint8_t pressed)
 {
   if (pressed) {
     key_matrix[DIP_ROW_INDEX] |= (1u << col);
-  } else {
+  }
+  else {
     key_matrix[DIP_ROW_INDEX] &= ~(1u << col);
   }
   keyscan_delay(ASDF_DEBOUNCE_TIME_MS);

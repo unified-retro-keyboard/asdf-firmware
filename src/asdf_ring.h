@@ -44,11 +44,11 @@
  * @endcode
  */
 typedef struct {
-    asdf_keycode_t *storage;
-    uint8_t capacity;
-    uint8_t head;    ///< index of the next code to read
-    uint8_t count;   ///< number of codes queued
-    uint8_t dropped; ///< codes rejected because the ring was full (saturates)
+  asdf_keycode_t *storage;
+  uint8_t capacity;
+  uint8_t head;    ///< index of the next code to read
+  uint8_t count;   ///< number of codes queued
+  uint8_t dropped; ///< codes rejected because the ring was full (saturates)
 } asdf_ring_t;
 
 /**

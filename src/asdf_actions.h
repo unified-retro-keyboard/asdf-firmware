@@ -50,23 +50,23 @@ typedef enum {
   ACTION_NOTHING = 0,          ///< must be 0: a zero-filled key does nothing
   ACTION_SEND_CODE,            ///< queue the code param
   ACTION_SEND_REPEATABLE_CODE, ///< queue the code param; the key autorepeats
-  ACTION_SHIFT,            ///< SHIFT pressed
-  ACTION_SHIFT_RELEASE,    ///< SHIFT released
-  ACTION_SHIFTLOCK_ON,     ///< turn SHIFT lock on
-  ACTION_SHIFTLOCK_TOGGLE, ///< toggle SHIFT lock
-  ACTION_CAPS,             ///< toggle CAPS lock
-  ACTION_CTRL,             ///< CTRL pressed
-  ACTION_CTRL_RELEASE,     ///< CTRL released
-  ACTION_REPEAT,           ///< REPEAT pressed
-  ACTION_REPEAT_RELEASE,   ///< REPEAT released
-  ACTION_MAPSEL_SET,       ///< set keymap select bit param (configuration)
-  ACTION_MAPSEL_CLEAR,     ///< clear keymap select bit param
-  ACTION_STROBE_POSITIVE,  ///< positive output strobe (configuration)
-  ACTION_STROBE_NEGATIVE,  ///< negative output strobe
-  ACTION_AUTOREPEAT_ON,    ///< enable autorepeat (configuration)
-  ACTION_AUTOREPEAT_OFF,   ///< disable autorepeat
-  ACTION_VIRTUAL,          ///< activate virtual output param
-  ACTION_KEYMAP_ID,        ///< print the keymap's ID message
+  ACTION_SHIFT,                ///< SHIFT pressed
+  ACTION_SHIFT_RELEASE,        ///< SHIFT released
+  ACTION_SHIFTLOCK_ON,         ///< turn SHIFT lock on
+  ACTION_SHIFTLOCK_TOGGLE,     ///< toggle SHIFT lock
+  ACTION_CAPS,                 ///< toggle CAPS lock
+  ACTION_CTRL,                 ///< CTRL pressed
+  ACTION_CTRL_RELEASE,         ///< CTRL released
+  ACTION_REPEAT,               ///< REPEAT pressed
+  ACTION_REPEAT_RELEASE,       ///< REPEAT released
+  ACTION_MAPSEL_SET,           ///< set keymap select bit param (configuration)
+  ACTION_MAPSEL_CLEAR,         ///< clear keymap select bit param
+  ACTION_STROBE_POSITIVE,      ///< positive output strobe (configuration)
+  ACTION_STROBE_NEGATIVE,      ///< negative output strobe
+  ACTION_AUTOREPEAT_ON,        ///< enable autorepeat (configuration)
+  ACTION_AUTOREPEAT_OFF,       ///< disable autorepeat
+  ACTION_VIRTUAL,              ///< activate virtual output param
+  ACTION_KEYMAP_ID,            ///< print the keymap's ID message
   ASDF_NUM_BUILTIN_ACTIONS
 } asdf_action_t;
 
@@ -357,7 +357,7 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param);
  * be omitted, and is then 0.
  */
 #define ASDF_KEY(press_fn, press_param, release_fn, release_param)                                 \
-  { (uint8_t) (press_fn), (uint8_t) (press_param), (uint8_t) (release_fn),                          \
+  { (uint8_t) (press_fn), (uint8_t) (press_param), (uint8_t) (release_fn),                         \
     (uint8_t) (release_param) }
 
 // A key that sends code, and autorepeats while held.
@@ -368,17 +368,17 @@ void asdf_action_keymap_id(asdf_t *kb, uint8_t param);
 #define KEY_NOTHING(unused) ASDF_KEY(ACTION_NOTHING, 0, ACTION_NOTHING, 0)
 // Modifiers: SHIFT, CTRL, and REPEAT are active while held; CAPS and SHIFT lock
 // change on press.
-#define KEY_SHIFT(unused) ASDF_KEY(ACTION_SHIFT, 0, ACTION_SHIFT_RELEASE, 0)
-#define KEY_SHIFTLOCK_ON(unused) ASDF_KEY(ACTION_SHIFTLOCK_ON, 0, ACTION_NOTHING, 0)
+#define KEY_SHIFT(unused)            ASDF_KEY(ACTION_SHIFT, 0, ACTION_SHIFT_RELEASE, 0)
+#define KEY_SHIFTLOCK_ON(unused)     ASDF_KEY(ACTION_SHIFTLOCK_ON, 0, ACTION_NOTHING, 0)
 #define KEY_SHIFTLOCK_TOGGLE(unused) ASDF_KEY(ACTION_SHIFTLOCK_TOGGLE, 0, ACTION_NOTHING, 0)
-#define KEY_CAPS(unused) ASDF_KEY(ACTION_CAPS, 0, ACTION_NOTHING, 0)
-#define KEY_CTRL(unused) ASDF_KEY(ACTION_CTRL, 0, ACTION_CTRL_RELEASE, 0)
-#define KEY_REPEAT(unused) ASDF_KEY(ACTION_REPEAT, 0, ACTION_REPEAT_RELEASE, 0)
+#define KEY_CAPS(unused)             ASDF_KEY(ACTION_CAPS, 0, ACTION_NOTHING, 0)
+#define KEY_CTRL(unused)             ASDF_KEY(ACTION_CTRL, 0, ACTION_CTRL_RELEASE, 0)
+#define KEY_REPEAT(unused)           ASDF_KEY(ACTION_REPEAT, 0, ACTION_REPEAT_RELEASE, 0)
 // Configuration switches: keymap select bit, strobe polarity, and autorepeat
 // are set while the switch is closed.
-#define KEY_MAPSEL(bit) ASDF_KEY(ACTION_MAPSEL_SET, (bit), ACTION_MAPSEL_CLEAR, (bit))
+#define KEY_MAPSEL(bit)             ASDF_KEY(ACTION_MAPSEL_SET, (bit), ACTION_MAPSEL_CLEAR, (bit))
 #define KEY_STROBE_POLARITY(unused) ASDF_KEY(ACTION_STROBE_POSITIVE, 0, ACTION_STROBE_NEGATIVE, 0)
-#define KEY_AUTOREPEAT(unused) ASDF_KEY(ACTION_AUTOREPEAT_ON, 0, ACTION_AUTOREPEAT_OFF, 0)
+#define KEY_AUTOREPEAT(unused)      ASDF_KEY(ACTION_AUTOREPEAT_ON, 0, ACTION_AUTOREPEAT_OFF, 0)
 // Activates a virtual output on press.
 #define KEY_VIRTUAL(virtual_out) ASDF_KEY(ACTION_VIRTUAL, (virtual_out), ACTION_NOTHING, 0)
 // Prints the keymap's ID message on press.

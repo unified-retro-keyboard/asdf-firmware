@@ -24,7 +24,7 @@
 #include "test_asdf_keymap_defs.h"
 
 #define NUM_KEYBOARDS 3
-#define SCRIPT_STEPS 40000
+#define SCRIPT_STEPS  40000
 
 // Position of no key (asdf.c)
 #define NO_KEY_POSITION 0xff
@@ -141,9 +141,7 @@ static void runner_step(fuzz_runner_t *r)
       asdf_update(&r->kb, (uint16_t) ((roll >> 8) % 400));
       break;
     }
-    case 3:
-      take_code(r);
-      break;
+    case 3: take_code(r); break;
     default:
       // ordinary time passing: one to three ticks
       asdf_update(&r->kb, (uint16_t) (1 + ((roll >> 8) % 3)));

@@ -39,7 +39,7 @@
  */
 static inline void set_bit(volatile uint8_t *port, uint8_t bit)
 {
-  *port |= (uint8_t)(1u << bit);
+  *port |= (uint8_t) (1u << bit);
 }
 
 /**
@@ -111,7 +111,7 @@ uint8_t asdf_arch_tick(asdf_arch_t *arch)
   uint8_t retval;
 
   // read and clear as one step, so a tick counted between them is not lost
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) //lint !e9036 !e9192 !e9194 !e9197 D18
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) // lint !e9036 !e9192 !e9194 !e9197 D18
   {
     retval = arch->ticks;
     arch->ticks = 0;
@@ -503,10 +503,10 @@ static asdf_cols_t asdf_arch_read_row(uint8_t row)
 {
   uint32_t rows = ~((uint32_t) 1 << row);
 
-  ASDF_LOROW_PORT = (uint8_t)(rows & 0xFFu);
-  _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US); //lint !e9034 D18: _delay_us takes a double
-  ASDF_HIROW_PORT = (uint8_t)((rows >> 8u) & 0xFFu);
-  _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US); //lint !e9034 D18: _delay_us takes a double
+  ASDF_LOROW_PORT = (uint8_t) (rows & 0xFFu);
+  _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US); // lint !e9034 D18: _delay_us takes a double
+  ASDF_HIROW_PORT = (uint8_t) ((rows >> 8u) & 0xFFu);
+  _delay_us(ASDF_KEYBOARD_ROW_SETTLING_TIME_US); // lint !e9034 D18: _delay_us takes a double
 
   return (asdf_cols_t) ~ASDF_COLUMNS_PIN;
 }
@@ -534,7 +534,7 @@ static void asdf_arch_send_code(const asdf_arch_t *arch, asdf_keycode_t code)
   // the strobe and return it to the idle level set by the strobe polarity.
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 
-  _delay_us(ASDF_STROBE_LENGTH_US); //lint !e9034 D18: _delay_us takes a double
+  _delay_us(ASDF_STROBE_LENGTH_US); // lint !e9034 D18: _delay_us takes a double
 
   set_bit(&ASDF_STROBE_PIN, ASDF_STROBE_BIT);
 }
@@ -556,8 +556,7 @@ typedef void (*asdf_arch_output_handler_t)(uint8_t value);
 static void asdf_arch_set_output(asdf_physical_dev_t output, uint8_t value)
 {
   // Output handlers, indexed by physical output, kept in flash.
-  static const asdf_arch_output_handler_t FLASH
-    output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
+  static const asdf_arch_output_handler_t FLASH output_handlers[ASDF_PHYSICAL_NUM_RESOURCES] = {
     [PHYSICAL_NO_OUT] = &asdf_arch_null_output,
     [PHYSICAL_OUT1] = &asdf_arch_out1_set,
     [PHYSICAL_OUT2] = &asdf_arch_out2_set,
@@ -596,7 +595,8 @@ static void asdf_arch_reset(asdf_arch_t *arch)
   arch->data_polarity = ASDF_DEFAULT_DATA_POLARITY;
   asdf_arch_init_ascii_output(arch->data_polarity);
 
-  if (ASDF_DEFAULT_STROBE_POLARITY == ASDF_POSITIVE_POLARITY) { //lint !e506 !e774 build-time configuration
+  if (ASDF_DEFAULT_STROBE_POLARITY
+      == ASDF_POSITIVE_POLARITY) { // lint !e506 !e774 build-time configuration
     asdf_arch_set_pos_strobe();
   }
   else {
@@ -683,7 +683,7 @@ static void arch_platform_set_strobe_polarity(void *user, bool positive)
 static void arch_platform_pulse_delay_short(void *user)
 {
   (void) user;
-  _delay_us(ASDF_PULSE_DELAY_SHORT_US); //lint !e9034 D18: _delay_us takes a double
+  _delay_us(ASDF_PULSE_DELAY_SHORT_US); // lint !e9034 D18: _delay_us takes a double
 }
 
 /**

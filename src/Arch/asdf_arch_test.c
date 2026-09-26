@@ -72,7 +72,8 @@ asdf_keycode_t asdf_arch_get_sent_code(void)
  * @return The code-sent flag: TRUE if a code was sent since the last
  *         asdf_arch_get_sent_code() or reset.
  */
-bool asdf_arch_was_code_sent(void){
+bool asdf_arch_was_code_sent(void)
+{
   return code_sent;
 }
 
@@ -251,7 +252,8 @@ void asdf_arch_out1_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out1_open_hi_set(uint8_t value)
-{record_output(PHYSICAL_OUT1_OPEN_HI, value);
+{
+  record_output(PHYSICAL_OUT1_OPEN_HI, value);
 }
 
 /**
@@ -262,7 +264,8 @@ void asdf_arch_out1_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out1_open_lo_set(uint8_t value)
-{record_output(PHYSICAL_OUT1_OPEN_LO, value);
+{
+  record_output(PHYSICAL_OUT1_OPEN_LO, value);
 }
 
 /**
@@ -286,7 +289,8 @@ void asdf_arch_out2_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out2_open_hi_set(uint8_t value)
-{record_output(PHYSICAL_OUT2_OPEN_HI, value);
+{
+  record_output(PHYSICAL_OUT2_OPEN_HI, value);
 }
 
 /**
@@ -297,7 +301,8 @@ void asdf_arch_out2_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out2_open_lo_set(uint8_t value)
-{record_output(PHYSICAL_OUT2_OPEN_LO, value);
+{
+  record_output(PHYSICAL_OUT2_OPEN_LO, value);
 }
 
 /**
@@ -320,7 +325,8 @@ void asdf_arch_out3_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out3_open_hi_set(uint8_t value)
-{record_output(PHYSICAL_OUT3_OPEN_HI, value);
+{
+  record_output(PHYSICAL_OUT3_OPEN_HI, value);
 }
 
 /**
@@ -331,7 +337,8 @@ void asdf_arch_out3_open_hi_set(uint8_t value)
  * @param value  Value written to the output.
  */
 void asdf_arch_out3_open_lo_set(uint8_t value)
-{record_output(PHYSICAL_OUT3_OPEN_LO, value);
+{
+  record_output(PHYSICAL_OUT3_OPEN_LO, value);
 }
 
 /**

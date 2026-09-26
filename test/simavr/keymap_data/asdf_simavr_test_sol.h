@@ -27,30 +27,30 @@
  * sol_plain_map[5][7] = ']'  sol_shift_map[5][7] = '}'
  */
 static const sim_event_t sol_events[] = {
-    { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_NONE  },
-    { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_SHIFT },
-    { .row = 7, .col = 5, .hold_cycles = 400000, .expected = '\r', .with_modifier = SIM_MOD_NONE  },
-    /* bit-paired punctuation: unshifted lower legend, then shifted upper legend */
-    { .row = 1, .col = 3, .hold_cycles = 400000, .expected = ';',  .with_modifier = SIM_MOD_NONE  },
-    { .row = 1, .col = 3, .hold_cycles = 400000, .expected = '+',  .with_modifier = SIM_MOD_SHIFT },
-    { .row = 1, .col = 4, .hold_cycles = 400000, .expected = ':',  .with_modifier = SIM_MOD_NONE  },
-    { .row = 1, .col = 4, .hold_cycles = 400000, .expected = '*',  .with_modifier = SIM_MOD_SHIFT },
-    { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '[',  .with_modifier = SIM_MOD_NONE  },
-    { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '{',  .with_modifier = SIM_MOD_SHIFT },
-    { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '\\', .with_modifier = SIM_MOD_NONE  },
-    { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '|',  .with_modifier = SIM_MOD_SHIFT },
-    { .row = 5, .col = 7, .hold_cycles = 400000, .expected = ']',  .with_modifier = SIM_MOD_NONE  },
-    { .row = 5, .col = 7, .hold_cycles = 400000, .expected = '}',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_NONE  },
+  { .row = 0, .col = 2, .hold_cycles = 400000, .expected = 'A',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 7, .col = 5, .hold_cycles = 400000, .expected = '\r', .with_modifier = SIM_MOD_NONE  },
+  /* bit-paired punctuation: unshifted lower legend, then shifted upper legend */
+  { .row = 1, .col = 3, .hold_cycles = 400000, .expected = ';',  .with_modifier = SIM_MOD_NONE  },
+  { .row = 1, .col = 3, .hold_cycles = 400000, .expected = '+',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 1, .col = 4, .hold_cycles = 400000, .expected = ':',  .with_modifier = SIM_MOD_NONE  },
+  { .row = 1, .col = 4, .hold_cycles = 400000, .expected = '*',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '[',  .with_modifier = SIM_MOD_NONE  },
+  { .row = 5, .col = 5, .hold_cycles = 400000, .expected = '{',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '\\', .with_modifier = SIM_MOD_NONE  },
+  { .row = 5, .col = 6, .hold_cycles = 400000, .expected = '|',  .with_modifier = SIM_MOD_SHIFT },
+  { .row = 5, .col = 7, .hold_cycles = 400000, .expected = ']',  .with_modifier = SIM_MOD_NONE  },
+  { .row = 5, .col = 7, .hold_cycles = 400000, .expected = '}',  .with_modifier = SIM_MOD_SHIFT },
 };
 
 static const sim_keymap_test_t sol_test = {
-    .name            = "sol",
-    .dip_value       = 4,
-    .boot_scan_ticks = 1000,
-    .modifier_shift  = { .row = 2, .col = 1 },
-    .modifier_ctrl   = { .row = 0, .col = 0 },
-    .events          = sol_events,
-    .num_events      = sizeof(sol_events) / sizeof(sol_events[0]),
+  .name = "sol",
+  .dip_value = 4,
+  .boot_scan_ticks = 1000,
+  .modifier_shift = { .row = 2, .col = 1 },
+  .modifier_ctrl = { .row = 0, .col = 0 },
+  .events = sol_events,
+  .num_events = sizeof(sol_events) / sizeof(sol_events[0]),
 };
 
 /* SOL identity test.
@@ -64,16 +64,16 @@ static const sim_keymap_test_t sol_test = {
  * Modifier coords from sol_test above.
  */
 static const sim_identity_test_t sol_identity_test = {
-    .dip_value             = 4,
-    .boot_scan_ticks       = 200,
-    .trigger_key           = { .row = 5, .col = 2 },
-    .trigger_modifier      = SIM_MOD_CTRL,
-    .modifier_shift        = { .row = 2, .col = 1 },
-    .modifier_caps_toggle  = { .row = 2, .col = 0 },
-    .modifier_ctrl         = { .row = 0, .col = 0 },
-    .capture_ticks         = 1500,
-    .expected              = "[Keybd: Sol-20]",
-    .expected_len          = sizeof("[Keybd: Sol-20]") - 1,
+  .dip_value = 4,
+  .boot_scan_ticks = 200,
+  .trigger_key = { .row = 5, .col = 2 },
+  .trigger_modifier = SIM_MOD_CTRL,
+  .modifier_shift = { .row = 2, .col = 1 },
+  .modifier_caps_toggle = { .row = 2, .col = 0 },
+  .modifier_ctrl = { .row = 0, .col = 0 },
+  .capture_ticks = 1500,
+  .expected = "[Keybd: Sol-20]",
+  .expected_len = sizeof("[Keybd: Sol-20]") - 1,
 };
 
 
@@ -101,67 +101,67 @@ static const sim_identity_test_t sol_identity_test = {
  * sol_ctrl_map[3][0].
  */
 static const sim_string_step_t sol_string_steps[] = {
-    /* <shift>T: CAPS+SHIFT => sol_shift_map => 'T' */
-    { .type = SIM_STEP_MOD_DOWN, .modifier = SIM_MOD_SHIFT },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 6, .expected = 'T' },
-    { .type = SIM_STEP_MOD_UP,   .modifier = SIM_MOD_SHIFT },
-    /* HIS IS A  (caps ON -> sol_caps_map -> uppercase) */
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 7, .expected = 'H' },
-    { .type = SIM_STEP_KEY,  .row = 7, .col = 1, .expected = 'I' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 3, .expected = 'S' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* IS  */
-    { .type = SIM_STEP_KEY,  .row = 7, .col = 1, .expected = 'I' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 3, .expected = 'S' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* A  */
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 2, .expected = 'A' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* TEST  */
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 6, .expected = 'T' },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 4, .expected = 'E' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 3, .expected = 'S' },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 6, .expected = 'T' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* OF  */
-    { .type = SIM_STEP_KEY,  .row = 7, .col = 2, .expected = 'O' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 5, .expected = 'F' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* THE  */
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 6, .expected = 'T' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 7, .expected = 'H' },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 4, .expected = 'E' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* SOL-20  */
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 3, .expected = 'S' },
-    { .type = SIM_STEP_KEY,  .row = 7, .col = 2, .expected = 'O' },
-    { .type = SIM_STEP_KEY,  .row = 1, .col = 2, .expected = 'L' },
-    { .type = SIM_STEP_KEY,  .row = 5, .col = 3, .expected = '-' },
-    { .type = SIM_STEP_KEY,  .row = 4, .col = 2, .expected = '2' },
-    { .type = SIM_STEP_KEY,  .row = 5, .col = 2, .expected = '0' },
-    { .type = SIM_STEP_KEY,  .row = 9, .col = 3, .expected = ' ' },
-    /* KEYMAP. */
-    { .type = SIM_STEP_KEY,  .row = 1, .col = 1, .expected = 'K' },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 4, .expected = 'E' },
-    { .type = SIM_STEP_KEY,  .row = 6, .col = 7, .expected = 'Y' },
-    { .type = SIM_STEP_KEY,  .row = 3, .col = 0, .expected = 'M' },
-    { .type = SIM_STEP_KEY,  .row = 0, .col = 2, .expected = 'A' },
-    { .type = SIM_STEP_KEY,  .row = 7, .col = 3, .expected = 'P' },
-    { .type = SIM_STEP_KEY,  .row = 3, .col = 2, .expected = '.' },
-    /* <ctrl>m</ctrl> => '\r' */
-    { .type = SIM_STEP_MOD_DOWN, .modifier = SIM_MOD_CTRL },
-    { .type = SIM_STEP_KEY,  .row = 3, .col = 0, .expected = '\r' },
-    { .type = SIM_STEP_MOD_UP,   .modifier = SIM_MOD_CTRL },
+  /* <shift>T: CAPS+SHIFT => sol_shift_map => 'T' */
+  { .type = SIM_STEP_MOD_DOWN, .modifier = SIM_MOD_SHIFT },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 6, .expected = 'T' },
+  { .type = SIM_STEP_MOD_UP, .modifier = SIM_MOD_SHIFT },
+  /* HIS IS A  (caps ON -> sol_caps_map -> uppercase) */
+  { .type = SIM_STEP_KEY, .row = 0, .col = 7, .expected = 'H' },
+  { .type = SIM_STEP_KEY, .row = 7, .col = 1, .expected = 'I' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 3, .expected = 'S' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* IS  */
+  { .type = SIM_STEP_KEY, .row = 7, .col = 1, .expected = 'I' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 3, .expected = 'S' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* A  */
+  { .type = SIM_STEP_KEY, .row = 0, .col = 2, .expected = 'A' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* TEST  */
+  { .type = SIM_STEP_KEY, .row = 6, .col = 6, .expected = 'T' },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 4, .expected = 'E' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 3, .expected = 'S' },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 6, .expected = 'T' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* OF  */
+  { .type = SIM_STEP_KEY, .row = 7, .col = 2, .expected = 'O' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 5, .expected = 'F' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* THE  */
+  { .type = SIM_STEP_KEY, .row = 6, .col = 6, .expected = 'T' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 7, .expected = 'H' },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 4, .expected = 'E' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* SOL-20  */
+  { .type = SIM_STEP_KEY, .row = 0, .col = 3, .expected = 'S' },
+  { .type = SIM_STEP_KEY, .row = 7, .col = 2, .expected = 'O' },
+  { .type = SIM_STEP_KEY, .row = 1, .col = 2, .expected = 'L' },
+  { .type = SIM_STEP_KEY, .row = 5, .col = 3, .expected = '-' },
+  { .type = SIM_STEP_KEY, .row = 4, .col = 2, .expected = '2' },
+  { .type = SIM_STEP_KEY, .row = 5, .col = 2, .expected = '0' },
+  { .type = SIM_STEP_KEY, .row = 9, .col = 3, .expected = ' ' },
+  /* KEYMAP. */
+  { .type = SIM_STEP_KEY, .row = 1, .col = 1, .expected = 'K' },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 4, .expected = 'E' },
+  { .type = SIM_STEP_KEY, .row = 6, .col = 7, .expected = 'Y' },
+  { .type = SIM_STEP_KEY, .row = 3, .col = 0, .expected = 'M' },
+  { .type = SIM_STEP_KEY, .row = 0, .col = 2, .expected = 'A' },
+  { .type = SIM_STEP_KEY, .row = 7, .col = 3, .expected = 'P' },
+  { .type = SIM_STEP_KEY, .row = 3, .col = 2, .expected = '.' },
+  /* <ctrl>m</ctrl> => '\r' */
+  { .type = SIM_STEP_MOD_DOWN, .modifier = SIM_MOD_CTRL },
+  { .type = SIM_STEP_KEY, .row = 3, .col = 0, .expected = '\r' },
+  { .type = SIM_STEP_MOD_UP, .modifier = SIM_MOD_CTRL },
 };
 
 static const sim_string_test_t sol_string_test = {
-    .dip_value             = 4,
-    .boot_scan_ticks       = 1000,
-    .modifier_shift        = { .row = 2, .col = 1 },
-    .modifier_caps_toggle  = { .row = 2, .col = 0 },
-    .modifier_ctrl         = { .row = 0, .col = 0 },
-    .steps                 = sol_string_steps,
-    .num_steps             = sizeof(sol_string_steps) / sizeof(sol_string_steps[0]),
+  .dip_value = 4,
+  .boot_scan_ticks = 1000,
+  .modifier_shift = { .row = 2, .col = 1 },
+  .modifier_caps_toggle = { .row = 2, .col = 0 },
+  .modifier_ctrl = { .row = 0, .col = 0 },
+  .steps = sol_string_steps,
+  .num_steps = sizeof(sol_string_steps) / sizeof(sol_string_steps[0]),
 };
 
 /* OUT2 regression data (see --mode out2).
@@ -177,11 +177,11 @@ static const sim_string_test_t sol_string_test = {
  * rather than a level change; settle_ms must outlast the pulse so both of
  * its edges are observed. */
 static const sim_out2_test_t sol_out2_test = {
-    .dip_value       = 4,
-    .boot_scan_ticks = 1000,
-    .trigger_key     = { .row = 6, .col = 0 },   /* BREAK */
-    .hold_ms         = 50,
-    .settle_ms       = 400,
+  .dip_value = 4,
+  .boot_scan_ticks = 1000,
+  .trigger_key = { .row = 6, .col = 0 }, /* BREAK */
+  .hold_ms = 50,
+  .settle_ms = 400,
 };
 
 /* Column-independent autorepeat regression (see --mode repeat), for
@@ -197,19 +197,19 @@ static const sim_out2_test_t sol_out2_test = {
  * remaining changed/pressed bits shifted to zero — making per-scan cost, and
  * therefore the servicing rate of a held key, a function of its column. */
 static const sim_repeat_test_t sol_repeat_test = {
-    .dip_value       = 4,
-    .boot_scan_ticks = 1000,
-    .row             = 6,
-    .cols            = { 1, 2, 3, 4, 5, 6, 7 },
-    .num_cols        = 7,
-    .hold_ms         = 3000,
-    .settle_ms       = 100,
-    /* One byte is emitted by the initial press. Requiring at least two proves
-     * that autorepeat actually ran rather than failing uniformly. */
-    .minimum_count   = 2,
-    /* Counts are exactly equal in practice; 1 absorbs any scan-phase
-     * alignment jitter without admitting the >2x spread the defect causes. */
-    .tolerance       = 1,
+  .dip_value = 4,
+  .boot_scan_ticks = 1000,
+  .row = 6,
+  .cols = { 1, 2, 3, 4, 5, 6, 7 },
+  .num_cols = 7,
+  .hold_ms = 3000,
+  .settle_ms = 100,
+  /* One byte is emitted by the initial press. Requiring at least two proves
+   * that autorepeat actually ran rather than failing uniformly. */
+  .minimum_count = 2,
+  /* Counts are exactly equal in practice; 1 absorbs any scan-phase
+   * alignment jitter without admitting the >2x spread the defect causes. */
+  .tolerance = 1,
 };
 
 #endif

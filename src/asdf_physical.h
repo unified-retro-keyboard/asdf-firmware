@@ -93,7 +93,7 @@ void asdf_physical_init(asdf_physical_state_t *phys, const struct asdf_platform 
  * @param value         Value to drive and record, stored as given.
  */
 void asdf_physical_set(asdf_physical_state_t *phys, asdf_physical_dev_t physical_out,
-                         uint8_t value);
+                       uint8_t value);
 
 /**
  * Set an output high (1), as asdf_physical_set().
@@ -155,7 +155,7 @@ void asdf_physical_toggle(asdf_physical_state_t *phys, asdf_physical_dev_t physi
  *         PHYSICAL_NO_OUT, returns the head of the available list.
  */
 asdf_physical_dev_t asdf_physical_next_device(const asdf_physical_state_t *phys,
-                                                asdf_physical_dev_t device);
+                                              asdf_physical_dev_t device);
 
 /**
  * Take an output off the available list and prepend it to a list.
