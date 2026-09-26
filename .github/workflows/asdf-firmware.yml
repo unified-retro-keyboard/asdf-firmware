@@ -91,6 +91,15 @@ jobs:
       - name: Report host test coverage of the core
         run: cmake --workflow --preset test-coverage
 
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv (runs the pinned clang-format)
+        uses: astral-sh/setup-uv@v5
+      - name: Check C formatting against .clang-format
+        run: bash ./format.sh -c
+
   # Debian trixie pins Cppcheck 2.17, the first with the staticFunction check
   # named in lint/cppcheck-suppressions.txt; ubuntu-latest has 2.13.
   cppcheck:
@@ -157,7 +166,7 @@ jobs:
           retention-days: 14
 
   build_docs:
-    needs: [build_firmware, host_test, cppcheck, integration_test]
+    needs: [build_firmware, host_test, cppcheck, format, integration_test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: { image: alpine }

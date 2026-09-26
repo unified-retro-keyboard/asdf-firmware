@@ -1,4 +1,5 @@
-# Python tooling for the ASDF firmware repo (Sphinx docs and linters).
+# Python tooling for the ASDF firmware repo (Sphinx docs, linters and the
+# pinned clang-format that format.sh runs).
 # Managed by uv: `uv sync` builds .venv; `uv run <cmd>` runs inside it.
 # The key matrix generator (src/asdf_keymap_gen.py) carries its own inline
 # script metadata and does not use this environment.
@@ -15,6 +16,9 @@ docs = [
     "sphinx-autodoc-typehints",
     "sphinx-rtd-theme",
     "toml",
+]
+format = [
+    "clang-format==21.1.8",
 ]
 dev = [
     "black",

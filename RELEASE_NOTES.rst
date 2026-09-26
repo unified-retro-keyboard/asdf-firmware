@@ -93,6 +93,8 @@ Details
   deviations are recorded in ``lint/MISRA-DEVIATIONS.md``.
 - *Build*: A ``cppcheck`` preset runs Cppcheck over the core and production
   keymaps, and CI fails on any finding.
+- *Build*: C sources follow ``.clang-format``; ``format.sh`` applies it with a
+  pinned clang-format, and CI checks it.
 - *Test*: Host tests also run under AddressSanitizer and
   UndefinedBehaviorSanitizer, and CI reports line coverage of the core.
 - *Test*: Randomized key event tests check state invariants on three

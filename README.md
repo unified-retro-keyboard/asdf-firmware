@@ -140,6 +140,10 @@ The presets are:
   `test/simavr/README.md`). Build the AVR firmware first; a missing ELF fails
   that target's tests, and the error names the preset that builds it.
 
+C sources are formatted with clang-format, in the style set by `.clang-format`.
+`./format.sh` formats them with the pinned clang-format (run through uv), and
+`./format.sh -c` only checks, as CI does.
+
 To install the hex files to `dist/`, and the AVR hex files and download links
 to `docs/source/` for the documentation:
 
