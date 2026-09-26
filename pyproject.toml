@@ -17,6 +17,10 @@ docs = [
     "sphinx-rtd-theme",
     "toml",
 ]
+keymap-test = [
+    "pytest",
+    "pyyaml",
+]
 format = [
     "clang-format==21.1.8",
 ]

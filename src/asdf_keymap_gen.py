@@ -15,48 +15,21 @@
 #
 # usage: asdf_keymap_gen.py INPUT.yaml OUTPUT_DIR
 #
-# The outputs are OUTPUT_DIR/<stem>.c and OUTPUT_DIR/<stem>.h, where <stem> is
-# the input file name without its extension.
-#
-# Input format:
+# The input format, the key forms, and the generated files are specified in
+# specs/keymap-generator.md, and docs/keymap-tutorial.md shows them in use. In
+# short:
 #
 #   include: [asdf_keymap_classic.h]  # headers naming the symbols used below
-#   rows: CLASSIC_NUM_ROWS            # number or C expression
+#   rows: CLASSIC_NUM_ROWS            # number or C identifier
 #   cols: CLASSIC_NUM_COLS
 #   maps:
-#     classic_plain_matrix:           # a list of rows, from row 0 ...
-#       - [~, KEY_SHIFT, KEY_SHIFT, ~, $ASCII_ESC, $ASCII_TAB, KEY_CTRL, '\']
-#       - ...
-#     classic_dip_example:            # ... or a mapping of row to keys, where a
-#       ASDF_ARCH_DIPSWITCH_ROW: [KEY_MAPSEL(0), KEY_MAPSEL(1)]  # row is a number or C symbol
+#     classic_plain_matrix:           # row (number or C identifier) -> keys
+#       0: [~, KEY_SHIFT, 'a', $ASCII_ESC, 0x8C, KEY_MAPSEL(1)]
+#       ASDF_ARCH_DIPSWITCH_ROW: [KEY_MAPSEL(0), KEY_MAPSEL(1)]
 #
-# Rows shorter than the column count, and rows not given, are filled with
-# KEY_NOTHING(0). Each key is one of:
-#
-#   NAME(PARAM)            a key macro, passed to C as written. Every key macro
-#   NAME                   takes one parameter, which is 0 if omitted. PARAM is
-#                          a C macro, a quoted character ('a'), or a number
-#                          0-255 (decimal or 0x..). Key macros are named KEY_
-#                          by convention: KEY_SHIFT, KEY_MAPSEL(2).
-#   $SYMBOL                sends the code the C macro SYMBOL names:
-#                          KEY_SEND(SYMBOL)
-#   a hex number (0x8C)    sends that code: KEY_SEND(0x8C)
-#   a single digit (7)     sends that digit character: KEY_SEND('7')
-#   a one-character string sends that character: KEY_SEND('a')
-#   ~ (null)               does nothing: KEY_NOTHING(0)
-#
-# So a bare symbol is always a key, and a code symbol is marked with $. A
-# symbol used as the wrong kind fails to compile: ASCII_ESC(0) is not a macro
-# call, and neither is KEY_SEND(KEY_SHIFT) a code.
-#
-# KEY_SEND keys autorepeat while held; KEY_SEND_ONCE(code) sends once. The key
-# macros are defined in asdf_actions.h and in the headers named by include.
-#
-# A YAML list [PRESS_FN, PRESS_PARAM, RELEASE_FN, RELEASE_PARAM] gives the four
-# fields of the key directly.
-#
-# Write a key containing a comma, bracket, brace, colon, or '#' in quotes, for
-# example "KEY_SEND_ONCE(',')".
+# ~ is no key, a quoted character or a number (decimal or hex) is sent, $SYMBOL
+# sends the code SYMBOL names, and NAME or NAME(PARAM) is a key macro. Rows and
+# keys left out are KEY_NOTHING(0).
 #
 # The C compiler checks every symbol; this script checks the layout: row and
 # column counts where they are numbers, key syntax, and value ranges.
@@ -70,6 +43,8 @@ import yaml
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 KEY_MACRO = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)(?:\((.*)\))?$")
 CODE_SYMBOL = re.compile(r"^\$([A-Za-z_][A-Za-z0-9_]*)$")
+# Decimal without a leading zero, which C would read as octal, or 0x hex.
+NUMBER = re.compile(r"^(0|[1-9][0-9]*|0[xX][0-9A-Fa-f]+)$")
 
 
 class KeymapError(Exception):
@@ -77,9 +52,8 @@ class KeymapError(Exception):
 
 
 class Number(str):
-    """A number in the YAML source, kept as written. As a key, a single digit
-    is that digit character and a hex number is a code; other bare numbers are
-    rejected, since YAML would otherwise silently take them as codes."""
+    """A number in the YAML source, kept as written, so it is passed to C in
+    the form the author chose."""
 
 
 class KeymapLoader(yaml.SafeLoader):
@@ -93,18 +67,33 @@ def construct_number(loader, node):
 KeymapLoader.add_constructor("tag:yaml.org,2002:int", construct_number)
 
 
-def c_char(ch):
+def number_value(text, where):
+    """Return the value of a number written as decimal or 0x hex."""
+    if not NUMBER.match(text):
+        raise KeymapError("%s: %s is not a decimal (no leading zero) or 0x hex number"
+                          % (where, text))
+    return int(text, 0)
+
+
+def byte_literal(text, where):
+    """Return a number 0-255 as written, for C."""
+    if number_value(text, where) > 0xFF:
+        raise KeymapError("%s: %s is out of range 0-255" % (where, text))
+    return text
+
+
+def c_char(ch, where):
     """Return a C character literal for one character."""
     escapes = {"\\": "\\\\", "'": "\\'", "\n": "\\n", "\t": "\\t", "\r": "\\r"}
     if ch in escapes:
         return "'" + escapes[ch] + "'"
     if " " <= ch <= "~":
         return "'" + ch + "'"
-    raise KeymapError("character %r is not printable; give its code" % ch)
+    raise KeymapError("%s: character %r is not printable; give its code" % (where, ch))
 
 
 def param_literal(text, where):
-    """Return the C expression for a key parameter: a C macro, a quoted
+    """Return the C expression for a key parameter: a C identifier, a quoted
     character, or a number 0-255."""
     text = text.strip()
     if IDENT.match(text):
@@ -116,13 +105,18 @@ def param_literal(text, where):
             ch = {"n": "\n", "t": "\t", "r": "\r"}.get(ch[1], ch[1])
         if len(ch) != 1:
             raise KeymapError("%s: parameter %s is not one character" % (where, text))
-        return c_char(ch)
-    if re.match(r"^(0[xX][0-9A-Fa-f]+|[0-9]+)$", text):
-        value = int(text, 0) if not re.match(r"^0[0-9]+$", text) else int(text, 10)
-        if value > 0xFF:
-            raise KeymapError("%s: parameter %s is out of range 0-255" % (where, text))
-        return text
-    raise KeymapError("%s: parameter %r is not a macro, character, or number" % (where, text))
+        return c_char(ch, where)
+    if NUMBER.match(text):
+        return byte_literal(text, where)
+    raise KeymapError("%s: parameter %r is not a C identifier, character, or number"
+                      % (where, text))
+
+
+def raw_field(field, where):
+    """Return one field of a four-field key, as written."""
+    if isinstance(field, str) and field.strip():
+        return field.strip()
+    raise KeymapError("%s: %r is not a key field" % (where, field))
 
 
 def key_initializer(key, where):
@@ -132,22 +126,15 @@ def key_initializer(key, where):
     if isinstance(key, bool) or isinstance(key, float):
         raise KeymapError("%s: %r is not a key; quote it" % (where, key))
     if isinstance(key, Number):
-        if re.match(r"^[0-9]$", key):
-            return "KEY_SEND(%s)" % c_char(key)
-        if not re.match(r"^0[xX][0-9A-Fa-f]+$", key):
-            raise KeymapError("%s: write codes in hex (0x..), not %s" % (where, key))
-        code = int(key, 16)
-        if code > 0xFF:
-            raise KeymapError("%s: code %s is out of range 0x00-0xFF" % (where, key))
-        return "KEY_SEND(0x%02X)" % code
+        return "KEY_SEND(%s)" % byte_literal(key, where)
     if isinstance(key, list):
         if len(key) != 4:
             raise KeymapError("%s: a raw key needs 4 fields, not %d" % (where, len(key)))
-        return "{ %s }" % ", ".join(str(field) for field in key)
+        return "{ %s }" % ", ".join(raw_field(field, where) for field in key)
     if not isinstance(key, str):
         raise KeymapError("%s: %r is not a key" % (where, key))
     if len(key) == 1:
-        return "KEY_SEND(%s)" % c_char(key)
+        return "KEY_SEND(%s)" % c_char(key, where)
 
     code = CODE_SYMBOL.match(key.strip())
     if code:
@@ -161,41 +148,56 @@ def key_initializer(key, where):
     raise KeymapError("%s: %r is not a key" % (where, key))
 
 
-def dimension(value, name):
-    """Return (C text, number or None) for a rows or cols value."""
+def dimension(source, name):
+    """Return (C text, number or None) for the rows or cols value."""
+    if name not in source:
+        raise KeymapError("the file needs '%s'" % name)
+    value = source[name]
     if isinstance(value, Number):
-        try:
-            return value, int(value, 0)
-        except ValueError:
-            raise KeymapError("%s: %s is not a number" % (name, value))
+        return value, number_value(value, name)
     if isinstance(value, str) and IDENT.match(value):
         return value, None
     raise KeymapError("%s must be a number or a C identifier" % name)
 
 
+def header_names(source):
+    """Return the header names given by include."""
+    if "include" not in source:
+        return []
+    includes = source["include"]
+    if isinstance(includes, str):
+        includes = [includes]
+    if not isinstance(includes, list) or not all(
+        isinstance(name, str) and not isinstance(name, Number) for name in includes
+    ):
+        raise KeymapError("include must be a header name or a sequence of them")
+    return includes
+
+
+def row_designator(row, name, num_rows):
+    """Return the C designator of a row: its number or C identifier."""
+    if isinstance(row, Number):
+        value = number_value(row, "%s: row" % name)
+        if num_rows is not None and value >= num_rows:
+            raise KeymapError("%s: row %s is beyond %d rows" % (name, row, num_rows))
+        return row
+    if isinstance(row, str) and IDENT.match(row):
+        return row  # a C symbol; the compiler checks it
+    raise KeymapError("%s: row %r is not a row number or C identifier" % (name, row))
+
+
 def matrix_rows(name, spec, num_rows, num_cols):
     """Return {row: [initializer, ...]} for one named matrix."""
-    if isinstance(spec, list):
-        rows = dict(enumerate(spec))
-    elif isinstance(spec, dict):
-        rows = spec
-    else:
-        raise KeymapError("%s: a matrix is a list or mapping of rows" % name)
+    if not isinstance(spec, dict):
+        raise KeymapError("%s: a matrix is a mapping of row to keys" % name)
 
     result = {}
-    for row, keys in rows.items():
-        if isinstance(row, Number):
-            row = int(row, 0)
-        if isinstance(row, str) and IDENT.match(row):
-            pass  # a C symbol; the compiler checks it
-        elif not isinstance(row, int) or row < 0:
-            raise KeymapError("%s: row %r is not a row number or C symbol" % (name, row))
-        elif num_rows is not None and row >= num_rows:
-            raise KeymapError("%s: row %d is beyond %d rows" % (name, row, num_rows))
+    for row, keys in spec.items():
+        row = row_designator(row, name, num_rows)
         if not keys:
             continue  # an empty row does nothing, as rows left out do
         if not isinstance(keys, list):
-            raise KeymapError("%s: row %s is not a list of keys" % (name, row))
+            raise KeymapError("%s: row %s is not a sequence of keys" % (name, row))
         if num_cols is not None and len(keys) > num_cols:
             raise KeymapError(
                 "%s: row %s has %d keys, more than %d columns" % (name, row, len(keys), num_cols)
@@ -209,15 +211,22 @@ def matrix_rows(name, spec, num_rows, num_cols):
     return result
 
 
+def row_order(row):
+    """Sort key: numbered rows ascending, then rows named by C identifiers."""
+    if isinstance(row, Number):
+        return (0, int(row, 0), "")
+    return (1, 0, row)
+
+
 def generate(source, stem):
     """Return (c_text, h_text) for a parsed YAML keymap file."""
-    if not isinstance(source, dict) or "maps" not in source:
-        raise KeymapError("the file needs a 'maps' mapping")
-    rows_c, num_rows = dimension(source.get("rows"), "rows")
-    cols_c, num_cols = dimension(source.get("cols"), "cols")
-    includes = source.get("include", [])
-    if isinstance(includes, str):
-        includes = [includes]
+    if not isinstance(source, dict):
+        raise KeymapError("the file must be a YAML mapping")
+    includes = header_names(source)
+    rows_c, num_rows = dimension(source, "rows")
+    cols_c, num_cols = dimension(source, "cols")
+    if not isinstance(source.get("maps"), dict) or not source["maps"]:
+        raise KeymapError("the file needs a 'maps' mapping of one or more matrices")
 
     guard = re.sub(r"[^A-Za-z0-9]", "_", stem).upper() + "_H"
     def banner(ext, what):
@@ -250,20 +259,31 @@ def generate(source, stem):
     c.append("")
 
     for name, spec in source["maps"].items():
-        if not IDENT.match(str(name)):
+        if not isinstance(name, str) or not IDENT.match(name):
             raise KeymapError("%r is not a C identifier" % name)
         decl = "const FLASH asdf_key_t %s[%s][%s]" % (name, rows_c, cols_c)
         h.append("extern %s;" % decl)
         c.append("%s = {" % decl)
         rows = matrix_rows(name, spec, num_rows, num_cols)
-        # numbered rows in order, then rows named by C symbols
-        for row in sorted(rows, key=lambda r: (isinstance(r, str), r if isinstance(r, int) else 0, str(r))):
+        for row in sorted(rows, key=row_order):
             c.append("  [%s] = { %s }," % (row, ", ".join(rows[row])))
         c.append("};")
         c.append("")
 
     h += ["", "#endif /* !defined(%s) */" % guard, ""]
     return "\n".join(c), "\n".join(h)
+
+
+def write_outputs(out_dir, stem, c_text, h_text):
+    """Write <stem>.c and <stem>.h, or neither."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    c_path = out_dir / (stem + ".c")
+    c_path.write_text(c_text)
+    try:
+        (out_dir / (stem + ".h")).write_text(h_text)
+    except OSError:
+        c_path.unlink()
+        raise
 
 
 def main(argv):
@@ -277,12 +297,13 @@ def main(argv):
         with source_path.open() as f:
             source = yaml.load(f, Loader=KeymapLoader)
         c_text, h_text = generate(source, stem)
+        write_outputs(out_dir, stem, c_text, h_text)
     except (KeymapError, yaml.YAMLError) as err:
-        print("%s: %s" % (source_path, err), file=sys.stderr)
+        print("%s: %s" % (source_path, str(err).replace("\n", " ")), file=sys.stderr)
         return 1
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / (stem + ".c")).write_text(c_text)
-    (out_dir / (stem + ".h")).write_text(h_text)
+    except OSError as err:
+        print("%s: %s" % (err.filename or source_path, err.strerror), file=sys.stderr)
+        return 1
     return 0
 
 

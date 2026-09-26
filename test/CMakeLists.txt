@@ -216,6 +216,13 @@ asdf_add_lint(asdf_production)
 include(${CMAKE_SOURCE_DIR}/cmake/asdf_cppcheck.cmake)
 asdf_add_cppcheck(asdf_production)
 
+# The keymap generator's black-box tests, against specs/keymap-generator.md,
+# with the pytest and PyYAML pinned in the keymap-test group of pyproject.toml.
+add_test(NAME keymap_gen
+  COMMAND ${ASDF_UV} run --quiet --only-group keymap-test pytest -q -p no:cacheprovider
+          ${CMAKE_CURRENT_SOURCE_DIR}/keymap_gen
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
 # CMakePresets.json must have a preset for every target in targets.csv.
 add_test(NAME presets_match_targets
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_SOURCE_DIR}/cmake/asdf_check_presets.cmake)
